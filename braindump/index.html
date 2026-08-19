@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Braindump</title>
+      <link rel="stylesheet" href="../side-bar/styles.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="side-menu"></div>
+
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        Braindump
+      </div>
+
+      <div class="toolbar">
+        <button class="tool active" data-tool="select">Select</button>
+        <button class="tool" data-tool="pen">Pen</button>
+        <button class="tool" data-tool="eraser">Eraser</button>
+        <span class="divider"></span>
+        <label class="color-wrap" title="Pen color">
+          <input id="color" type="color" value="#ff9d45">
+        </label>
+        <button class="icon-btn" id="undo" title="Undo">↶</button>
+        <button class="icon-btn" id="redo" title="Redo">↷</button>
+        <button class="icon-btn" id="clear" title="Clear canvas">⌫</button>
+        <button class="icon-btn" id="import" title="Import dump">↑</button><button class="icon-btn" id="export" title="Export dump">↓</button><input id="import-file" type="file" accept="application/json" hidden>
+      </div>
+    </header>
+
+    <main class="workspace" id="workspace">
+      <canvas id="canvas"></canvas>
+
+      <div class="hint" id="hint">
+        <strong>Click anywhere to type.</strong>
+        <span>Switch to Pen to draw anywhere.</span>
+      </div>
+
+      <div class="status" id="status">
+        <span class="save-dot"></span>
+        <span id="save-text">Saved locally</span>
+      </div>
+    </main>
+  </div>
+
+        <script src="../side-bar/app.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

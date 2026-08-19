@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diet Tracker</title>
+      <link rel="stylesheet" href="../side-bar/styles.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="side-menu"></div>
+
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><div class="logo"></div><span>Diet Tracker</span></div>
+    <div class="date-nav">
+      <button id="prevDay">←</button>
+      <button id="todayBtn">TODAY</button>
+      <div>
+        <strong id="dateLabel">AUG 13</strong>
+        <small id="dayLabel">Thursday</small>
+      </div>
+      <button id="nextDay">→</button>
+    </div>
+    <div class="top-actions">
+      <button id="foodLibraryBtn">Food Library</button>
+      <button id="settingsBtn">Targets</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="summary-grid">
+      <div class="metric calories">
+        <div class="metric-head"><span>Calories</span><b id="calorieValue">0 / 2400 kcal</b></div>
+        <div class="bar"><i id="calorieBar"></i></div>
+      </div>
+      <div class="metric">
+        <div class="metric-head"><span>Protein</span><b id="proteinValue">0 / 160 g</b></div>
+        <div class="bar"><i id="proteinBar"></i></div>
+      </div>
+      <div class="metric">
+        <div class="metric-head"><span>Carbs</span><b id="carbValue">0 / 300 g</b></div>
+        <div class="bar"><i id="carbBar"></i></div>
+      </div>
+      <div class="metric">
+        <div class="metric-head"><span>Fat</span><b id="fatValue">0 / 70 g</b></div>
+        <div class="bar"><i id="fatBar"></i></div>
+      </div>
+    </section>
+
+    <section class="secondary-row">
+      <div class="water-card">
+        <div><span>Water</span><strong id="waterValue">0 / 2.5 L</strong></div>
+        <div class="water-glasses" id="waterGlasses"></div>
+        <div class="water-buttons">
+          <button data-water="250">+250 ml</button>
+          <button data-water="500">+500 ml</button>
+          <button id="resetWater">Reset</button>
+        </div>
+      </div>
+      <button class="details-toggle" id="detailsToggle">Nutrition Details <span>⌄</span></button>
+    </section>
+
+    <section class="nutrition-details" id="nutritionDetails">
+      <div><span>Fiber</span><b id="fiberValue">0 g</b></div>
+      <div><span>Sugar</span><b id="sugarValue">0 g</b></div>
+      <div><span>Sodium</span><b id="sodiumValue">0 mg</b></div>
+      <div><span>Calcium</span><b id="calciumValue">0 mg</b></div>
+      <div><span>Iron</span><b id="ironValue">0 mg</b></div>
+      <div><span>Potassium</span><b id="potassiumValue">0 mg</b></div>
+    </section>
+
+    <section class="meals" id="meals"></section>
+
+    <section class="bottom-actions">
+      <button class="primary" id="addMealBtn">+ Add Meal</button>
+      <button id="copyDayBtn">Copy Previous Day</button>
+      <button id="clearDayBtn">Clear Day</button>
+    </section>
+  </main>
+</div>
+
+<div class="modal hidden" id="foodModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h2>Food Library</h2><button class="close" data-close="foodModal">×</button></div>
+    <div class="library-actions">
+      <input id="foodSearch" placeholder="Search food...">
+      <button class="primary" id="newFoodBtn">+ New Food</button>
+    </div>
+    <div id="foodList" class="food-list"></div>
+  </div>
+</div>
+
+<div class="modal hidden" id="foodEditorModal">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="foodEditorTitle">Create Food</h2><button class="close" data-close="foodEditorModal">×</button></div>
+    <form id="foodForm" class="form">
+      <label>Name<input id="foodName" required></label>
+      <label>Serving size (g)<input id="foodServing" type="number" min="1" step="1" value="100" required></label>
+      <div class="form-grid">
+        <label>Calories<input id="fCal" type="number" min="0" step=".1" required></label>
+        <label>Protein (g)<input id="fProtein" type="number" min="0" step=".1" value="0"></label>
+        <label>Carbs (g)<input id="fCarbs" type="number" min="0" step=".1" value="0"></label>
+        <label>Fat (g)<input id="fFat" type="number" min="0" step=".1" value="0"></label>
+        <label>Fiber (g)<input id="fFiber" type="number" min="0" step=".1" value="0"></label>
+        <label>Sugar (g)<input id="fSugar" type="number" min="0" step=".1" value="0"></label>
+        <label>Sodium (mg)<input id="fSodium" type="number" min="0" step=".1" value="0"></label>
+        <label>Calcium (mg)<input id="fCalcium" type="number" min="0" step=".1" value="0"></label>
+        <label>Iron (mg)<input id="fIron" type="number" min="0" step=".1" value="0"></label>
+        <label>Potassium (mg)<input id="fPotassium" type="number" min="0" step=".1" value="0"></label>
+      </div>
+      <button class="primary full" type="submit">Save Food</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal hidden" id="mealModal">
+  <div class="modal-box">
+    <div class="modal-head"><h2>Add Meal</h2><button class="close" data-close="mealModal">×</button></div>
+    <form id="mealForm" class="form">
+      <label>Meal name
+        <input id="mealName" placeholder="Breakfast, Lunch, Snack..." required>
+      </label>
+      <label>Time<input id="mealTime" type="time"></label>
+      <button class="primary full" type="submit">Create Meal</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal hidden" id="addFoodModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h2 id="addFoodTitle">Add Food</h2><button class="close" data-close="addFoodModal">×</button></div>
+    <input id="addFoodSearch" placeholder="Search your food library...">
+    <div id="addFoodList" class="food-list"></div>
+  </div>
+</div>
+
+<div class="modal hidden" id="quantityModal">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="quantityTitle">Quantity</h2><button class="close" data-close="quantityModal">×</button></div>
+    <form id="quantityForm" class="form">
+      <label>Amount (g)<input id="quantityInput" type="number" min=".1" step=".1" value="100" required></label>
+      <div class="quantity-preview" id="quantityPreview"></div>
+      <button class="primary full" type="submit">Add Food</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal hidden" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-head"><h2>Daily Targets</h2><button class="close" data-close="settingsModal">×</button></div>
+    <form id="settingsForm" class="form">
+      <div class="form-grid">
+        <label>Calories<input id="tCal" type="number" min="0"></label>
+        <label>Protein (g)<input id="tProtein" type="number" min="0"></label>
+        <label>Carbs (g)<input id="tCarbs" type="number" min="0"></label>
+        <label>Fat (g)<input id="tFat" type="number" min="0"></label>
+        <label>Water (L)<input id="tWater" type="number" min="0" step=".1"></label>
+      </div>
+      <button class="primary full">Save Targets</button>
+    </form>
+  </div>
+</div>
+
+<input type="file" id="importInput" accept=".json" hidden>
+        <script src="../side-bar/app.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

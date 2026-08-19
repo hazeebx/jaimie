@@ -1,0 +1,316 @@
+/* =========================================================
+   JAIMIE — COLLAPSIBLE SIDE MENU
+   ========================================================= */
+
+.side-menu,
+.side-menu * {
+    box-sizing: border-box;
+}
+
+.side-menu {
+    --menu-width: 250px;
+    --collapsed-width: 72px;
+    --bg: #151619;
+    --bg-deep: #111214;
+    --border: #303238;
+    --text: #e8e5df;
+    --muted: #858891;
+    --orange: #ff8a2a;
+
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1000;
+
+    width: var(--menu-width);
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    background:
+        linear-gradient(180deg, #17181b 0%, #121315 100%);
+
+    border-right: 1px solid var(--border);
+
+    color: var(--text);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+
+    transition:
+        width 220ms ease,
+        box-shadow 220ms ease;
+}
+
+.side-menu__top {
+    height: 76px;
+    flex: 0 0 76px;
+
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 0 14px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.side-menu__toggle {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    background: #191a1d;
+    border: 1px solid #3a3c42;
+    border-radius: 9px;
+
+    cursor: pointer;
+}
+
+.side-menu__toggle span {
+    width: 17px;
+    height: 1px;
+    background: #a3a5ab;
+    transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.side-menu__toggle:hover {
+    border-color: var(--orange);
+}
+
+.side-menu__toggle:hover span {
+    background: var(--orange);
+}
+
+.side-menu__brand {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: .08em;
+    white-space: nowrap;
+}
+
+.side-menu__brand-mark {
+    width: 31px;
+    height: 31px;
+
+    display: grid;
+    place-items: center;
+
+    border: 1px solid var(--orange);
+    border-radius: 8px;
+
+    color: var(--orange);
+    font-size: 13px;
+}
+
+.side-menu__nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 15px 10px;
+
+    scrollbar-width: thin;
+    scrollbar-color: #3d3f45 transparent;
+}
+
+.side-menu__nav::-webkit-scrollbar {
+    width: 5px;
+}
+
+.side-menu__nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.side-menu__nav::-webkit-scrollbar-thumb {
+    background: #3d3f45;
+    border-radius: 10px;
+}
+
+.side-menu__item {
+    min-height: 44px;
+
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    margin: 3px 0;
+    padding: 0 11px;
+
+    border: 1px solid transparent;
+    border-radius: 9px;
+
+    color: var(--muted);
+    text-decoration: none;
+
+    font-size: 12px;
+    letter-spacing: .01em;
+
+    transition:
+        background 150ms ease,
+        color 150ms ease,
+        border-color 150ms ease;
+}
+
+.side-menu__item:hover {
+    color: var(--text);
+    background: #1c1d21;
+    border-color: #303238;
+}
+
+.side-menu__item.active {
+    color: var(--orange);
+    background: #211a16;
+    border-color: #633a20;
+}
+
+.side-menu__icon {
+    width: 22px;
+    flex: 0 0 22px;
+
+    display: grid;
+    place-items: center;
+
+    font-size: 15px;
+    color: currentColor;
+}
+
+.side-menu__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.side-menu__section {
+    padding: 19px 11px 7px;
+}
+
+.side-menu__section-title {
+    color: #55585f;
+    font: 9px/1 monospace;
+    letter-spacing: .17em;
+    white-space: nowrap;
+}
+
+.side-menu__bottom {
+    flex: 0 0 52px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 15px;
+
+    border-top: 1px solid var(--border);
+}
+
+.side-menu__status {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    color: #62656d;
+    font: 9px monospace;
+    letter-spacing: .08em;
+    white-space: nowrap;
+}
+
+.side-menu__status-dot {
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+    background: #65d69d;
+    box-shadow: 0 0 8px #65d69d66;
+}
+
+/* =========================================================
+   COLLAPSED STATE
+   ========================================================= */
+
+.side-menu.is-collapsed {
+    width: var(--collapsed-width);
+}
+
+.side-menu.is-collapsed .side-menu__top {
+    justify-content: center;
+    padding: 0;
+}
+
+.side-menu.is-collapsed .side-menu__brand {
+    display: none;
+}
+
+.side-menu.is-collapsed .side-menu__item {
+    justify-content: center;
+    padding: 0;
+}
+
+.side-menu.is-collapsed .side-menu__label,
+.side-menu.is-collapsed .side-menu__section,
+.side-menu.is-collapsed .side-menu__status .side-menu__label {
+    display: none;
+}
+
+.side-menu.is-collapsed .side-menu__bottom {
+    justify-content: center;
+    padding: 0;
+}
+
+.side-menu.is-collapsed .side-menu__status {
+    gap: 0;
+}
+
+/* Optional helper:
+   Add this class to your page's main wrapper if you want it
+   to move automatically when the menu expands/collapses. */
+
+.jaimie-content {
+    margin-left: var(--jaimie-menu-width, 250px);
+    transition: margin-left 220ms ease;
+}
+
+.jaimie-content.menu-collapsed {
+    margin-left: 72px;
+}
+
+@media (max-width: 700px) {
+    .side-menu {
+        width: var(--collapsed-width);
+    }
+
+    .side-menu .side-menu__brand,
+    .side-menu .side-menu__label,
+    .side-menu .side-menu__section,
+    .side-menu .side-menu__status .side-menu__label {
+        display: none;
+    }
+
+    .side-menu .side-menu__top {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .side-menu .side-menu__item {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .side-menu .side-menu__bottom {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .jaimie-content {
+        margin-left: 72px;
+    }
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Packing Tracker</title>
+      <link rel="stylesheet" href="../side-bar/styles.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="side-menu"></div>
+
+
+<main class="app">
+<header class="topbar">
+  <div class="brand">
+    <div class="sigil">◆</div>
+    <div><div class="eyebrow">SURVIVAL SYSTEM / EQUIPMENT</div><h1>Packing Tracker</h1></div>
+  </div>
+  <div class="top-actions">
+    <button id="manageBtn" class="secondary">MANAGE LISTS</button>
+    <button id="newTripBtn" class="primary">+ NEW PACKING RUN</button>
+  </div>
+</header>
+
+<section class="mission-bar">
+  <div><span class="eyebrow">ACTIVE LOADOUT</span><strong id="profileName">Travel</strong></div>
+  <div class="mission-progress"><span id="progressText">0 / 0 PACKED</span><div class="progress"><i id="progressBar"></i></div></div>
+  <div class="completion" id="completion">0%</div>
+</section>
+
+<nav class="mode-tabs">
+  <button class="mode active" data-mode="packing">PACKING</button>
+  <button class="mode" data-mode="returning">RETURNING</button>
+</nav>
+
+<section class="content-head">
+  <div><div class="eyebrow" id="modeEyebrow">DEPARTURE CHECK</div><h2 id="modeTitle">Prepare Your Loadout</h2></div>
+  <div class="quick"><button id="checkAll" class="secondary">CHECK ALL</button><button id="clearAll" class="secondary">CLEAR ALL</button></div>
+</section>
+
+<section id="categoryGrid" class="category-grid"></section>
+
+<section class="bottom-bar">
+  <div><span id="remaining">0 ITEMS REMAINING</span><span class="separator">•</span><span id="checked">0 VERIFIED</span></div>
+  <button id="finishBtn" class="primary">✓ COMPLETE PACKING</button>
+</section>
+</main>
+
+<div id="listModal" class="modal hidden">
+<div class="modal-card">
+  <div class="modal-head"><div><div class="eyebrow">LOADOUT DATABASE</div><h2>Manage Packing Lists</h2></div><button class="icon-btn" data-close>×</button></div>
+  <div id="profiles"></div>
+  <div class="add-profile"><input id="profileInput" maxlength="35" placeholder="New list name"><button id="addProfile" class="primary">CREATE</button></div>
+</div></div>
+
+<div id="itemModal" class="modal hidden">
+<div class="modal-card">
+  <div class="modal-head"><div><div class="eyebrow">LOADOUT EDITOR</div><h2 id="itemModalTitle">Add Item</h2></div><button class="icon-btn" data-close-item>×</button></div>
+  <form id="itemForm">
+    <input id="itemId" type="hidden">
+    <label>Item name<input id="itemName" required maxlength="60" placeholder="e.g. Passport"></label>
+    <label>Category<select id="itemCategory"><option>ESSENTIALS</option><option>ELECTRONICS</option><option>CLOTHING</option><option>TOILETRIES</option><option>CAMPING</option><option>MISC</option></select></label>
+    <label>Quantity<input id="itemQty" type="number" min="1" step="1" value="1"></label>
+    <div class="form-actions"><button type="button" id="deleteItem" class="danger hidden">DELETE</button><span></span><button type="button" class="secondary" data-close-item>CANCEL</button><button class="primary">SAVE ITEM</button></div>
+  </form>
+</div></div>
+
+        <script src="../side-bar/app.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

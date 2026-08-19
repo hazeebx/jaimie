@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Supply Inventory</title>
+      <link rel="stylesheet" href="../side-bar/styles.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="side-menu"></div>
+
+
+<main class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="sigil">◆</div>
+      <div>
+        <div class="eyebrow">SURVIVAL SYSTEM / SUPPLIES</div>
+        <h1>Inventory</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="carry-count"><span id="totalItems">0</span> ITEMS</div>
+      <button id="addBtn" class="primary">+ ADD ITEM</button>
+    </div>
+  </header>
+
+  <section class="hud">
+    <div class="hud-stat"><span>GROCERIES</span><strong id="groceryCount">0</strong></div>
+    <div class="hud-stat"><span>TOILETRIES</span><strong id="toiletryCount">0</strong></div>
+    <div class="hud-stat warn-stat"><span>LOW STOCK</span><strong id="lowCount">0</strong></div>
+    <div class="hud-stat"><span>SHOPPING</span><strong id="shoppingCount">0</strong></div>
+  </section>
+
+  <nav class="tabs" aria-label="Inventory sections">
+    <button class="tab active" data-view="inventory">INVENTORY</button>
+    <button class="tab" data-view="shopping">SHOPPING LIST <span id="shoppingBadge">0</span></button>
+  </nav>
+
+  <section id="inventoryView" class="view">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">CURRENT SUPPLIES</div>
+        <h2>What You Have</h2>
+      </div>
+      <div class="filters">
+        <button class="filter active" data-category="all">ALL</button>
+        <button class="filter" data-category="groceries">GROCERIES</button>
+        <button class="filter" data-category="toiletries">TOILETRIES</button>
+      </div>
+    </div>
+    <div id="inventoryGrid" class="inventory-grid"></div>
+  </section>
+
+  <section id="shoppingView" class="view hidden">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">ACQUISITION QUEUE</div>
+        <h2>Shopping List</h2>
+      </div>
+      <button id="addShoppingBtn" class="secondary">+ ADD TO LIST</button>
+    </div>
+    <div id="shoppingList" class="shopping-list"></div>
+  </section>
+</main>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <div class="eyebrow">SUPPLY DATABASE</div>
+        <h2 id="modalTitle">Add Item</h2>
+      </div>
+      <button id="closeModal" class="icon-btn">×</button>
+    </div>
+    <form id="itemForm">
+      <input id="editId" type="hidden">
+      <label>Item name<input id="itemName" required maxlength="60" placeholder="e.g. Rice"></label>
+      <div class="two-col">
+        <label>Category
+          <select id="itemCategory">
+            <option value="groceries">Groceries</option>
+            <option value="toiletries">Toiletries</option>
+          </select>
+        </label>
+        <label>Unit
+          <select id="itemUnit">
+            <option>pcs</option><option>packs</option><option>kg</option><option>g</option>
+            <option>L</option><option>ml</option><option>bottles</option><option>boxes</option>
+          </select>
+        </label>
+      </div>
+      <div class="two-col">
+        <label>Quantity<input id="itemQty" type="number" min="0" step="0.01" value="1" required></label>
+        <label>Minimum quantity<input id="itemMin" type="number" min="0" step="0.01" value="0"></label>
+      </div>
+      <label>Notes<input id="itemNotes" maxlength="120" placeholder="Optional"></label>
+      <div class="form-actions">
+        <button type="button" id="deleteBtn" class="danger hidden">DELETE</button>
+        <span></span>
+        <button type="button" id="cancelBtn" class="secondary">CANCEL</button>
+        <button class="primary" type="submit">SAVE ITEM</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="shoppingModal" class="modal hidden">
+  <div class="modal-card small">
+    <div class="modal-head">
+      <div><div class="eyebrow">ACQUISITION QUEUE</div><h2>Add Shopping Item</h2></div>
+      <button class="icon-btn" data-close-shopping>×</button>
+    </div>
+    <form id="shoppingForm">
+      <label>Item name<input id="shopName" required maxlength="60" placeholder="e.g. Bananas"></label>
+      <div class="two-col">
+        <label>Quantity<input id="shopQty" type="number" min="0" step="0.01" value="1"></label>
+        <label>Unit<select id="shopUnit"><option>pcs</option><option>packs</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>bottles</option><option>boxes</option></select></label>
+      </div>
+      <div class="form-actions">
+        <span></span><button type="button" class="secondary" data-close-shopping>CANCEL</button>
+        <button class="primary">ADD TO LIST</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+        <script src="../side-bar/app.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

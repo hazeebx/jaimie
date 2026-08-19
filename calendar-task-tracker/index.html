@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Local-first calendar and task tracker">
+  <title>Calendar — Task Tracker</title>
+  <link rel="stylesheet" href="../side-bar/styles.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+
+    <div id="side-menu"></div>
+
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark"></span><span>Calendar</span></div>
+      <div class="top-actions">
+        <button id="todayButton" class="ghost-button">Today</button>
+        <button id="searchButton" class="ghost-button">Search</button>
+        <button id="addTaskButton" class="accent-button">+ Add Task</button>
+      </div>
+    </header>
+
+    <main class="calendar-page">
+      <section class="intro">
+        <div>
+          <p class="eyebrow">Your schedule</p>
+          <h1>Calendar</h1>
+           </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="upcoming-panel panel">
+          <div class="panel-heading">
+            <div>
+              <span class="section-kicker">Next 7 days</span>
+              <h2>Upcoming week</h2>
+            </div>
+            <span id="upcomingCount" class="count-badge">0</span>
+          </div>
+          <div id="upcomingList" class="upcoming-list"></div>
+        </aside>
+
+        <section class="calendar-panel panel">
+          <div class="calendar-toolbar">
+            <button id="prevMonth" class="icon-button" aria-label="Previous month">←</button>
+            <div class="month-title">
+              <h2 id="monthTitle"></h2>
+              <button id="monthToday" class="mini-today">Today</button>
+            </div>
+            <button id="nextMonth" class="icon-button" aria-label="Next month">→</button>
+          </div>
+          <div class="weekdays" aria-hidden="true">
+            <span>SU</span><span>MO</span><span>TU</span><span>WE</span><span>TH</span><span>FR</span><span>SA</span>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </section>
+      </section>
+
+      <section id="selectedDayPanel" class="selected-day-panel panel">
+        <div class="selected-heading">
+          <div>
+            <span class="section-kicker">Selected date</span>
+            <h2 id="selectedDateTitle"></h2>
+          </div>
+          <button id="addSelectedTask" class="accent-button">+ Add Task</button>
+        </div>
+        <div id="selectedTasks" class="selected-tasks"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Task editor -->
+  <div id="taskModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+    <div class="modal-card">
+      <div class="modal-heading">
+        <h2 id="taskModalTitle">Add Task</h2>
+        <button class="close-button" data-close="taskModal" aria-label="Close">×</button>
+      </div>
+      <form id="taskForm" class="form">
+        <label>Task name
+          <input id="taskTitle" maxlength="180" autocomplete="off" required>
+        </label>
+        <label>Date
+          <input id="taskDate" type="date" required>
+        </label>
+        <label>Category
+          <select id="taskCategory">
+            <option>Personal</option>
+            <option>Work</option>
+            <option>Study</option>
+            <option>Fitness</option>
+            <option>Finance</option>
+            <option>Project</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Notes
+          <textarea id="taskNotes" maxlength="1000" rows="4" placeholder="Optional notes..."></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="button" id="deleteTaskButton" class="danger-button hidden">Delete</button>
+          <div class="form-actions-right">
+            <button type="button" class="ghost-button" data-close="taskModal">Cancel</button>
+            <button type="submit" class="accent-button">Save Task</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Task details -->
+  <div id="detailsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+    <div class="modal-card">
+      <div class="modal-heading">
+        <h2 id="detailsTitle">Task</h2>
+        <button class="close-button" data-close="detailsModal" aria-label="Close">×</button>
+      </div>
+      <div id="detailsContent"></div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div id="searchModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+    <div class="modal-card wide">
+      <div class="modal-heading">
+        <h2 id="searchTitle">Search tasks</h2>
+        <button class="close-button" data-close="searchModal" aria-label="Close">×</button>
+      </div>
+      <input id="searchInput" class="search-input" placeholder="Search title, notes, category..." autocomplete="off">
+      <div id="searchResults" class="search-results"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+    <script src="../side-bar/app.js"></script>
+</body>
+</html>

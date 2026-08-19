@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sleep Tracker</title>
+      <link rel="stylesheet" href="../side-bar/styles.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="side-menu"></div>
+
+
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">WELLBEING</div>
+        <h1>Sleep Tracker</h1>
+      </div>
+      <div class="day-nav">
+        <button id="prevDay" class="ghost nav-btn" aria-label="Previous day">‹</button>
+        <button id="todayBtn" class="ghost">Today</button>
+        <button id="nextDay" class="ghost nav-btn" aria-label="Next day">›</button>
+      </div>
+    </header>
+
+    <section class="page-grid">
+      <section class="card daily">
+        <div class="card-head">
+          <div>
+            <div class="eyebrow">DAILY ENTRY</div>
+            <h2 id="entryTitle">SLEEP — TODAY</h2>
+          </div>
+          <div id="savedState" class="saved">Not saved</div>
+        </div>
+
+        <div class="form-grid">
+          <label>Bedtime
+            <input id="bedtime" type="time">
+          </label>
+          <label>Wake-up
+            <input id="wakeTime" type="time">
+          </label>
+        </div>
+
+        <div class="total">
+          <span>Total Sleep</span>
+          <strong id="totalSleep">—</strong>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><span>Quality</span><strong id="qualityValue">5/10</strong></div>
+          <input id="quality" type="range" min="1" max="10" value="5">
+          <div id="qualityDots" class="dots"></div>
+        </div>
+
+        <label>Fell asleep
+          <select id="fellAsleep">
+            <option>Easily</option>
+            <option>Normally</option>
+            <option>With difficulty</option>
+          </select>
+        </label>
+
+        <label>Wake-ups
+          <input id="wakeups" type="number" min="0" step="1" value="0">
+        </label>
+
+        <label class="check">
+          <input id="rested" type="checkbox">
+          <span>Felt rested</span>
+        </label>
+
+        <button id="saveBtn" class="primary">Save Sleep</button>
+      </section>
+
+      <section class="card history">
+        <div class="card-head">
+          <div>
+            <div class="eyebrow">HISTORY</div>
+            <h2>Sleep History</h2>
+          </div>
+          <div class="range-tabs">
+            <button data-range="7" class="active">7D</button>
+            <button data-range="30">30D</button>
+            <button data-range="90">90D</button>
+          </div>
+        </div>
+
+        <div id="historyList" class="history-list"></div>
+
+        <div class="stats">
+          <div><span>Average Sleep</span><strong id="avgSleep">—</strong></div>
+          <div><span>Average Quality</span><strong id="avgQuality">—</strong></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+        <script src="../side-bar/app.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
