@@ -289,65 +289,75 @@ let authInitialized = false;
     ===================================================== */
 
     function switchTab(
-        tabName
+    tabName
+) {
+
+    root
+        .querySelectorAll(
+            "[data-settings-tab]"
+        )
+        .forEach(
+            button => {
+
+                button.classList.toggle(
+                    "active",
+                    button.dataset
+                        .settingsTab ===
+                    tabName
+                );
+
+            }
+        );
+
+
+    root
+        .querySelectorAll(
+            "[data-settings-panel]"
+        )
+        .forEach(
+            panel => {
+
+                panel.classList.toggle(
+                    "active",
+                    panel.dataset
+                        .settingsPanel ===
+                    tabName
+                );
+
+            }
+        );
+
+
+    if (
+        tabName ===
+        "data"
     ) {
 
-        root
-            .querySelectorAll(
-                "[data-settings-tab]"
-            )
-            .forEach(
-                button => {
-
-                    button.classList.toggle(
-                        "active",
-                        button.dataset
-                            .settingsTab ===
-                        tabName
-                    );
-
-                }
-            );
-
-
-        root
-            .querySelectorAll(
-                "[data-settings-panel]"
-            )
-            .forEach(
-                panel => {
-
-                    panel.classList.toggle(
-                        "active",
-                        panel.dataset
-                            .settingsPanel ===
-                        tabName
-                    );
-
-                }
-            );
-
-
-        if (
-            tabName ===
-            "data"
-        ) {
-
-            refreshDataPanel();
-
-        }
-
-
-        if (
-            tabName ===
-            "security"
-        ) {
-
-            initAuthUI();
-
-        }
+        refreshDataPanel();
 
     }
+
+
+    if (
+        tabName ===
+        "security"
+    ) {
+
+        initAuthUI();
+
+    }
+
+
+    if (
+        tabName ===
+        "storage"
+    ) {
+
+        refreshStoragePanel();
+
+    }
+
+}
 
 
     /* =====================================================
@@ -1205,6 +1215,85 @@ let authInitialized = false;
 
     }
 
+    async function refreshStoragePanel() {
+
+    if (!root) {
+        return;
+    }
+
+    const syncStatus =
+        root.querySelector(
+            "#storageSyncStatus"
+        );
+
+    const accountStatus =
+        root.querySelector(
+            "#storageAccountStatus"
+        );
+
+    if (!syncStatus || !accountStatus) {
+        return;
+    }
+
+    try {
+
+        if (
+            window.JAIMIEData &&
+            typeof JAIMIEData.sync?.status ===
+                "function"
+        ) {
+
+            const status =
+                await JAIMIEData.sync.status();
+
+            if (
+                status.connected &&
+                status.enabled
+            ) {
+
+                syncStatus.textContent =
+                    "FIREBASE CONNECTED";
+
+            } else {
+
+                syncStatus.textContent =
+                    "LOCAL ONLY";
+
+            }
+
+            accountStatus.textContent =
+                status.connected
+                    ? "AUTHENTICATED"
+                    : "NOT SIGNED IN";
+
+        } else {
+
+            syncStatus.textContent =
+                "LOCAL ONLY";
+
+            accountStatus.textContent =
+                "UNKNOWN";
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Could not inspect storage status:",
+            error
+        );
+
+        syncStatus.textContent =
+            "UNAVAILABLE";
+
+        accountStatus.textContent =
+            "UNKNOWN";
+
+    }
+
+}
 
     /* =====================================================
        PUBLIC API

@@ -1670,5 +1670,29 @@
         "color:inherit"
     );
 
+/* =========================================================
+   FIREBASE SYNC BOOTSTRAP
+   ========================================================= */
+
+(async () => {
+
+    try {
+
+        await import(
+            "../firebase/sync.js"
+        );
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "JAIMIE Firebase Sync unavailable:",
+            error
+        );
+
+    }
+
+})();
 
 })();
