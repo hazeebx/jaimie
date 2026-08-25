@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAIMIE // GPS</title>
+<style>
+:root{ --bg:#0e0e0f; --card:#18181b; --card2:#1e1e22; --border:#27272a; --orange:#fb923c; --text:#a1a1aa; --text2:#fafafa; --mono: ui-monospace, SFMono-Regular, Menlo, monospace; }
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+.sidebar{width:64px;border-right:1px solid var(--border);background:#101012;display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:18px}
+.icon{width:36px;height:36px;border:1px solid var(--border);border-radius:10px;display:grid;place-items:center;cursor:pointer;font-size:16px}
+.icon.active{border-color:rgba(251,146,60,.4);background:rgba(251,146,60,.12);color:var(--orange)}
+.main{flex:1;display:flex;flex-direction:column;padding:16px;gap:16px;overflow:auto}
+.topbar{height:58px;border:1px solid var(--border);border-radius:14px;background:var(--card);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.topbar .title{color:var(--text2);letter-spacing:.2em;font-family:var(--mono);font-size:12px}
+.topbar .title b{color:var(--orange)}
+.grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px;flex:1;min-height:0}
+@media(max-width:900px){.grid{grid-template-columns:1fr;grid-template-rows:auto}}
+.card{border:1px solid var(--border);background:var(--card);border-radius:22px;padding:20px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.label{font-size:10px;letter-spacing:.18em;color:var(--orange);font-family:var(--mono)}
+.card h2{color:var(--text2);margin:8px 0 4px 0;font-size:26px;font-weight:450;letter-spacing:-.02em}
+.sub{font-size:12px;line-height:1.5}
+.value{font-size:48px;color:var(--text2);font-weight:600;letter-spacing:-.03em;margin-top:auto}
+.unit{font-size:14px;color:var(--text);font-weight:400}
+
+/* Compass specific */
+.compass-wrap{flex:1;display:grid;place-items:center;margin-top:12px}
+.ring{width:200px;height:200px;border-radius:50%;border:1px solid var(--border);position:relative;background:radial-gradient(circle at center, var(--card2), var(--card))}
+.ring::before{content:'';position:absolute;inset:12px;border-radius:50%;border:1px dashed #333}
+.needle{position:absolute;left:50%;top:50%;width:2px;height:90px;background:var(--orange);transform-origin:bottom center;transform:translate(-50%,-100%) rotate(0deg);transition:transform .2s ease-out;box-shadow:0 0 12px rgba(251,146,60,.6)}
+.dot{position:absolute;left:50%;top:50%;width:10px;height:10px;background:var(--text2);border-radius:50%;transform:translate(-50%,-50%)}
+.dir{position:absolute;font-family:var(--mono);font-size:10px;color:var(--text)} .N{top:6px;left:50%;transform:translateX(-50%)} .E{right:8px;top:50%;transform:translateY(-50%)} .S{bottom:6px;left:50%;transform:translateX(-50%)} .W{left:8px;top:50%;transform:translateY(-50%)}
+
+/* UV */
+.uv-bar{height:8px;background:#27272a;border-radius:99px;margin-top:16px;position:relative;overflow:hidden}
+.uv-fill{height:100%;background:linear-gradient(90deg,#4ade80,#facc15,#fb923c,#ef4444,#a855f7);width:0%;transition:width .6s}
+.uv-scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;margin-top:6px}
+
+/* Weather */
+.weather-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.w-item{border:1px solid var(--border);background:var(--card2);border-radius:12px;padding:10px}
+.w-item span{display:block;font-family:var(--mono);font-size:10px;color:var(--text)} .w-item b{display:block;color:var(--text2);font-size:16px;margin-top:4px}
+
+/* Timer */
+.timer-ctrl{display:flex;gap:8px;margin-top:16px}
+.t-btn{flex:1;border:1px solid var(--border);background:var(--card2);color:var(--text2);border-radius:12px;padding:12px 0;font-family:var(--mono);font-size:12px;cursor:pointer}
+.t-btn.primary{background:var(--orange);color:#000;border-color:var(--orange);font-weight:700}
+.t-input{display:flex;gap:8px;margin-top:12px}
+.t-input input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text2);padding:10px;text-align:center;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="icon">☰</div>
+  <div class="icon">⌂</div>
+  <div class="icon active">◍</div>
+  <div class="icon">✓</div>
+  <div class="icon">☾</div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="title">JAIMIE // <b>GPS / FIELD KIT</b></div>
+    <div style="font-family:var(--mono);font-size:11px" id="coords">LOCATING...</div>
+  </div>
+
+  <div class="grid">
+    <!-- COMPASS -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between"><span class="label">01 / DIRECTION</span><span class="label" id="headingLabel">--°</span></div>
+      <h2>Compass</h2>
+      <div class="compass-wrap">
+        <div class="ring">
+          <span class="dir N">N</span><span class="dir E">E</span><span class="dir S">S</span><span class="dir W">W</span>
+          <div class="needle" id="needle"></div><div class="dot"></div>
+        </div>
+      </div>
+      <p class="sub" id="compassStatus" style="margin-top:12px;text-align:center">Tap to enable compass on iOS</p>
+    </div>
+
+    <!-- UV INDEX -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between"><span class="label">02 / RADIATION</span><span class="label" id="uvCat">--</span></div>
+      <h2>UV Index</h2>
+      <div class="value" id="uvValue">-- <span class="unit">UVI</span></div>
+      <div class="uv-bar"><div class="uv-fill" id="uvFill"></div></div>
+      <div class="uv-scale"><span>0</span><span>3</span><span>6</span><span>8</span><span>11+</span></div>
+      <p class="sub" id="uvAdvice" style="margin-top:12px">Fetching UV from Open-Meteo...</p>
+    </div>
+
+    <!-- WEATHER -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between"><span class="label">03 / ATMOS</span><span class="label" id="weatherTime">--</span></div>
+      <h2>Weather</h2>
+      <div class="value" id="temp">--°</div>
+      <div class="weather-grid">
+        <div class="w-item"><span>WIND</span><b id="wind">-- km/h</b></div>
+        <div class="w-item"><span>HUMIDITY</span><b id="hum">--%</b></div>
+        <div class="w-item"><span>CONDITION</span><b id="cond">--</b></div>
+        <div class="w-item"><span>LOCATION</span><b id="loc">--</b></div>
+      </div>
+    </div>
+
+    <!-- TIMER -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between"><span class="label">04 / INTERVAL</span><span class="label">FIELD TIMER</span></div>
+      <h2>Timer</h2>
+      <div class="t-input"><input id="h" type="number" min="0" placeholder="HH" value="0"><input id="m" type="number" min="0" max="59" placeholder="MM" value="5"><input id="s" type="number" min="0" max="59" placeholder="SS" value="0"></div>
+      <div class="value" id="timerDisplay">05:00</div>
+      <div class="timer-ctrl"><button class="t-btn primary" id="startBtn">START</button><button class="t-btn" id="pauseBtn">PAUSE</button><button class="t-btn" id="resetBtn">RESET</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- GEOLOCATION + WEATHER + UV ----
+let lat, lon;
+async function initLocation(){
+  if(!navigator.geolocation){ document.getElementById('coords').textContent='GEO DENIED'; return; }
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    lat=pos.coords.latitude; lon=pos.coords.longitude;
+    document.getElementById('coords').textContent=`${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    document.getElementById('loc').textContent=`${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+    fetchWeather();
+  },()=>{ document.getElementById('coords').textContent='LOCATION OFF'; });
+}
+async function fetchWeather(){
+  // Open-Meteo free API - no key
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,uv_index&timezone=auto`;
+  try{
+    const r=await fetch(url); const d=await r.json(); const c=d.current;
+    document.getElementById('temp').innerHTML=`${Math.round(c.temperature_2m)}°<span class="unit">C</span>`;
+    document.getElementById('wind').textContent=`${c.wind_speed_10m} km/h`;
+    document.getElementById('hum').textContent=`${c.relative_humidity_2m}%`;
+    document.getElementById('weatherTime').textContent=new Date(c.time).toLocaleTimeString();
+    const codes={0:'Clear',1:'Clear',2:'Partly Cloudy',3:'Overcast',45:'Fog',51:'Drizzle',61:'Rain',71:'Snow',95:'Thunderstorm'};
+    document.getElementById('cond').textContent=codes[c.weather_code]||'--';
+    // UV
+    const uv=c.uv_index;
+    document.getElementById('uvValue').innerHTML=`${uv} <span class="unit">UVI</span>`;
+    document.getElementById('uvFill').style.width=`${Math.min(uv/11*100,100)}%`;
+    let cat='LOW', adv='Safe to stay outside.';
+    if(uv>=3){cat='MODERATE'; adv='Wear sunscreen.'}
+    if(uv>=6){cat='HIGH'; adv='Shade + SPF 50+ required.'}
+    if(uv>=8){cat='VERY HIGH'; adv='Minimize exposure 10am-4pm.'}
+    if(uv>=11){cat='EXTREME'; adv='Avoid sun. Full cover.'}
+    document.getElementById('uvCat').textContent=cat; document.getElementById('uvAdvice').textContent=adv;
+  }catch(e){ console.log(e); }
+}
+
+// ---- COMPASS ----
+const needle=document.getElementById('needle');
+const headingLabel=document.getElementById('headingLabel');
+const statusEl=document.getElementById('compassStatus');
+function handleOrient(e){
+  let heading;
+  if(e.webkitCompassHeading) heading=e.webkitCompassHeading;
+  else if(e.alpha!==null) heading=360-e.alpha;
+  if(heading!==undefined){
+    needle.style.transform=`translate(-50%,-100%) rotate(${heading}deg)`;
+    headingLabel.textContent=`${Math.round(heading)}°`;
+    const dirs=['N','NE','E','SE','S','SW','W','NW']; const idx=Math.round(heading/45)%8;
+    statusEl.textContent=`${dirs[idx]} • ${Math.round(heading)}°`;
+  }
+}
+function enableCompass(){
+  if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(p=>{ if(p==='granted'){ window.addEventListener('deviceorientation',handleOrient,true); statusEl.textContent='Compass active'; } });
+  }else{ window.addEventListener('deviceorientationabsolute',handleOrient,true); window.addEventListener('deviceorientation',handleOrient,true); statusEl.textContent='Move device to calibrate'; }
+}
+document.querySelector('.card').addEventListener('click',enableCompass,{once:true});
+
+// ---- TIMER ----
+let interval=null,total=300,remaining=300,running=false;
+const display=document.getElementById('timerDisplay');
+function updateDisplay(){ const mm=String(Math.floor(remaining/60)).padStart(2,'0'); const ss=String(remaining%60).padStart(2,'0'); display.textContent=`${mm}:${ss}`; }
+function getInput(){ const h=parseInt(document.getElementById('h').value)||0; const m=parseInt(document.getElementById('m').value)||0; const s=parseInt(document.getElementById('s').value)||0; return h*3600+m*60+s; }
+document.getElementById('startBtn').onclick=()=>{
+  if(!running){ if(remaining<=0) remaining=getInput()||300; total=remaining; running=true;
+    interval=setInterval(()=>{ remaining--; updateDisplay(); if(remaining<=0){ clearInterval(interval); running=false; display.textContent='DONE'; if(navigator.vibrate) navigator.vibrate([200,100,200]); } },1000);
+  }
+};
+document.getElementById('pauseBtn').onclick=()=>{ clearInterval(interval); running=false; };
+document.getElementById('resetBtn').onclick=()=>{ clearInterval(interval); running=false; remaining=getInput()||300; updateDisplay(); };
+
+initLocation(); updateDisplay();
+</script>
+</body>
+</html>

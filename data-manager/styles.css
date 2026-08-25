@@ -1,0 +1,14 @@
+/* JAIMIE — DATA MANAGER */
+.jaimie-data-control {
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 122, 24, 0.35);
+    background: rgba(255, 122, 24, 0.06);
+    color: #f2f2f2;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+.jaimie-data-control:hover { border-color: rgba(255, 122, 24, 0.8); background: rgba(255, 122, 24, 0.12); }
+.jaimie-data-control:active { transform: translateY(1px); }

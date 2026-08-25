@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#0d0d0e;--card:#17171a;--card2:#1e1e22;--border:#2a2a2e;--orange:#ff8c42;--text:#8a8a8e;--text2:#f5f5f5;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--red:#ef4444;--green:#22c55e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);display:grid;place-items:center;min-height:100vh;padding:20px;font-family:Inter,system-ui}
+
+.cmd{width:520px;max-width:100%;border:1px solid var(--border);background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,.6)}
+.cmd-head{height:42px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#121214}
+.dots{display:flex;gap:6px}.d{width:10px;height:10px;border-radius:50%}.d.r{background:#ff5f56}.d.y{background:#ffbd2e}.d.g{background:#27c93f}
+.head-title{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--text)}
+.cmd-body{padding:12px}
+
+.term{font-family:var(--mono);font-size:11px;line-height:1.6;background:#0f0f10;border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text)}
+.term b{color:var(--text2);font-weight:500}.term.o{color:var(--orange)}.term.g{color:var(--green)}
+.line{display:flex;justify-content:space-between}
+.prompt::before{content:'> ';color:var(--orange)}
+
+.map-wrap{margin-top:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative;height:280px;background:#0a0a0b}
+#map{height:100%;width:100%;filter:grayscale(1) invert(.9) brightness(1.1) contrast(1.2) hue-rotate(180deg)} /* makes it terminal/dark */
+.map-overlay{position:absolute;inset:0;pointer-events:none;border:1px solid rgba(255,140,66,.2);box-shadow:inset 0 0 0 1px rgba(255,140,66,.1)}
+.cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30px;height:30px;pointer-events:none}
+.cross::before,.cross::after{content:'';position:absolute;background:var(--orange)}.cross::before{width:1px;height:100%;left:50%;box-shadow:0 0 8px var(--orange)}.cross::after{height:1px;width:100%;top:50%;box-shadow:0 0 8px var(--orange)}
+.scanline{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--orange),transparent);top:0;animation:scan 3s linear infinite;opacity:.6}
+@keyframes scan{0%{top:0}100%{top:100%}}
+
+.grid-labels{position:absolute;inset:0;pointer-events:none;font-family:var(--mono);font-size:8px;color:rgba(255,140,66,.5)}
+.grid-labels span{position:absolute}
+
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.k{border:1px solid var(--border);background:var(--card2);border-radius:10px;padding:10px}.k span{display:block;font-family:var(--mono);font-size:9px;color:var(--text);letter-spacing:.12em}.k b{display:block;color:var(--text2);font-family:var(--mono);font-size:13px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.sos-bar{margin-top:12px;display:grid;grid-template-columns:1fr 90px;gap:8px}
+.btn{border:1px solid var(--border);background:var(--card2);color:var(--text2);border-radius:12px;padding:12px;font-family:var(--mono);font-size:11px;cursor:pointer;letter-spacing:.08em}
+.btn.sos{background:var(--red);border-color:var(--red);color:#fff;font-weight:700;animation:pulse 2s infinite}
+.btn:active{transform:scale(.98)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.6)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+
+.copied{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text2);color:#000;font-family:var(--mono);font-size:11px;padding:8px 14px;border-radius:99px;display:none}
+.copied.on{display:block}
+.leaflet-control-attribution{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="cmd">
+  <div class="cmd-head"><div class="dots"><div class="d r"></div><div class="d y"></div><div class="d g"></div></div><div class="head-title">LOCATION.SYS // CMD MAP v1.0</div><div class="head-title" style="color:var(--green)">● LIVE</div></div>
+  <div class="cmd-body">
+
+    <div class="term" id="term">
+      <div class="line"><span class="prompt">init geolocation</span><span class="g">OK</span></div>
+      <div class="line"><span>lat: <b id="tLat">--</b> </span><span>lon: <b id="tLon">--</b></span></div>
+      <div class="line"><span>utm: <b id="tUtm" class="o">--</b></span><span>acc: <b id="tAcc">--m</b></span></div>
+      <div class="line"><span>mgrs: <b id="tMgrs">--</b></span><span>spd: <b id="tSpd">-- km/h</b></span></div>
+      <div class="line"><span>cmd: <b>map --render ascii --zoom 15</b></span></div>
+    </div>
+
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="map-overlay"></div><div class="cross"></div><div class="scanline"></div>
+      <div class="grid-labels">
+        <span style="top:6px;left:50%;transform:translateX(-50%)">N 0°</span>
+        <span style="bottom:6px;left:50%;transform:translateX(-50%)">S 180°</span>
+        <span style="left:6px;top:50%;transform:translateY(-50%)">W 270°</span>
+        <span style="right:6px;top:50%;transform:translateY(-50%)">E 90°</span>
+      </div>
+    </div>
+
+    <div class="data-grid">
+      <div class="k"><span>DECIMAL</span><b id="kDec">--, --</b></div>
+      <div class="k"><span>DMS</span><b id="kDms">--</b></div>
+      <div class="k"><span>WHAT3WORDS SIM</span><b id="kW3w" class="o" style="color:var(--orange)">/// --.--.--</b></div>
+      <div class="k"><span>ELEVATION</span><b id="kEle">-- m</b></div>
+    </div>
+
+    <div class="sos-bar">
+      <button class="btn" id="copyBtn">COPY COORDS [C]</button>
+      <button class="btn sos" id="sosBtn">SOS ◆</button>
+    </div>
+    <div class="term" style="margin-top:10px;font-size:10px;opacity:.7">TIP: Press [S] for SOS • [C] to copy • Map auto-follows position</div>
+
+  </div>
+</div>
+
+<div class="copied" id="toast"></div>
+
+<script>
+let lat=24.7136, lon=46.6753, acc=12, map, marker, watchId;
+const toast=(m)=>{ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2000); }
+
+// UTM-ish conversion (simplified, not survey-grade but fine for UI)
+function toUtm(lat, lon){
+  const zone=Math.floor((lon+180)/6)+1;
+  const easting= (lon - ((zone-1)*6-180+3))* 111320 * Math.cos(lat*Math.PI/180) + 500000;
+  const northing= lat*110540;
+  return `${zone}N ${Math.round(easting)} ${Math.round(northing)}`;
+}
+function toDms(deg, isLat){
+  const d=Math.floor(Math.abs(deg)); const m=Math.floor((Math.abs(deg)-d)*60); const s=((Math.abs(deg)-d)*60-m)*60;
+  return `${d}°${m}'${s.toFixed(1)}" ${deg>=0?(isLat?'N':'E'):(isLat?'S':'W')}`;
+}
+
+function initMap(){
+  map=L.map('map',{zoomControl:false, attributionControl:false}).setView([lat,lon],15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+  marker=L.circleMarker([lat,lon],{radius:6,color:'#ff8c42',fillColor:'#ff8c42',fillOpacity:1,weight:2}).addTo(map);
+  L.circle([lat,lon],{radius:acc,color:'#ff8c42',fillColor:'#ff8c42',fillOpacity:.1,weight:1}).addTo(map);
+}
+
+function updateUI(pos){
+  if(pos){ lat=pos.coords.latitude; lon=pos.coords.longitude; acc=Math.round(pos.coords.accuracy||12); }
+  const speed=pos?.coords.speed? (pos.coords.speed*3.6).toFixed(1) : '--';
+
+  document.getElementById('tLat').textContent=lat.toFixed(6); document.getElementById('tLon').textContent=lon.toFixed(6);
+  document.getElementById('tAcc').textContent=acc+'m'; document.getElementById('tUtm').textContent=toUtm(lat,lon);
+  document.getElementById('tMgrs').textContent=`${Math.floor(lat)}${String.fromCharCode(65+Math.floor(lon))} ${Math.floor(lon*10)}`;
+  document.getElementById('tSpd').textContent=speed+' km/h';
+  document.getElementById('kDec').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+  document.getElementById('kDms').textContent=`${toDms(lat,true)} ${toDms(lon,false)}`;
+  document.getElementById('kW3w').textContent=`/// ${lat.toFixed(3).replace('.','-')}.${lon.toFixed(3).replace('.','-')}.loc`;
+  document.getElementById('kEle').textContent=`${(Math.random()*50+600).toFixed(0)} m`; // placeholder, needs elevation API
+
+  if(map){ map.setView([lat,lon]); marker.setLatLng([lat,lon]); }
+}
+
+function startGeo(){
+  if(!navigator.geolocation){ toast('GEO DENIED'); initMap(); return; }
+  navigator.geolocation.getCurrentPosition(p=>{ updateUI(p); initMap(); },()=>{ initMap(); toast('USING DEFAULT RIYADH'); updateUI(); });
+  watchId=navigator.geolocation.watchPosition(p=>updateUI(p), null, {enableHighAccuracy:true});
+}
+
+document.getElementById('copyBtn').onclick=()=>{
+  const str=`${lat.toFixed(6)}, ${lon.toFixed(6)} | UTM ${toUtm(lat,lon)} | https://maps.google.com/?q=${lat},${lon}`;
+  navigator.clipboard.writeText(str); toast('COORDS COPIED TO CLIPBOARD');
+}
+document.getElementById('sosBtn').onclick=async()=>{
+  const msg=`SOS - I need help. My location: https://maps.google.com/?q=${lat},${lon} | Accuracy ${acc}m | ${new Date().toISOString()} | JAIMIE SOS`;
+  if(navigator.share){ try{ await navigator.share({title:'SOS LOCATION', text:msg}); }catch(e){} }
+  else { navigator.clipboard.writeText(msg); toast('SOS MESSAGE COPIED - PASTE TO WHATSAPP'); window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank'); }
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key.toLowerCase()==='c') document.getElementById('copyBtn').click();
+  if(e.key.toLowerCase()==='s') document.getElementById('sosBtn').click();
+});
+
+startGeo();
+</script>
+</body>
+</html>

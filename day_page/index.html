@@ -1,35 +1,164 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>JAIMIE — Day</title>
-        <!-- Side menu CSS -->
-    <link rel="stylesheet" href="../side-bar/styles.css">
-    <link rel="stylesheet" href="styles.css">
+
+<!-- Side menu CSS -->
+<link rel="stylesheet" href="../side-bar/styles.css">
+
+<!-- Day page CSS -->
+<link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
     <div id="side-menu"></div>
 
+    <div class="app">
+
+        <header class="topbar">
+            <button id="prevDay" class="nav">←</button>
+
+            <button id="today" class="today">TODAY</button>
+
+            <div class="date">
+                <b id="date"></b>
+                <span id="weekday"></span>
+            </div>
+
+            <button id="nextDay" class="nav">→</button>
+        </header>
+
+        <main>
+
+            <section class="panel">
+                <div class="head">
+                    <div>
+                        <small>01 / TIME GRID</small>
+                        <h1>Schedule</h1>
+                    </div>
+
+                    <button id="addSchedule" class="plus">+</button>
+                </div>
+
+                <p>Build an hourly plan for this day when you need one.</p>
+
+                <div id="schedule"></div>
+            </section>
 
 
-<div class="app">
-<header class="topbar">
-<button id="prevDay" class="nav">←</button><button id="today" class="today">TODAY</button>
-<div class="date"><b id="date"></b><span id="weekday"></span></div><button id="nextDay" class="nav">→</button>
-</header>
-<main>
-<section class="panel"><div class="head"><div><small>01 / TIME GRID</small><h1>Schedule</h1></div><button id="addSchedule" class="plus">+</button></div><p>Build an hourly plan for this day when you need one.</p><div id="schedule"></div></section>
-<section class="panel"><div class="head"><div><small>02 / ACTIVE OBJECTIVES</small><h1>Main Quest</h1></div><button id="addQuest" class="plus">+</button></div><p>Tasks belonging specifically to this day.</p><div id="quests"></div><div class="progress"><span>DAY PROGRESS</span><b id="percent">0%</b><i id="bar"></i></div></section>
-<section class="panel"><div class="head"><div><small>03 / PERSISTENT</small><h1>Reminders</h1></div><button id="addReminder" class="plus">+</button></div><p>These stay visible every day until you tick them off.</p><div id="reminders"></div></section>
-</main>
-<footer>JAIMIE // DAY SYSTEM <span>LOCAL DATA • SAVED</span></footer>
-</div>
-<div id="modal" hidden><div class="modal"><button id="close">×</button><small id="modalType"></small><h2 id="modalTitle"></h2>
-<form id="form"><label>Title<input id="title" required maxlength="120"></label>
-<label id="timeRow">Time<input id="time" type="time"></label>
-<label>Notes<textarea id="note" rows="3" maxlength="300"></textarea></label>
-<button class="submit">ADD TO DAY</button></form></div></div>
+            <section class="panel">
+                <div class="head">
+                    <div>
+                        <small>02 / ACTIVE OBJECTIVES</small>
+                        <h1>Main Quest</h1>
+                    </div>
+
+                    <button id="addQuest" class="plus">+</button>
+                </div>
+
+                <p>Tasks belonging specifically to this day.</p>
+
+                <div id="quests"></div>
+
+                <div class="progress">
+                    <span>DAY PROGRESS</span>
+                    <b id="percent">0%</b>
+                    <i id="bar"></i>
+                </div>
+            </section>
+
+
+            <section class="panel">
+                <div class="head">
+                    <div>
+                        <small>03 / PERSISTENT</small>
+                        <h1>Reminders</h1>
+                    </div>
+
+                    <button id="addReminder" class="plus">+</button>
+                </div>
+
+                <p>These stay visible every day until you tick them off.</p>
+
+                <div id="reminders"></div>
+            </section>
+
+        </main>
+
+        <footer>
+            JAIMIE // DAY SYSTEM
+            <span>LOCAL DATA • SAVED</span>
+        </footer>
+
+    </div>
+
+
+    <!-- Add / Edit Modal -->
+    <div id="modal" hidden>
+
+        <div class="modal">
+
+            <button id="close">×</button>
+
+            <small id="modalType"></small>
+
+            <h2 id="modalTitle"></h2>
+
+            <form id="form">
+
+                <label>
+                    Title
+                    <input
+                        id="title"
+                        required
+                        maxlength="120"
+                    >
+                </label>
+
+                <label id="timeRow">
+                    Time
+                    <input
+                        id="time"
+                        type="time"
+                    >
+                </label>
+
+                <label>
+                    Notes
+                    <textarea
+                        id="note"
+                        rows="3"
+                        maxlength="300"
+                    ></textarea>
+                </label>
+
+                <button class="submit">
+                    ADD TO DAY
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         JAIMIE DATA MANAGER
+         Must load BEFORE day_page/app.js
+    ====================================================== -->
+
+    <script src="../data-manager/app.js"></script>
+
+    <!-- Side menu -->
     <script src="../side-bar/app.js"></script>
+
+    <!-- Day page -->
     <script src="app.js"></script>
-</body></html>
+
+</body>
+</html>

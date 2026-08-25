@@ -227,7 +227,36 @@
 
             }
         );
+/* =================================================
+   SETTINGS OVERLAY
+   ================================================= */
 
+const settingsButton =
+    document.getElementById("openSettings");
+
+if (settingsButton) {
+
+    settingsButton.addEventListener(
+        "click",
+        async () => {
+
+            try {
+
+                await openSettings();
+
+            } catch (error) {
+
+                console.error(
+                    "JAIMIE Settings:",
+                    error
+                );
+
+            }
+
+        }
+    );
+
+}
 
         /* =================================================
            ACTIVE PAGE
@@ -299,5 +328,106 @@
             });
 
     }
+    /* =========================================================
+   SETTINGS LOADER
+   ========================================================= */
+
+let settingsLoading = null;
+
+async function openSettings() {
+
+    /*
+     * If Settings has already loaded,
+     * just open it.
+     */
+    if (
+        window.JAIMIESettings &&
+        typeof window.JAIMIESettings.open === "function"
+    ) {
+
+        await window.JAIMIESettings.open();
+
+        return;
+
+    }
+
+
+    /*
+     * Only load the Settings JS once.
+     */
+    if (!settingsLoading) {
+
+        settingsLoading =
+            loadSettingsScript();
+
+    }
+
+
+    await settingsLoading;
+
+
+    if (
+        !window.JAIMIESettings
+    ) {
+
+        throw new Error(
+            "JAIMIESettings API was not initialized."
+        );
+
+    }
+
+
+    await window.JAIMIESettings.open();
+
+}
+
+
+function loadSettingsScript() {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            /*
+             * side-bar/app.js is inside:
+             *
+             * JAIMIE/side-bar/
+             *
+             * Therefore ../settings/app.js
+             * points to the Settings system.
+             */
+
+            const script =
+                document.createElement(
+                    "script"
+                );
+
+
+            script.src =
+                "../settings/app.js";
+
+
+            script.async = true;
+
+
+            script.onload =
+                () => resolve();
+
+
+            script.onerror =
+                () => reject(
+                    new Error(
+                        "Could not load settings/app.js"
+                    )
+                );
+
+
+            document.head.appendChild(
+                script
+            );
+
+        }
+    );
+
+}
 
 })();

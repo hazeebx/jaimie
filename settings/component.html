@@ -1,0 +1,560 @@
+<div id="jaimieSettingsModal" class="settings-overlay hidden">
+
+    <div class="settings-window">
+
+        <header class="settings-header">
+
+            <div>
+                <div class="settings-eyebrow">
+                    JAIMIE // SYSTEM CONTROL
+                </div>
+
+                <h2>Settings</h2>
+            </div>
+
+            <button
+                id="settingsClose"
+                class="settings-close"
+                aria-label="Close settings"
+            >
+                ×
+            </button>
+
+        </header>
+
+
+        <div class="settings-body">
+
+            <aside class="settings-tabs">
+
+                <button
+                    class="settings-tab active"
+                    data-settings-tab="data"
+                >
+                    <span>01</span>
+                    Data
+                </button>
+
+                <button
+                    class="settings-tab"
+                    data-settings-tab="appearance"
+                >
+                    <span>02</span>
+                    Appearance
+                </button>
+
+                <button
+                    class="settings-tab"
+                    data-settings-tab="navigation"
+                >
+                    <span>03</span>
+                    Navigation
+                </button>
+
+                <button
+                    class="settings-tab"
+                    data-settings-tab="storage"
+                >
+                    <span>04</span>
+                    Storage
+                </button>
+
+                <button
+                    class="settings-tab"
+                    data-settings-tab="security"
+                >
+                    <span>05</span>
+                    Security
+                </button>
+
+                <button
+                    class="settings-tab"
+                    data-settings-tab="about"
+                >
+                    <span>06</span>
+                    About
+                </button>
+
+            </aside>
+
+
+            <section class="settings-content">
+
+
+                <!-- =================================================
+                     DATA
+                ================================================== -->
+
+                <div
+                    class="settings-panel active"
+                    data-settings-panel="data"
+                >
+
+                    <div class="panel-heading">
+                        <div class="panel-code">
+                            DATA / BACKUP
+                        </div>
+
+                        <h3>JAIMIE Data</h3>
+
+                        <p>
+                            Export or restore your complete
+                            JAIMIE dataset.
+                        </p>
+                    </div>
+
+
+                    <div class="data-status-card">
+
+                        <div>
+                            <span>LOCAL DATASETS</span>
+
+                            <strong id="settingsDatasetCount">
+                                0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>DATABASE</span>
+
+                            <strong>
+                                INDEXEDDB
+                            </strong>
+                        </div>
+
+                    </div>
+
+
+                    <div class="settings-actions">
+
+                        <button
+                            id="exportDataBtn"
+                            class="settings-action primary-action"
+                        >
+                            <span>↓</span>
+                            EXPORT JAIMIE DATA
+                        </button>
+
+                        <button
+                            id="importDataBtn"
+                            class="settings-action"
+                        >
+                            <span>↑</span>
+                            IMPORT JAIMIE DATA
+                        </button>
+
+                        <input
+                            type="file"
+                            id="settingsImportFile"
+                            accept=".json,application/json"
+                            hidden
+                        >
+
+                    </div>
+
+
+                    <div class="dataset-list">
+
+                        <div class="dataset-list-head">
+                            <span>ACTIVE DATASETS</span>
+                        </div>
+
+                        <div id="settingsDatasetList">
+                            <div class="dataset-loading">
+                                SCANNING...
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="settingsDataMessage"
+                        class="settings-message"
+                    ></div>
+
+                </div>
+
+
+                <!-- =================================================
+                     APPEARANCE
+                ================================================== -->
+
+                <div
+                    class="settings-panel"
+                    data-settings-panel="appearance"
+                >
+
+                    <div class="panel-heading">
+
+                        <div class="panel-code">
+                            SYSTEM / VISUAL
+                        </div>
+
+                        <h3>Appearance</h3>
+
+                        <p>
+                            Visual configuration will live here.
+                        </p>
+
+                    </div>
+
+
+                    <div class="placeholder-panel">
+
+                        <div class="placeholder-icon">
+                            ◈
+                        </div>
+
+                        <strong>
+                            APPEARANCE MODULE
+                        </strong>
+
+                        <span>
+                            Theme, accent color,
+                            animations and other
+                            visual controls will be
+                            added here.
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     NAVIGATION
+                ================================================== -->
+
+                <div
+                    class="settings-panel"
+                    data-settings-panel="navigation"
+                >
+
+                    <div class="panel-heading">
+
+                        <div class="panel-code">
+                            SYSTEM / NAVIGATION
+                        </div>
+
+                        <h3>Navigation</h3>
+
+                        <p>
+                            Configure how JAIMIE moves
+                            between systems.
+                        </p>
+
+                    </div>
+
+
+                    <div class="placeholder-panel">
+
+                        <div class="placeholder-icon">
+                            ⌘
+                        </div>
+
+                        <strong>
+                            NAVIGATION MODULE
+                        </strong>
+
+                        <span>
+                            Sidebar behavior,
+                            startup page,
+                            page ordering and
+                            navigation preferences
+                            will go here.
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     STORAGE
+                ================================================== -->
+
+                <div
+                    class="settings-panel"
+                    data-settings-panel="storage"
+                >
+
+                    <div class="panel-heading">
+
+                        <div class="panel-code">
+                            SYSTEM / STORAGE
+                        </div>
+
+                        <h3>Storage</h3>
+
+                        <p>
+                            Inspect JAIMIE's local
+                            storage architecture.
+                        </p>
+
+                    </div>
+
+
+                    <div class="storage-card">
+
+                        <div class="storage-line">
+                            <span>PRIMARY STORAGE</span>
+                            <strong>JAIMIE DATA</strong>
+                        </div>
+
+                        <div class="storage-line">
+                            <span>ENGINE</span>
+                            <strong>INDEXEDDB</strong>
+                        </div>
+
+                        <div class="storage-line">
+                            <span>SYNC</span>
+                            <strong>OFFLINE / LOCAL</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SECURITY
+                ================================================== -->
+
+                <div
+                    class="settings-panel"
+                    data-settings-panel="security"
+                >
+
+                    <div class="panel-heading">
+
+                        <div class="panel-code">
+                            SYSTEM / SECURITY
+                        </div>
+
+                        <h3>Security</h3>
+
+                        <p>
+                            Security and account controls
+                            will live here.
+                        </p>
+
+                    </div>
+
+
+                    <div
+    class="settings-panel"
+    data-settings-panel="security"
+>
+
+    <div class="panel-heading">
+
+        <div class="panel-code">
+            SYSTEM / SECURITY
+        </div>
+
+        <h3>Security</h3>
+
+        <p>
+            Manage your JAIMIE identity and cloud account.
+        </p>
+
+    </div>
+
+
+    <div class="auth-card">
+
+        <div class="auth-status-row">
+
+            <div>
+                <span class="auth-label">
+                    ACCOUNT STATUS
+                </span>
+
+                <strong id="authStatus">
+                    Checking...
+                </strong>
+            </div>
+
+            <span
+                id="authStatusDot"
+                class="auth-status-dot"
+            ></span>
+
+        </div>
+
+
+        <div
+            id="authAnonymous"
+            class="auth-section hidden"
+        >
+
+            <div class="auth-description">
+
+                <strong>
+                    LOCAL SESSION
+                </strong>
+
+                <p>
+                    You're currently using JAIMIE
+                    anonymously. Your Firebase identity
+                    is temporary until you connect a
+                    Google account.
+                </p>
+
+            </div>
+
+
+            <button
+                id="connectGoogleBtn"
+                class="auth-button"
+            >
+                <span class="google-icon">G</span>
+                CONNECT GOOGLE ACCOUNT
+            </button>
+
+        </div>
+
+
+        <div
+            id="authGoogle"
+            class="auth-section hidden"
+        >
+
+            <div class="auth-description">
+
+                <strong>
+                    CLOUD ACCOUNT CONNECTED
+                </strong>
+
+                <p>
+                    Your JAIMIE account is linked
+                    to Google.
+                </p>
+
+            </div>
+
+
+            <div class="auth-account">
+
+                <div class="auth-account-label">
+                    GOOGLE ACCOUNT
+                </div>
+
+                <div
+                    id="authEmail"
+                    class="auth-account-value"
+                >
+                    —
+                </div>
+
+            </div>
+
+
+            <div class="auth-account">
+
+                <div class="auth-account-label">
+                    FIREBASE UID
+                </div>
+
+                <div
+                    id="authUid"
+                    class="auth-account-value mono"
+                >
+                    —
+                </div>
+
+            </div>
+
+
+            <button
+                id="signOutBtn"
+                class="auth-button danger-auth"
+            >
+                SIGN OUT
+            </button>
+
+        </div>
+
+
+        <div
+            id="authError"
+            class="auth-error"
+        ></div>
+
+    </div>
+
+</div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ABOUT
+                ================================================== -->
+
+                <div
+                    class="settings-panel"
+                    data-settings-panel="about"
+                >
+
+                    <div class="panel-heading">
+
+                        <div class="panel-code">
+                            SYSTEM / IDENTITY
+                        </div>
+
+                        <h3>About JAIMIE</h3>
+
+                    </div>
+
+
+                    <div class="about-card">
+
+                        <div class="about-logo">
+                            J
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                JAIMIE
+                            </strong>
+
+                            <span>
+                                Just An Intelligent
+                                Memory Integrated
+                                Environment
+                            </span>
+
+                            <small>
+                                LOCAL SYSTEM // v0.1
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </section>
+
+        </div>
+
+
+        <footer class="settings-footer">
+
+            <span>
+                JAIMIE // SYSTEM ONLINE
+            </span>
+
+            <span>
+                LOCAL DATA • SAVED
+            </span>
+
+        </footer>
+
+    </div>
+
+</div>

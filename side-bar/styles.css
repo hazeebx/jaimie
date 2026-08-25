@@ -314,3 +314,20 @@
         margin-left: 72px;
     }
 }
+
+
+/* =========================================================
+   SETTINGS BUTTON
+   ========================================================= */
+
+.settings-trigger {
+    width: calc(100% - 20px);
+    margin: 3px 10px;
+
+    font: inherit;
+    text-align: left;
+
+    cursor: pointer;
+
+    background: transparent;
+}

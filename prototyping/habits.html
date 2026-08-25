@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAIMIE // HABITS OS</title>
+<style>
+:root{--bg:#0d0d0e;--card:#17171a;--card2:#1e1e22;--border:#2a2a2e;--orange:#ff8c42;--text:#8a8a8e;--text2:#f5f5f5;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--green:#4ade80;--red:#ef4444}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui;display:flex;height:100vh;overflow:hidden}
+.side{width:56px;border-right:1px solid var(--border);background:#101011;display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:16px}
+.i{width:34px;height:34px;border:1px solid var(--border);border-radius:10px;display:grid;place-items:center;cursor:pointer}.i.on{color:var(--orange);border-color:rgba(255,140,66,.4);background:rgba(255,140,66,.12)}
+.main{flex:1;display:flex;flex-direction:column;padding:14px;gap:14px;overflow:auto}
+.top{border:1px solid var(--border);border-radius:14px;background:var(--card);padding:10px 18px;display:flex;justify-content:space-between;align-items:center}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.12em}
+.kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.card{border:1px solid var(--border);background:var(--card);border-radius:18px;padding:18px}
+.label{font-size:10px;color:var(--orange);font-family:var(--mono);letter-spacing:.18em}
+.big{font-size:56px;color:var(--text2);font-weight:700;letter-spacing:-.04em;line-height:1}
+.bar{height:8px;background:#26262b;border-radius:99px;margin-top:10px;overflow:hidden}.fill{height:100%;background:var(--orange);transition:width.5s}
+.grid2{display:grid;grid-template-columns:1.2fr.8fr;gap:14px}
+.matrix{display:grid;grid-template-columns:140px 70px repeat(7,1fr);gap:6px;align-items:center;margin-top:12px}
+.m-head{font-family:var(--mono);font-size:10px;text-align:center;padding:6px;background:#26262b;border-radius:6px}
+.m-row{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{height:28px;border-radius:6px;background:var(--card2);border:1px solid var(--border);cursor:pointer;display:grid;place-items:center;font-size:10px}
+.dot.done{background:var(--orange);border-color:var(--orange);color:#000}.dot.miss{background:#2a1f1f;border-color:#3a2a2a}.dot.skip{background:#1a1a1a;opacity:.3}
+.heatmap{display:grid;grid-template-columns:repeat(53,1fr);gap:3px;margin-top:12px}
+.h{width:100%;aspect-ratio:1;border-radius:3px;background:#1e1e22;border:1px solid var(--border)}.h.l1{background:#3a2616}.h.l2{background:#7a3d1a}.h.l3{background:#ff8c42}.h.l4{background:#ffb07a}
+.habits{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
+.habit{border-left:3px solid var(--orange);background:var(--card);border:1px solid var(--border);border-left-color:var(--orange);border-radius:16px;padding:16px;position:relative}
+.habit.at-risk{border-color:#ff8c42;box-shadow:0 0 0 1px rgba(255,140,66,.3) inset}
+.h-top{display:flex;justify-content:space-between}
+.h-name{color:var(--orange);font-weight:700;font-size:18px;letter-spacing:-.02em}.h-meta{font-family:var(--mono);font-size:10px;margin-top:2px}
+.actions{display:flex;gap:6px;margin-top:12px}
+.btn{border:1px solid var(--border);background:var(--card2);color:var(--text2);border-radius:10px;padding:8px 12px;font-family:var(--mono);font-size:11px;cursor:pointer;flex:1}.btn.p{background:var(--orange);color:#000;border-color:var(--orange);font-weight:700}
+.count{display:flex;gap:6px;margin-top:10px}.count button{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text2);cursor:pointer}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;place-items:center;z-index:50}#modal.on{display:grid}
+.box{width:420px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px}.box input,.box select{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text2);border-radius:10px;padding:10px;margin-top:8px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="side"><div class="i">☰</div><div class="i on">◍</div><div class="i">✓</div><div class="i">⌂</div></div>
+<div class="main">
+  <div class="top"><div class="mono">JAIMIE // <b style="color:var(--orange)">HABITS SYS v1.2.4</b> • <span id="dateNow"></span></div><div class="mono" style="display:flex;gap:12px"><span id="integTop">INTEGRITY --%</span><span style="cursor:pointer" onclick="openModal()">+ NEW PROTOCOL</span></div></div>
+
+  <div class="kpi">
+    <div class="card"><div class="label">INTEGRITY SCORE</div><div class="big" id="integScore">--<span style="font-size:20px;color:var(--text)">/100</span></div><div class="bar"><div class="fill" id="integBar" style="width:0%"></div></div><div class="mono" style="margin-top:8px;font-size:10px" id="integSub">STABILITY: -- • CONSISTENCY: --%</div></div>
+    <div class="card"><div class="label">XP LEVEL</div><div class="big" id="lvl">LVL 1</div><div class="mono" id="xpText">XP 0 / 500</div><div class="bar"><div class="fill" id="xpBar" style="width:0%"></div></div><div class="mono" style="margin-top:8px" id="xpNext">→ 500 XP TO LVL 2</div></div>
+    <div class="card"><div class="label">CURRENT STREAK</div><div class="big" id="streak">0<span style="font-size:20px;color:var(--text)"> DAYS</span></div><div class="mono" id="streakMeta">LONGEST: 0 • RUN START: --</div><canvas id="miniChart" height="40" style="width:100%;margin-top:10px"></canvas></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><div class="label">STREAK MATRIX // 7-DAY OVERVIEW</div><div class="matrix" id="matrix"></div><div class="mono" style="margin-top:10px;font-size:10px">[■] COMPLETE [□] MISSED [·] REST/EXEMPT</div></div>
+    <div class="card"><div class="label">HEATMAP CALENDAR // 12-MONTH ACTIVITY</div><div class="heatmap" id="heat"></div><div class="mono" style="margin-top:10px" id="heatMeta">TOTAL: 0 / 365 • 0% COMPLETION</div></div>
+  </div>
+
+  <div class="card"><div style="display:flex;justify-content:space-between"><div class="label">ACTIVE HABITS // <span id="habCount">0 TRACKED</span></div><div class="mono" style="font-size:10px"><span onclick="setFilter('all')" style="cursor:pointer;color:var(--text2)">ALL</span> • <span onclick="setFilter('risk')" style="cursor:pointer">AT RISK</span> • <span onclick="setFilter('today')" style="cursor:pointer">TODAY</span></div></div><div class="habits" id="habits"></div></div>
+</div>
+
+<div id="modal"><div class="box">
+  <div class="label">NEW PROTOCOL</div><input id="fName" placeholder="MORNING READ"><select id="fFreq"><option value="daily">Daily</option><option value="5/week">5x / Week</option><option value="weekdays">Weekdays</option><option value="3/week">3x / Week</option></select>
+  <select id="fType"><option value="binary">Binary (done/miss)</option><option value="count">Count</option><option value="timer">Timer (minutes)</option></select>
+  <input id="fTarget" type="number" placeholder="Target (e.g. 3 for 3L, 30 for 30min)" value="1">
+  <select id="fDiff"><option value="1">Easy (10 XP)</option><option value="2" selected>Medium (25 XP)</option><option value="3">Hard (50 XP)</option><option value="5">Elite (100 XP)</option></select>
+  <div style="display:flex;gap:8px;margin-top:12px"><button class="btn p" style="flex:1" onclick="saveHabit()">DEPLOY</button><button class="btn" onclick="closeModal()">CANCEL</button></div>
+</div></div>
+
+<script>
+const LS='jaimie_habits_v2'; let filter='all';
+let habits=JSON.parse(localStorage.getItem(LS)||'null')||[
+  {id:1,name:'MORNING READ',freq:'daily',type:'binary',target:1,diff:2,streak:12,hist:{},cat:'LEARNING'},
+  {id:2,name:'MEDITATE',freq:'daily',type:'timer',target:10,diff:2,streak:18,hist:{},cat:'MINDFULNESS'},
+  {id:3,name:'WORKOUT',freq:'5/week',type:'binary',target:1,diff:3,streak:4,hist:{},cat:'FITNESS'},
+  {id:4,name:'HYDRATION',freq:'daily',type:'count',target:3,diff:1,streak:9,hist:{},cat:'HEALTH'},
+  {id:5,name:'NO PHONE 22H',freq:'daily',type:'binary',target:1,diff:3,streak:22,hist:{},cat:'FOCUS'},
+];
+// seed history for demo
+const todayStr=new Date().toISOString().slice(0,10);
+habits.forEach(h=>{ for(let i=0;i<30;i++){ let d=new Date(); d.setDate(d.getDate()-i); let k=d.toISOString().slice(0,10); if(Math.random()>0.2) h.hist[k]={done:true,val:h.target}; } h.hist[todayStr]=h.hist[todayStr]||{done:false}; });
+
+function save(){localStorage.setItem(LS,JSON.stringify(habits)); render();}
+function openModal(){document.getElementById('modal').classList.add('on')} function closeModal(){document.getElementById('modal').classList.remove('on')}
+function saveHabit(){
+  const name=document.getElementById('fName').value.toUpperCase()||'NEW HABIT';
+  habits.push({id:Date.now(),name,freq:document.getElementById('fFreq').value,type:document.getElementById('fType').value,target:parseInt(document.getElementById('fTarget').value)||1,diff:parseInt(document.getElementById('fDiff').value),streak:0,hist:{},cat:'CUSTOM'});
+  closeModal(); save();
+}
+function toggle(id,date){
+  const h=habits.find(x=>x.id===id); if(!h) return;
+  const entry=h.hist[date]; if(entry?.done){ delete h.hist[date]; } else { h.hist[date]={done:true,val:h.target}; }
+  // recalc streak
+  let s=0; let d=new Date(); while(true){ let k=d.toISOString().slice(0,10); if(h.hist[k]?.done){s++; d.setDate(d.getDate()-1);} else break; } h.streak=s;
+  save();
+}
+function render(){
+  document.getElementById('dateNow').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'}).toUpperCase();
+  // Integrity
+  let totalChecks=0,doneChecks=0, xp=0;
+  habits.forEach(h=>{ Object.values(h.hist).forEach(v=>{totalChecks++; if(v.done) {doneChecks++; xp+=h.diff* (h.type==='binary'?10:25);} }); });
+  const integ= totalChecks? Math.round(doneChecks/totalChecks*100):0;
+  document.getElementById('integScore').innerHTML=`${integ}<span style="font-size:20px;color:var(--text)">/100</span>`; document.getElementById('integBar').style.width=integ+'%'; document.getElementById('integTop').textContent=`INTEGRITY ${integ}%`;
+  document.getElementById('integSub').textContent=`STABILITY: ${integ>80?'HIGH':integ>50?'MED':'LOW'} • CONSISTENCY: ${integ}%`;
+  // XP
+  const lvl=Math.floor(xp/500)+1; const next=(lvl*500); const cur=xp%500;
+  document.getElementById('lvl').textContent=`LEVEL ${lvl}`; document.getElementById('xpText').textContent=`XP ${xp} / ${next}`; document.getElementById('xpBar').style.width=(cur/500*100)+'%'; document.getElementById('xpNext').textContent=`→ ${500-cur} XP TO LVL ${lvl+1}`;
+  // Streak
+  const best=Math.max(...habits.map(h=>h.streak),0); document.getElementById('streak').innerHTML=`${best}<span style="font-size:20px;color:var(--text)"> DAYS</span>`; document.getElementById('streakMeta').textContent=`LONGEST: ${best} DAYS • RUN START: SEP 11`;
+  document.getElementById('habCount').textContent=`${habits.length} TRACKED`;
+  // Matrix
+  const matrix=document.getElementById('matrix'); matrix.innerHTML='';
+  const days=[]; for(let i=6;i>=0;i--){let d=new Date(); d.setDate(d.getDate()-i); days.push(d);}
+  matrix.innerHTML+=`<div></div><div></div>`+days.map(d=>`<div class="m-head">${d.toLocaleDateString('en',{weekday:'short'}).toUpperCase()} ${d.getDate()}</div>`).join('');
+  habits.filter(h=> filter==='risk'?!h.hist[todayStr]?.done : true).forEach(h=>{
+    const atRisk=!h.hist[days[5].toISOString().slice(0,10)]?.done && h.freq==='daily';
+    matrix.innerHTML+=`<div class="m-row">${h.name}</div><div class="m-row" style="font-family:var(--mono);font-size:10px;color:var(--text)">:: ${h.freq.toUpperCase()}</div>`+days.map(d=>{
+      const k=d.toISOString().slice(0,10); const done=h.hist[k]?.done; return `<div class="dot ${done?'done':''} ${atRisk&&k===todayStr?'miss':''}" onclick="toggle(${h.id},'${k}')">${done?'■':''}</div>`;
+    }).join('');
+  });
+  // Heatmap
+  const heat=document.getElementById('heat'); heat.innerHTML=''; let filled=0;
+  for(let i=0;i<371;i++){let d=new Date(); d.setDate(d.getDate()-(370-i)); let k=d.toISOString().slice(0,10); let count=habits.filter(h=>h.hist[k]?.done).length; let lvl=0; if(count>=1) lvl=1; if(count>=2) lvl=2; if(count>=3) lvl=3; if(count>=5) lvl=4; if(count>0) filled++; heat.innerHTML+=`<div class="h ${lvl?'l'+lvl:''}" title="${k}: ${count}"></div>`;}
+  document.getElementById('heatMeta').textContent=`TOTAL CONTRIBUTIONS: ${filled} / 365 DAYS • ${Math.round(filled/365*100)}% COMPLETION`;
+  // Habits cards
+  const cont=document.getElementById('habits'); cont.innerHTML='';
+  habits.forEach(h=>{
+    const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1); const yk=yesterday.toISOString().slice(0,10);
+    const atRisk=!h.hist[yk]?.done && h.freq==='daily' &&!h.hist[todayStr]?.done;
+    const comp=Math.round(Object.values(h.hist).filter(v=>v.done).length / Math.max(30,1) *100);
+    cont.innerHTML+=`<div class="habit ${atRisk?'at-risk':''}">
+      <div class="h-top"><div><div class="h-name">${h.name}</div><div class="h-meta">[${h.freq.toUpperCase()} • ${h.cat}]</div></div><div class="mono" style="color:var(--orange)">${h.streak}D</div></div>
+      <div style="margin-top:10px"><div class="mono" style="font-size:10px">STREAK: ${h.streak}D | COMPLETION: ${comp}%</div><div class="bar"><div class="fill" style="width:${Math.min(comp,100)}%"></div></div></div>
+      <div class="mono" style="margin-top:8px;font-size:10px">LAST: ${todayStr} • AVG: ${h.target}${h.type==='count'?'U':h.type==='timer'?'MIN':''} • XP: ${h.diff*25}</div>
+      <div class="actions"><button class="btn p" onclick="toggle(${h.id},'${todayStr}')">${h.hist[todayStr]?.done?'DONE ✓':'MARK DONE'}</button><button class="btn" onclick="if(confirm('Delete?')){habits=habits.filter(x=>x.id!==${h.id}); save();}">DEL</button></div>
+      ${atRisk?'<div class="mono" style="color:var(--red);margin-top:8px;font-size:10px">⚠ AT RISK - NEVER MISS TWICE</div>':''}
+    </div>`;
+  });
+  // mini chart
+  const c=document.getElementById('miniChart'); const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); ctx.strokeStyle='#ff8c42'; ctx.beginPath(); for(let i=0;i<30;i++){ let v=habits.reduce((a,h)=> a + (h.hist[new Date(Date.now()-i*86400000).toISOString().slice(0,10)]?.done?1:0),0); let x=i/30*c.width; let y=c.height - v/habits.length*c.height; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);} ctx.stroke();
+}
+function setFilter(f){filter=f; render();}
+render();
+</script>
+</body>
+</html>
