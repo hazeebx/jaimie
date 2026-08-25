@@ -1382,146 +1382,185 @@
     ===================================================== */
 
     async function importBackup(
-        backup,
-        {
-            replace = false
-        } = {}
+    backup,
+    {
+        replace = false
+    } = {}
+) {
+
+    if (
+        !backup ||
+        backup.format !== BACKUP_FORMAT ||
+        backup.version !== BACKUP_VERSION
     ) {
 
-        if (
-            !backup ||
-            backup.format !==
-                BACKUP_FORMAT ||
-            backup.version !==
-                BACKUP_VERSION
+        throw new Error(
+            "Invalid or unsupported JAIMIE backup."
+        );
+
+    }
+
+
+    if (
+        !backup.data ||
+        typeof backup.data !== "object"
+    ) {
+
+        throw new Error(
+            "JAIMIE backup contains no data."
+        );
+
+    }
+
+
+    if (replace) {
+
+        for (
+            const key
+            of await listKeys()
         ) {
 
-            throw new Error(
-                "Invalid or unsupported JAIMIE backup."
-            );
+            await remove(key);
 
         }
 
+    }
 
-        if (
-            !backup.data ||
-            typeof backup.data !==
-                "object"
-        ) {
 
-            throw new Error(
-                "JAIMIE backup contains no data."
+    const deviceId =
+        await getDeviceId();
+
+    const importedRecords = [];
+
+    /*
+     * Treat the import itself as a new local edit.
+     *
+     * This is important because an old backup may contain
+     * an older updatedAt timestamp. We want this restore
+     * operation to become the new sync event.
+     */
+    const importedAt =
+        nowIso();
+
+    const importedAtMs =
+        nowMs();
+
+
+    for (
+        const [
+            key,
+            entry
+        ]
+        of Object.entries(
+            backup.data
+        )
+    ) {
+
+        const record = {
+
+            key,
+
+            value:
+                entry?.value,
+
+            updatedAt:
+                importedAt,
+
+            updatedAtMs:
+                importedAtMs,
+
+            version:
+                nextVersion(
+                    entry?.version
+                ),
+
+            deviceId,
+
+            dirty:
+                true
+
+        };
+
+
+        const s =
+            await store(
+                STORE_NAME,
+                "readwrite"
             );
 
-        }
+
+        await new Promise(
+            (
+                resolve,
+                reject
+            ) => {
+
+                const request =
+                    s.put(record);
 
 
-        if (
-            replace
+                request.onsuccess =
+                    () =>
+                        resolve();
+
+
+                request.onerror =
+                    () =>
+                        reject(
+                            request.error
+                        );
+
+            }
+        );
+
+
+        importedRecords.push(
+            record
+        );
+
+    }
+
+
+    /*
+     * Notify the sync adapter that these are
+     * fresh local changes.
+     */
+    if (
+        syncAdapter &&
+        typeof syncAdapter.onLocalChange ===
+            "function"
+    ) {
+
+        for (
+            const record
+            of importedRecords
         ) {
 
-            for (
-                const key
-                of await listKeys()
-            ) {
+            try {
 
-                await remove(
-                    key
+                await syncAdapter.onLocalChange(
+                    record
+                );
+
+            }
+
+            catch (error) {
+
+                console.warn(
+                    `JAIMIE sync: imported dataset "${record.key}" remains pending.`,
+                    error
                 );
 
             }
 
         }
 
-
-        for (
-            const [
-                key,
-                entry
-            ]
-            of Object.entries(
-                backup.data
-            )
-        ) {
-
-            /*
-             * Preserve imported metadata
-             * where available.
-             */
-            const record = {
-
-                key,
-
-                value:
-                    entry?.value,
-
-                updatedAt:
-                    entry?.updatedAt ||
-                    nowIso(),
-
-                updatedAtMs:
-                    entry?.updatedAtMs ||
-                    nowMs(),
-
-                version:
-                    entry?.version ||
-                    1,
-
-                deviceId:
-                    entry?.deviceId ||
-                    null,
-
-                /*
-                 * Imported backup is local
-                 * data, so treat it as dirty
-                 * until a future cloud sync
-                 * confirms it.
-                 */
-                dirty:
-                    true
-
-            };
-
-
-            const s =
-                await store(
-                    STORE_NAME,
-                    "readwrite"
-                );
-
-
-            await new Promise(
-                (
-                    resolve,
-                    reject
-                ) => {
-
-                    const request =
-                        s.put(
-                            record
-                        );
-
-
-                    request.onsuccess =
-                        () =>
-                            resolve();
-
-
-                    request.onerror =
-                        () =>
-                            reject(
-                                request.error
-                            );
-
-                }
-            );
-
-        }
-
-
-        return true;
-
     }
+
+
+    return true;
+
+}
 
 
     /* =====================================================
