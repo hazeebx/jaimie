@@ -1018,7 +1018,11 @@
 
     transform: translateY(-1px);
 }
-
+.auth-button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 .google-icon {
     display: grid;
     place-items: center;

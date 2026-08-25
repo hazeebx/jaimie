@@ -1,7 +1,9 @@
 /* =========================================================
    JAIMIE — SETTINGS
    ========================================================= */
+
 let authInitialized = false;
+
 (() => {
 
     "use strict";
@@ -337,12 +339,13 @@ let authInitialized = false;
 
 
         if (
-    tabName === "security"
-) {
+            tabName ===
+            "security"
+        ) {
 
-    initAuthUI();
+            initAuthUI();
 
-}
+        }
 
     }
 
@@ -806,323 +809,401 @@ let authInitialized = false;
 
 
     /* =====================================================
-   AUTH
-   ===================================================== */
+       AUTH
+    ===================================================== */
 
-let authModule = null;
+    let authModule = null;
 
-async function getAuthModule() {
 
-    if (authModule) {
+    async function getAuthModule() {
+
+        if (authModule) {
+
+            return authModule;
+
+        }
+
+
+        authModule =
+            await import(
+                "../firebase/auth.js"
+            );
+
 
         return authModule;
 
     }
 
-    authModule =
-        await import(
-            "../firebase/auth.js"
-        );
 
-    return authModule;
+    async function initAuthUI() {
 
-}
-
-
-async function initAuthUI() {
-
-    if (!root) {
-        return;
-    }
-
-    if (authInitialized) {
-        return;
-    }
-
-    authInitialized = true;
-
-    const status =
-        root.querySelector(
-            "#authStatus"
-        );
-
-    const dot =
-        root.querySelector(
-            "#authStatusDot"
-        );
-
-    const anonymousPanel =
-        root.querySelector(
-            "#authAnonymous"
-        );
-
-    const googlePanel =
-        root.querySelector(
-            "#authGoogle"
-        );
-
-    const email =
-        root.querySelector(
-            "#authEmail"
-        );
-
-    const uid =
-        root.querySelector(
-            "#authUid"
-        );
-
-    const errorBox =
-        root.querySelector(
-            "#authError"
-        );
-
-
-    const {
-        signInAnonymous,
-        linkGoogle,
-        logout,
-        observe
-    } = await getAuthModule();
-
-
-    function clearError() {
-
-        errorBox.textContent = "";
-
-    }
-
-
-    function showError(
-        error
-    ) {
-
-        console.error(
-            "JAIMIE Auth:",
-            error
-        );
-
-
-        errorBox.textContent =
-            error?.message ||
-            "Authentication failed.";
-
-    }
-
-
-    function renderUser(
-        user
-    ) {
-
-        clearError();
-
-
-        anonymousPanel
-            .classList
-            .add(
-                "hidden"
-            );
-
-        googlePanel
-            .classList
-            .add(
-                "hidden"
-            );
-
-        dot.classList.remove(
-            "online",
-            "warning"
-        );
-
-
-        if (!user) {
-
-            status.textContent =
-                "SIGNED OUT";
-
-            dot.classList.add(
-                "warning"
-            );
+        if (!root) {
 
             return;
 
         }
 
 
-        if (
-            user.isAnonymous
+        if (authInitialized) {
+
+            return;
+
+        }
+
+
+        authInitialized = true;
+
+
+        const status =
+            root.querySelector(
+                "#authStatus"
+            );
+
+
+        const dot =
+            root.querySelector(
+                "#authStatusDot"
+            );
+
+
+        const anonymousPanel =
+            root.querySelector(
+                "#authAnonymous"
+            );
+
+
+        const googlePanel =
+            root.querySelector(
+                "#authGoogle"
+            );
+
+
+        const email =
+            root.querySelector(
+                "#authEmail"
+            );
+
+
+        const uid =
+            root.querySelector(
+                "#authUid"
+            );
+
+
+        const errorBox =
+            root.querySelector(
+                "#authError"
+            );
+
+
+        const {
+            signInAnonymous,
+            signInWithGoogle,
+            linkGoogle,
+            logout,
+            observe
+        } = await getAuthModule();
+
+
+        function clearError() {
+
+            errorBox.textContent =
+                "";
+
+        }
+
+
+        function showError(
+            error
         ) {
 
-            status.textContent =
-                "LOCAL SESSION";
+            console.error(
+                "JAIMIE Auth:",
+                error
+            );
 
-            dot.classList.add(
+
+            errorBox.textContent =
+                error?.message ||
+                "Authentication failed.";
+
+        }
+
+
+        function renderUser(
+            user
+        ) {
+
+            clearError();
+
+
+            anonymousPanel
+                .classList
+                .add(
+                    "hidden"
+                );
+
+
+            googlePanel
+                .classList
+                .add(
+                    "hidden"
+                );
+
+
+            dot.classList.remove(
+                "online",
                 "warning"
             );
 
-            anonymousPanel
+
+            if (!user) {
+
+                status.textContent =
+                    "SIGNED OUT";
+
+
+                dot.classList.add(
+                    "warning"
+                );
+
+
+                return;
+
+            }
+
+
+            if (
+                user.isAnonymous
+            ) {
+
+                status.textContent =
+                    "LOCAL SESSION";
+
+
+                dot.classList.add(
+                    "warning"
+                );
+
+
+                anonymousPanel
+                    .classList
+                    .remove(
+                        "hidden"
+                    );
+
+
+                return;
+
+            }
+
+
+            status.textContent =
+                "CLOUD ACCOUNT CONNECTED";
+
+
+            dot.classList.add(
+                "online"
+            );
+
+
+            googlePanel
                 .classList
                 .remove(
                     "hidden"
                 );
 
-            return;
+
+            email.textContent =
+                user.email ||
+                "Google account";
+
+
+            uid.textContent =
+                user.uid;
 
         }
 
 
-        status.textContent =
-            "CLOUD ACCOUNT CONNECTED";
+        /* ===============================================
+           LINK GOOGLE
+        =============================================== */
 
-        dot.classList.add(
-            "online"
-        );
-
-        googlePanel
-            .classList
-            .remove(
-                "hidden"
+        const connectGoogleButton =
+            root.querySelector(
+                "#connectGoogleBtn"
             );
 
 
-        email.textContent =
-            user.email ||
-            "Google account";
+        if (connectGoogleButton) {
+
+            connectGoogleButton.onclick =
+                async () => {
+
+                    clearError();
 
 
-        uid.textContent =
-            user.uid;
+                    try {
 
-    }
+                        await linkGoogle();
 
+                    }
 
-    /*
-     * Connect Google
-     */
-    root
-        .querySelector(
-            "#connectGoogleBtn"
-        )
-        .onclick =
-        async () => {
+                    catch (error) {
 
-            clearError();
+                        /*
+                         * If no authenticated user
+                         * exists anymore, recreate
+                         * an anonymous session.
+                         */
+                        if (
+                            error?.code ===
+                            "auth/no-current-user"
+                        ) {
 
+                            await signInAnonymous();
 
-            try {
+                        }
 
-                await linkGoogle();
+                        else {
 
-            }
+                            showError(
+                                error
+                            );
 
-            catch (error) {
+                        }
 
-                /*
-                 * If the anonymous account is
-                 * already gone, create a new one.
-                 */
-                if (
-                    error?.code ===
-                    "auth/no-current-user"
-                ) {
+                    }
 
-                    await signInAnonymous();
+                };
 
-                }
-
-                else {
-
-                    showError(
-                        error
-                    );
-
-                }
-
-            }
-
-        };
+        }
 
 
-    /*
-     * Sign out
-     */
-    root
-        .querySelector(
-            "#signOutBtn"
-        )
-        .onclick =
-        async () => {
+        /* ===============================================
+           SIGN IN WITH GOOGLE
+        =============================================== */
 
-            clearError();
+        const signInGoogleButton =
+            root.querySelector(
+                "#signInGoogleBtn"
+            );
 
 
-            try {
+        if (signInGoogleButton) {
 
-                await logout();
+            signInGoogleButton.onclick =
+                async () => {
 
-            }
+                    clearError();
 
-            catch (
-                error
-            ) {
 
-                showError(
-                    error
+                    try {
+
+                        await signInWithGoogle();
+
+                    }
+
+                    catch (error) {
+
+                        showError(
+                            error
+                        );
+
+                    }
+
+                };
+
+        }
+
+
+        /* ===============================================
+           SIGN OUT
+        =============================================== */
+
+        const signOutButton =
+            root.querySelector(
+                "#signOutBtn"
+            );
+
+
+        if (signOutButton) {
+
+            signOutButton.onclick =
+                async () => {
+
+                    clearError();
+
+
+                    try {
+
+                        await logout();
+
+                    }
+
+                    catch (error) {
+
+                        showError(
+                            error
+                        );
+
+                    }
+
+                };
+
+        }
+
+
+        /* ===============================================
+           AUTH STATE
+        =============================================== */
+
+        let firstAuthEvent =
+            true;
+
+
+        observe(
+            async user => {
+
+                renderUser(
+                    user
                 );
 
-            }
 
-        };
+                /*
+                 * Automatically create an anonymous
+                 * account only when there is genuinely
+                 * no authenticated user.
+                 */
+                if (
+                    !user &&
+                    firstAuthEvent
+                ) {
 
-
-    /*
-     * Automatically sign in anonymously
-     * if there is no current account.
-     */
-    let firstAuthEvent = true;
-
-
-    observe(
-        async user => {
-
-            renderUser(
-                user
-            );
+                    firstAuthEvent =
+                        false;
 
 
-            /*
-             * Only auto-create the anonymous
-             * session when there is genuinely
-             * no user.
-             */
-            if (
-                !user &&
-                firstAuthEvent
-            ) {
+                    try {
 
-                firstAuthEvent =
-                    false;
+                        await signInAnonymous();
 
+                    }
 
-                try {
+                    catch (error) {
 
-                    await signInAnonymous();
+                        showError(
+                            error
+                        );
 
-                }
-
-                catch (error) {
-
-                    showError(
-                        error
-                    );
+                    }
 
                 }
 
             }
+        );
 
-        }
-    );
-
-}
+    }
 
 
     /* =====================================================

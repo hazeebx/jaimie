@@ -317,32 +317,11 @@
                 </div>
 
 
-                <!-- =================================================
-                     SECURITY
-                ================================================== -->
+               <!-- =================================================
+     SECURITY
+================================================== -->
 
-                <div
-                    class="settings-panel"
-                    data-settings-panel="security"
-                >
-
-                    <div class="panel-heading">
-
-                        <div class="panel-code">
-                            SYSTEM / SECURITY
-                        </div>
-
-                        <h3>Security</h3>
-
-                        <p>
-                            Security and account controls
-                            will live here.
-                        </p>
-
-                    </div>
-
-
-                    <div
+<div
     class="settings-panel"
     data-settings-panel="security"
 >
@@ -364,9 +343,14 @@
 
     <div class="auth-card">
 
+        <!-- =================================================
+             AUTH STATUS
+        ================================================== -->
+
         <div class="auth-status-row">
 
             <div>
+
                 <span class="auth-label">
                     ACCOUNT STATUS
                 </span>
@@ -374,6 +358,7 @@
                 <strong id="authStatus">
                     Checking...
                 </strong>
+
             </div>
 
             <span
@@ -383,6 +368,10 @@
 
         </div>
 
+
+        <!-- =================================================
+             ANONYMOUS SESSION
+        ================================================== -->
 
         <div
             id="authAnonymous"
@@ -405,16 +394,33 @@
             </div>
 
 
-            <button
-                id="connectGoogleBtn"
-                class="auth-button"
-            >
-                <span class="google-icon">G</span>
-                CONNECT GOOGLE ACCOUNT
-            </button>
+            <div class="auth-button-group">
+
+                <button
+                    id="connectGoogleBtn"
+                    class="auth-button"
+                >
+                    <span class="google-icon">G</span>
+                    LINK GOOGLE ACCOUNT
+                </button>
+
+
+                <button
+                    id="signInGoogleBtn"
+                    class="auth-button"
+                >
+                    <span class="google-icon">G</span>
+                    SIGN IN WITH GOOGLE
+                </button>
+
+            </div>
 
         </div>
 
+
+        <!-- =================================================
+             GOOGLE ACCOUNT
+        ================================================== -->
 
         <div
             id="authGoogle"
@@ -477,6 +483,10 @@
         </div>
 
 
+        <!-- =================================================
+             AUTH ERROR
+        ================================================== -->
+
         <div
             id="authError"
             class="auth-error"
@@ -485,8 +495,6 @@
     </div>
 
 </div>
-
-                </div>
 
 
                 <!-- =================================================
