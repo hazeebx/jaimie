@@ -1153,41 +1153,62 @@
 
     async function syncStatus() {
 
-        const changes =
-            await getChanges();
+    /*
+     * If Firebase sync adapter provides its own
+     * detailed status function, use that.
+     */
+    if (
+        syncAdapter &&
+        typeof syncAdapter.status === "function"
+    ) {
 
+        try {
 
-        const all =
-            await getAll();
+            return await syncAdapter.status();
 
+        }
 
-        return {
+        catch (error) {
 
-            enabled:
-                !!syncAdapter,
+            console.error(
+                "JAIMIE Sync: status check failed:",
+                error
+            );
 
-            configured:
-                !!syncAdapter,
-
-            connected:
-                syncAdapter?.connected
-                    ? !!syncAdapter.connected()
-                    : false,
-
-            deviceId:
-                await getDeviceId(),
-
-            datasets:
-                Object.keys(
-                    all
-                ).length,
-
-            pending:
-                changes.length
-
-        };
+        }
 
     }
+
+
+    /*
+     * Fallback when no cloud adapter is active.
+     */
+    return {
+
+        enabled:
+            !!syncAdapter,
+
+        connected:
+            false,
+
+        authenticated:
+            false,
+
+        uid:
+            null,
+
+        datasets:
+            0,
+
+        pending:
+            0,
+
+        lastSyncAt:
+            null
+
+    };
+
+}
 
 
     /* =====================================================

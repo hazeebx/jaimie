@@ -255,6 +255,7 @@ let authInitialized = false;
 
 
         await refreshDataPanel();
+        await refreshStoragePanel();
 
     }
 
@@ -289,75 +290,75 @@ let authInitialized = false;
     ===================================================== */
 
     function switchTab(
-    tabName
-) {
-
-    root
-        .querySelectorAll(
-            "[data-settings-tab]"
-        )
-        .forEach(
-            button => {
-
-                button.classList.toggle(
-                    "active",
-                    button.dataset
-                        .settingsTab ===
-                    tabName
-                );
-
-            }
-        );
-
-
-    root
-        .querySelectorAll(
-            "[data-settings-panel]"
-        )
-        .forEach(
-            panel => {
-
-                panel.classList.toggle(
-                    "active",
-                    panel.dataset
-                        .settingsPanel ===
-                    tabName
-                );
-
-            }
-        );
-
-
-    if (
-        tabName ===
-        "data"
+        tabName
     ) {
 
-        refreshDataPanel();
+        root
+            .querySelectorAll(
+                "[data-settings-tab]"
+            )
+            .forEach(
+                button => {
+
+                    button.classList.toggle(
+                        "active",
+                        button.dataset
+                            .settingsTab ===
+                        tabName
+                    );
+
+                }
+            );
+
+
+        root
+            .querySelectorAll(
+                "[data-settings-panel]"
+            )
+            .forEach(
+                panel => {
+
+                    panel.classList.toggle(
+                        "active",
+                        panel.dataset
+                            .settingsPanel ===
+                        tabName
+                    );
+
+                }
+            );
+
+
+        if (
+            tabName ===
+            "data"
+        ) {
+
+            refreshDataPanel();
+
+        }
+
+
+        if (
+            tabName ===
+            "security"
+        ) {
+
+            initAuthUI();
+
+        }
+
+
+        if (
+            tabName ===
+            "storage"
+        ) {
+
+            refreshStoragePanel();
+
+        }
 
     }
-
-
-    if (
-        tabName ===
-        "security"
-    ) {
-
-        initAuthUI();
-
-    }
-
-
-    if (
-        tabName ===
-        "storage"
-    ) {
-
-        refreshStoragePanel();
-
-    }
-
-}
 
 
     /* =====================================================
@@ -515,6 +516,190 @@ let authInitialized = false;
             setMessage(
                 "Export failed."
             );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       STORAGE PANEL
+    ===================================================== */
+
+    async function refreshStoragePanel() {
+
+        if (
+            !root ||
+            !window.JAIMIEData
+        ) {
+
+            return;
+
+        }
+
+
+        const syncStatus =
+            root.querySelector(
+                "#storageSyncStatus"
+            );
+
+
+        const accountStatus =
+            root.querySelector(
+                "#storageAccountStatus"
+            );
+
+
+        const pending =
+            root.querySelector(
+                "#storagePending"
+            );
+
+
+        const lastSync =
+            root.querySelector(
+                "#storageLastSync"
+            );
+
+
+        try {
+
+            if (
+                typeof JAIMIEData.sync?.status !==
+                    "function"
+            ) {
+
+                if (syncStatus) {
+
+                    syncStatus.textContent =
+                        "LOCAL ONLY";
+
+                }
+
+
+                if (accountStatus) {
+
+                    accountStatus.textContent =
+                        "UNKNOWN";
+
+                }
+
+
+                if (pending) {
+
+                    pending.textContent =
+                        "—";
+
+                }
+
+
+                if (lastSync) {
+
+                    lastSync.textContent =
+                        "—";
+
+                }
+
+
+                return;
+
+            }
+
+
+            const status =
+                await JAIMIEData.sync.status();
+
+
+            if (
+                syncStatus
+            ) {
+
+                syncStatus.textContent =
+                    status.connected &&
+                    status.enabled
+                        ? "FIREBASE CONNECTED"
+                        : "LOCAL ONLY";
+
+            }
+
+
+            if (
+                accountStatus
+            ) {
+
+                accountStatus.textContent =
+                    status.authenticated
+                        ? "AUTHENTICATED"
+                        : "NOT SIGNED IN";
+
+            }
+
+
+            if (
+                pending
+            ) {
+
+                pending.textContent =
+                    Number(
+                        status.pending || 0
+                    );
+
+            }
+
+
+            if (
+                lastSync
+            ) {
+
+                lastSync.textContent =
+                    status.lastSyncAt
+                        ? new Date(
+                            status.lastSyncAt
+                        ).toLocaleString()
+                        : "NEVER";
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Could not inspect storage status:",
+                error
+            );
+
+
+            if (syncStatus) {
+
+                syncStatus.textContent =
+                    "UNAVAILABLE";
+
+            }
+
+
+            if (accountStatus) {
+
+                accountStatus.textContent =
+                    "UNKNOWN";
+
+            }
+
+
+            if (pending) {
+
+                pending.textContent =
+                    "—";
+
+            }
+
+
+            if (lastSync) {
+
+                lastSync.textContent =
+                    "—";
+
+            }
 
         }
 
@@ -743,12 +928,18 @@ let authInitialized = false;
         /*
          * Export
          */
-        root
-            .querySelector(
+        const exportButton =
+            root.querySelector(
                 "#exportDataBtn"
-            )
-            .onclick =
-            exportData;
+            );
+
+
+        if (exportButton) {
+
+            exportButton.onclick =
+                exportData;
+
+        }
 
 
         /*
@@ -760,35 +951,130 @@ let authInitialized = false;
             );
 
 
-        root
-            .querySelector(
+        const importButton =
+            root.querySelector(
                 "#importDataBtn"
-            )
-            .onclick =
-            () =>
-                input.click();
+            );
 
 
-        input.onchange =
-            async event => {
+        if (
+            importButton &&
+            input
+        ) {
 
-                const file =
-                    event.target.files?.[0];
-
-
-                if (file) {
-
-                    await importData(
-                        file
-                    );
-
-                }
+            importButton.onclick =
+                () =>
+                    input.click();
 
 
-                input.value =
-                    "";
+            input.onchange =
+                async event => {
 
-            };
+                    const file =
+                        event.target
+                            .files?.[0];
+
+
+                    if (file) {
+
+                        await importData(
+                            file
+                        );
+
+                    }
+
+
+                    input.value =
+                        "";
+
+                };
+
+        }
+
+
+        /*
+         * Manual Sync
+         */
+        const manualSyncButton =
+            root.querySelector(
+                "#manualSyncBtn"
+            );
+
+
+        if (
+            manualSyncButton
+        ) {
+
+            manualSyncButton.onclick =
+                async () => {
+
+                    const message =
+                        root.querySelector(
+                            "#manualSyncMessage"
+                        );
+
+
+                    manualSyncButton.disabled =
+                        true;
+
+
+                    if (message) {
+
+                        message.textContent =
+                            "Synchronizing...";
+
+                    }
+
+
+                    try {
+
+                        const result =
+                            await JAIMIEData.sync.now();
+
+
+                        if (message) {
+
+                            message.textContent =
+                                `Sync complete · ${
+                                    result.pushed || 0
+                                } uploaded · ${
+                                    result.pulled || 0
+                                } restored`;
+
+                        }
+
+
+                        await refreshStoragePanel();
+
+                    }
+
+                    catch (error) {
+
+                        console.error(
+                            "Manual JAIMIE sync failed:",
+                            error
+                        );
+
+
+                        if (message) {
+
+                            message.textContent =
+                                "Sync failed.";
+
+                        }
+
+                    }
+
+                    finally {
+
+                        manualSyncButton.disabled =
+                            false;
+
+                    }
+
+                };
+
+        }
 
     }
 
@@ -917,8 +1203,12 @@ let authInitialized = false;
 
         function clearError() {
 
-            errorBox.textContent =
-                "";
+            if (errorBox) {
+
+                errorBox.textContent =
+                    "";
+
+            }
 
         }
 
@@ -933,9 +1223,13 @@ let authInitialized = false;
             );
 
 
-            errorBox.textContent =
-                error?.message ||
-                "Authentication failed.";
+            if (errorBox) {
+
+                errorBox.textContent =
+                    error?.message ||
+                    "Authentication failed.";
+
+            }
 
         }
 
@@ -947,24 +1241,36 @@ let authInitialized = false;
             clearError();
 
 
-            anonymousPanel
-                .classList
-                .add(
-                    "hidden"
+            if (anonymousPanel) {
+
+                anonymousPanel
+                    .classList
+                    .add(
+                        "hidden"
+                    );
+
+            }
+
+
+            if (googlePanel) {
+
+                googlePanel
+                    .classList
+                    .add(
+                        "hidden"
+                    );
+
+            }
+
+
+            if (dot) {
+
+                dot.classList.remove(
+                    "online",
+                    "warning"
                 );
 
-
-            googlePanel
-                .classList
-                .add(
-                    "hidden"
-                );
-
-
-            dot.classList.remove(
-                "online",
-                "warning"
-            );
+            }
 
 
             if (!user) {
@@ -973,9 +1279,13 @@ let authInitialized = false;
                     "SIGNED OUT";
 
 
-                dot.classList.add(
-                    "warning"
-                );
+                if (dot) {
+
+                    dot.classList.add(
+                        "warning"
+                    );
+
+                }
 
 
                 return;
@@ -991,16 +1301,24 @@ let authInitialized = false;
                     "LOCAL SESSION";
 
 
-                dot.classList.add(
-                    "warning"
-                );
+                if (dot) {
 
-
-                anonymousPanel
-                    .classList
-                    .remove(
-                        "hidden"
+                    dot.classList.add(
+                        "warning"
                     );
+
+                }
+
+
+                if (anonymousPanel) {
+
+                    anonymousPanel
+                        .classList
+                        .remove(
+                            "hidden"
+                        );
+
+                }
 
 
                 return;
@@ -1012,25 +1330,41 @@ let authInitialized = false;
                 "CLOUD ACCOUNT CONNECTED";
 
 
-            dot.classList.add(
-                "online"
-            );
+            if (dot) {
 
-
-            googlePanel
-                .classList
-                .remove(
-                    "hidden"
+                dot.classList.add(
+                    "online"
                 );
 
-
-            email.textContent =
-                user.email ||
-                "Google account";
+            }
 
 
-            uid.textContent =
-                user.uid;
+            if (googlePanel) {
+
+                googlePanel
+                    .classList
+                    .remove(
+                        "hidden"
+                    );
+
+            }
+
+
+            if (email) {
+
+                email.textContent =
+                    user.email ||
+                    "Google account";
+
+            }
+
+
+            if (uid) {
+
+                uid.textContent =
+                    user.uid;
+
+            }
 
         }
 
@@ -1061,11 +1395,6 @@ let authInitialized = false;
 
                     catch (error) {
 
-                        /*
-                         * If no authenticated user
-                         * exists anymore, recreate
-                         * an anonymous session.
-                         */
                         if (
                             error?.code ===
                             "auth/no-current-user"
@@ -1215,85 +1544,6 @@ let authInitialized = false;
 
     }
 
-    async function refreshStoragePanel() {
-
-    if (!root) {
-        return;
-    }
-
-    const syncStatus =
-        root.querySelector(
-            "#storageSyncStatus"
-        );
-
-    const accountStatus =
-        root.querySelector(
-            "#storageAccountStatus"
-        );
-
-    if (!syncStatus || !accountStatus) {
-        return;
-    }
-
-    try {
-
-        if (
-            window.JAIMIEData &&
-            typeof JAIMIEData.sync?.status ===
-                "function"
-        ) {
-
-            const status =
-                await JAIMIEData.sync.status();
-
-            if (
-                status.connected &&
-                status.enabled
-            ) {
-
-                syncStatus.textContent =
-                    "FIREBASE CONNECTED";
-
-            } else {
-
-                syncStatus.textContent =
-                    "LOCAL ONLY";
-
-            }
-
-            accountStatus.textContent =
-                status.connected
-                    ? "AUTHENTICATED"
-                    : "NOT SIGNED IN";
-
-        } else {
-
-            syncStatus.textContent =
-                "LOCAL ONLY";
-
-            accountStatus.textContent =
-                "UNKNOWN";
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Could not inspect storage status:",
-            error
-        );
-
-        syncStatus.textContent =
-            "UNAVAILABLE";
-
-        accountStatus.textContent =
-            "UNKNOWN";
-
-    }
-
-}
 
     /* =====================================================
        PUBLIC API
