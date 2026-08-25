@@ -1,24 +1,32 @@
 /* =========================================================
    JAIMIE — FIREBASE SYNC
    =========================================================
-   Connects JAIMIEData's local-first sync layer to Firestore.
 
-   Firestore structure:
+   LOCAL-FIRST RECONCILIATION
 
-   users/
-       {uid}/
-           data/
-               braindump
-               calendar
-               day
-               diet
-               event-countdown
-               inventory
-               packing
-               sleep
-               workout
+   Local IndexedDB
+        ↕
+   JAIMIEData
+        ↕
+   Firebase / Firestore
 
-   Local IndexedDB remains the primary local cache.
+   Initial rules:
+
+   1. Firebase empty + local data exists
+      → local data seeds Firebase.
+
+   2. Local empty + Firebase data exists
+      → Firebase populates local storage.
+
+   3. Both exist
+      → newer record wins.
+
+   4. Equal records
+      → simply mark local record synced.
+
+   IMPORTANT:
+   Firebase is the shared cloud state,
+   but reconciliation is performed per dataset.
    ========================================================= */
 
 import {
@@ -33,137 +41,284 @@ import {
 import {
     collection,
     doc,
+    getDoc,
     getDocs,
     onSnapshot,
     setDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
+/* =========================================================
+   STATE
+   ========================================================= */
+
 let currentUser = null;
 let unsubscribeSnapshot = null;
 let initialized = false;
 let syncing = false;
-
-let authReadyResolve;
-
-const authReady =
-    new Promise(
-        resolve => {
-            authReadyResolve = resolve;
-        }
-    );
-
-
-observe(
-    async user => {
-
-        /*
-         * No user:
-         * automatically create anonymous identity.
-         */
-        if (!user) {
-
-            currentUser = null;
-
-            if (unsubscribeSnapshot) {
-
-                unsubscribeSnapshot();
-                unsubscribeSnapshot = null;
-
-            }
-
-            try {
-
-                await signInAnonymous();
-
-            }
-
-            catch (error) {
-
-                console.warn(
-                    "JAIMIE Sync: anonymous authentication failed.",
-                    error
-                );
-
-                authReadyResolve(null);
-
-            }
-
-            return;
-
-        }
-
-
-        /*
-         * Authenticated user now available.
-         */
-        currentUser = user;
-
-        authReadyResolve(user);
-
-
-        if (unsubscribeSnapshot) {
-
-            unsubscribeSnapshot();
-            unsubscribeSnapshot = null;
-
-        }
-
-
-        startRealtimeListener();
-
-
-        /*
-         * Initial pull/push.
-         */
-        try {
-
-            const result =
-                await JAIMIEData.sync.now();
-
-            console.log(
-                "JAIMIE Sync: auth sync complete.",
-                result
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "JAIMIE Sync: auth sync failed.",
-                error
-            );
-
-        }
-
-    }
-);
+let lastSyncAt = null;
 
 
 /* =========================================================
-   PUSH ONE LOCAL RECORD
+   FIRESTORE PATHS
+   ========================================================= */
+
+function userDataCollection(
+    uid
+) {
+
+    return collection(
+        firestore,
+        "users",
+        uid,
+        "data"
+    );
+
+}
+
+
+function userDataDocument(
+    uid,
+    key
+) {
+
+    return doc(
+        firestore,
+        "users",
+        uid,
+        "data",
+        key
+    );
+
+}
+
+
+/* =========================================================
+   RECORD NORMALIZATION
+   ========================================================= */
+
+function normalizeLocalRecord(
+    key,
+    entry
+) {
+
+    return {
+
+        key,
+
+        value:
+            entry?.value,
+
+        updatedAt:
+            entry?.updatedAt ||
+            null,
+
+        updatedAtMs:
+            Number(
+                entry?.updatedAtMs ||
+                (
+                    entry?.updatedAt
+                        ? Date.parse(
+                            entry.updatedAt
+                        )
+                        : 0
+                )
+            ),
+
+        version:
+            Number(
+                entry?.version ||
+                0
+            ),
+
+        deviceId:
+            entry?.deviceId ||
+            null,
+
+        dirty:
+            !!entry?.dirty
+
+    };
+
+}
+
+
+function normalizeRemoteRecord(
+    key,
+    entry
+) {
+
+    return {
+
+        key,
+
+        value:
+            entry?.value,
+
+        updatedAt:
+            entry?.updatedAt ||
+            null,
+
+        updatedAtMs:
+            Number(
+                entry?.updatedAtMs ||
+                (
+                    entry?.updatedAt
+                        ? Date.parse(
+                            entry.updatedAt
+                        )
+                        : 0
+                )
+            ),
+
+        version:
+            Number(
+                entry?.version ||
+                0
+            ),
+
+        deviceId:
+            entry?.deviceId ||
+            null
+
+    };
+
+}
+
+
+/* =========================================================
+   VERSION COMPARISON
+   =========================================================
+
+   Returns:
+
+       > 0 → local is newer
+       < 0 → remote is newer
+         0 → equivalent
+   ========================================================= */
+
+function compareRecords(
+    local,
+    remote
+) {
+
+    const localTime =
+        Number(
+            local?.updatedAtMs ||
+            0
+        );
+
+    const remoteTime =
+        Number(
+            remote?.updatedAtMs ||
+            0
+        );
+
+
+    /*
+     * Timestamp is the primary ordering signal.
+     */
+    if (
+        localTime !==
+        remoteTime
+    ) {
+
+        return (
+            localTime >
+            remoteTime
+        )
+            ? 1
+            : -1;
+
+    }
+
+
+    /*
+     * Version is the secondary signal.
+     */
+    const localVersion =
+        Number(
+            local?.version ||
+            0
+        );
+
+    const remoteVersion =
+        Number(
+            remote?.version ||
+            0
+        );
+
+
+    if (
+        localVersion !==
+        remoteVersion
+    ) {
+
+        return (
+            localVersion >
+            remoteVersion
+        )
+            ? 1
+            : -1;
+
+    }
+
+
+    /*
+     * Deterministic tie-breaker.
+     */
+    const localDevice =
+        String(
+            local?.deviceId ||
+            ""
+        );
+
+    const remoteDevice =
+        String(
+            remote?.deviceId ||
+            ""
+        );
+
+
+    if (
+        localDevice ===
+        remoteDevice
+    ) {
+
+        return 0;
+
+    }
+
+
+    return (
+        localDevice >
+        remoteDevice
+    )
+        ? 1
+        : -1;
+
+}
+
+
+/* =========================================================
+   PUSH ONE RECORD
    ========================================================= */
 
 async function pushRecord(
     record
 ) {
 
-    if (!currentUser) {
+    if (
+        !currentUser
+    ) {
 
         return {
+
             pushed: false,
-            reason: "not-authenticated"
-        };
 
-    }
+            reason:
+                "not-authenticated"
 
-
-    if (!record) {
-
-        return {
-            pushed: false,
-            reason: "no-record"
         };
 
     }
@@ -176,11 +331,6 @@ async function pushRecord(
         );
 
 
-    /*
-     * Store the exact local record metadata.
-     *
-     * Firestore receives a plain object.
-     */
     const remoteRecord = {
 
         key:
@@ -217,8 +367,8 @@ async function pushRecord(
 
 
     /*
-     * Only mark the local record synced
-     * AFTER Firestore confirms the write.
+     * Only clear dirty state after
+     * Firestore accepts the write.
      */
     await JAIMIEData.markSynced(
         record.key
@@ -226,104 +376,28 @@ async function pushRecord(
 
 
     return {
+
         pushed: true,
-        key: record.key
+
+        key:
+            record.key
+
     };
 
 }
 
 
 /* =========================================================
-   PUSH ALL LOCAL CHANGES
+   GET ALL REMOTE DATA
    ========================================================= */
 
-async function pushChanges(
-    getChanges
-) {
+async function getRemoteData() {
 
-    if (!currentUser) {
-
-        return {
-            pushed: 0,
-            conflicts: 0,
-            skipped: 0
-        };
-
-    }
-
-
-    const changes =
-        await getChanges();
-
-
-    let pushed = 0;
-    let skipped = 0;
-
-
-    for (
-        const record
-        of changes
+    if (
+        !currentUser
     ) {
 
-        try {
-
-            const result =
-                await pushRecord(
-                    record
-                );
-
-
-            if (
-                result.pushed
-            ) {
-
-                pushed += 1;
-
-            }
-
-            else {
-
-                skipped += 1;
-
-            }
-
-        }
-
-        catch (error) {
-
-            console.error(
-                `JAIMIE Sync: failed to push "${record.key}"`,
-                error
-            );
-
-        }
-
-    }
-
-
-    return {
-        pushed,
-        conflicts: 0,
-        skipped
-    };
-
-}
-
-
-/* =========================================================
-   PULL ALL REMOTE DATA
-   ========================================================= */
-
-async function pullRemote(
-    applyRemote
-) {
-
-    if (!currentUser) {
-
-        return {
-            pulled: 0,
-            conflicts: 0
-        };
+        return {};
 
     }
 
@@ -336,8 +410,7 @@ async function pullRemote(
         );
 
 
-    let pulled = 0;
-    let conflicts = 0;
+    const result = {};
 
 
     for (
@@ -345,34 +418,530 @@ async function pullRemote(
         of snapshot.docs
     ) {
 
-        const remote =
+        const data =
             documentSnapshot.data();
 
 
+        result[
+            documentSnapshot.id
+        ] =
+            normalizeRemoteRecord(
+                documentSnapshot.id,
+                data
+            );
+
+    }
+
+
+    return result;
+
+}
+
+
+/* =========================================================
+   GET ALL LOCAL DATA
+   ========================================================= */
+
+async function getLocalData() {
+
+    const all =
+        await JAIMIEData.getAll();
+
+
+    const result = {};
+
+
+    for (
+        const [
+            key,
+            entry
+        ]
+        of Object.entries(
+            all
+        )
+    ) {
+
+        result[key] =
+            normalizeLocalRecord(
+                key,
+                entry
+            );
+
+    }
+
+
+    return result;
+
+}
+
+
+/* =========================================================
+   RECONCILE ONE RECORD
+   ========================================================= */
+
+async function reconcileRecord(
+    local,
+    remote
+) {
+
+    /*
+     * Only remote exists.
+     */
+    if (
+        !local &&
+        remote
+    ) {
+
         const result =
-            await applyRemote(
+            await JAIMIEData.applyRemote(
                 remote
             );
 
 
-        if (
-            result.applied
+        return {
+
+            action:
+                result.applied
+                    ? "pulled"
+                    : "unchanged",
+
+            conflict:
+                !!result.conflict
+
+        };
+
+    }
+
+
+    /*
+     * Only local exists.
+     */
+    if (
+        local &&
+        !remote
+    ) {
+
+        const result =
+            await pushRecord(
+                local
+            );
+
+
+        return {
+
+            action:
+                result.pushed
+                    ? "pushed"
+                    : "skipped",
+
+            conflict:
+                false
+
+        };
+
+    }
+
+
+    /*
+     * Neither exists.
+     */
+    if (
+        !local &&
+        !remote
+    ) {
+
+        return {
+
+            action:
+                "nothing",
+
+            conflict:
+                false
+
+        };
+
+    }
+
+
+    /*
+     * Both exist.
+     */
+    const comparison =
+        compareRecords(
+            local,
+            remote
+        );
+
+
+    /*
+     * LOCAL WINS
+     */
+    if (
+        comparison > 0
+    ) {
+
+        const result =
+            await pushRecord(
+                local
+            );
+
+
+        return {
+
+            action:
+                result.pushed
+                    ? "pushed"
+                    : "skipped",
+
+            conflict:
+                false
+
+        };
+
+    }
+
+
+    /*
+     * REMOTE WINS
+     */
+    if (
+        comparison < 0
+    ) {
+
+        const result =
+            await JAIMIEData.applyRemote(
+                remote,
+                {
+                    force: true
+                }
+            );
+
+
+        return {
+
+            action:
+                result.applied
+                    ? "pulled"
+                    : "unchanged",
+
+            conflict:
+                false
+
+        };
+
+    }
+
+
+    /*
+     * EXACTLY EQUAL
+     */
+    if (
+        local.dirty
+    ) {
+
+        await JAIMIEData.markSynced(
+            local.key
+        );
+
+    }
+
+
+    return {
+
+        action:
+            "unchanged",
+
+        conflict:
+            false
+
+    };
+
+}
+
+
+/* =========================================================
+   INITIAL RECONCILIATION
+   ========================================================= */
+
+async function reconcileAll() {
+
+    const local =
+        await getLocalData();
+
+
+    const remote =
+        await getRemoteData();
+
+
+    const localKeys =
+        Object.keys(
+            local
+        );
+
+    const remoteKeys =
+        Object.keys(
+            remote
+        );
+
+
+    const remoteEmpty =
+        remoteKeys.length === 0;
+
+
+    const localEmpty =
+        localKeys.length === 0;
+
+
+    let pushed = 0;
+    let pulled = 0;
+    let unchanged = 0;
+    let conflicts = 0;
+
+
+    /*
+     * =====================================================
+     * BOOTSTRAP CASE 1
+     *
+     * Firebase empty
+     * Local has data
+     *
+     * Local becomes the seed.
+     * =====================================================
+     */
+
+    if (
+        remoteEmpty &&
+        !localEmpty
+    ) {
+
+        console.log(
+            "JAIMIE Sync: Firebase is empty. Seeding cloud from local data."
+        );
+
+
+        for (
+            const key
+            of localKeys
         ) {
 
-            pulled += 1;
+            try {
+
+                const result =
+                    await pushRecord(
+                        local[key]
+                    );
+
+
+                if (
+                    result.pushed
+                ) {
+
+                    pushed += 1;
+
+                }
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    `JAIMIE Sync: failed to seed "${key}".`,
+                    error
+                );
+
+            }
 
         }
 
 
-        if (
-            result.conflict
+        return {
+
+            pushed,
+
+            pulled: 0,
+
+            unchanged: 0,
+
+            conflicts: 0,
+
+            bootstrap:
+                "local-seeded"
+
+        };
+
+    }
+
+
+    /*
+     * =====================================================
+     * BOOTSTRAP CASE 2
+     *
+     * Local empty
+     * Firebase has data
+     *
+     * Cloud populates the device.
+     * =====================================================
+     */
+
+    if (
+        localEmpty &&
+        !remoteEmpty
+    ) {
+
+        console.log(
+            "JAIMIE Sync: local database is empty. Pulling cloud data."
+        );
+
+
+        for (
+            const key
+            of remoteKeys
         ) {
 
-            conflicts += 1;
+            try {
 
-            console.warn(
-                `JAIMIE Sync: conflict on "${remote.key}".`,
-                result
+                const result =
+                    await JAIMIEData.applyRemote(
+                        remote[key]
+                    );
+
+
+                if (
+                    result.applied
+                ) {
+
+                    pulled += 1;
+
+                }
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    `JAIMIE Sync: failed to restore "${key}".`,
+                    error
+                );
+
+            }
+
+        }
+
+
+        return {
+
+            pushed: 0,
+
+            pulled,
+
+            unchanged: 0,
+
+            conflicts: 0,
+
+            bootstrap:
+                "cloud-restored"
+
+        };
+
+    }
+
+
+    /*
+     * =====================================================
+     * BOTH SIDES EMPTY
+     * =====================================================
+     */
+
+    if (
+        localEmpty &&
+        remoteEmpty
+    ) {
+
+        return {
+
+            pushed: 0,
+
+            pulled: 0,
+
+            unchanged: 0,
+
+            conflicts: 0,
+
+            bootstrap:
+                "empty"
+
+        };
+
+    }
+
+
+    /*
+     * =====================================================
+     * NORMAL RECONCILIATION
+     * =====================================================
+     */
+
+    const keys =
+        new Set([
+            ...localKeys,
+            ...remoteKeys
+        ]);
+
+
+    for (
+        const key
+        of keys
+    ) {
+
+        try {
+
+            const result =
+                await reconcileRecord(
+                    local[key],
+                    remote[key]
+                );
+
+
+            if (
+                result.action ===
+                "pushed"
+            ) {
+
+                pushed += 1;
+
+            }
+
+            else if (
+                result.action ===
+                "pulled"
+            ) {
+
+                pulled += 1;
+
+            }
+
+            else {
+
+                unchanged += 1;
+
+            }
+
+
+            if (
+                result.conflict
+            ) {
+
+                conflicts += 1;
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(
+                `JAIMIE Sync: reconciliation failed for "${key}".`,
+                error
             );
 
         }
@@ -381,9 +950,196 @@ async function pullRemote(
 
 
     return {
+
+        pushed,
+
         pulled,
-        conflicts
+
+        unchanged,
+
+        conflicts,
+
+        bootstrap:
+            "reconciled"
+
     };
+
+}
+
+
+/* =========================================================
+   SYNC NOW
+   ========================================================= */
+
+async function syncNow() {
+
+    if (
+        syncing
+    ) {
+
+        return {
+
+            skipped: true
+
+        };
+
+    }
+
+
+    if (
+        !currentUser
+    ) {
+
+        return {
+
+            enabled: true,
+
+            authenticated:
+                false,
+
+            pushed: 0,
+
+            pulled: 0,
+
+            conflicts: 0
+
+        };
+
+    }
+
+
+    syncing =
+        true;
+
+
+    try {
+
+        const result =
+            await reconcileAll();
+
+
+        lastSyncAt =
+            new Date()
+                .toISOString();
+
+
+        return {
+
+            enabled: true,
+
+            authenticated: true,
+
+            uid:
+                currentUser.uid,
+
+            ...result
+
+        };
+
+    }
+
+    finally {
+
+        syncing =
+            false;
+
+    }
+
+}
+
+
+/* =========================================================
+   LOCAL CHANGE
+   =========================================================
+
+   Whenever JAIMIEData.save() happens, compare the
+   changed local record against the current cloud version
+   before deciding which one wins.
+   ========================================================= */
+
+async function onLocalChange(
+    record
+) {
+
+    if (
+        !currentUser
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const remoteRef =
+            userDataDocument(
+                currentUser.uid,
+                record.key
+            );
+
+
+        const snapshot =
+            await getDoc(
+                remoteRef
+            );
+
+
+        const remote =
+            snapshot.exists()
+                ? normalizeRemoteRecord(
+                    record.key,
+                    snapshot.data()
+                )
+                : null;
+
+
+        const local =
+            normalizeLocalRecord(
+                record.key,
+                record
+            );
+
+
+        const result =
+            await reconcileRecord(
+                local,
+                remote
+            );
+
+
+        if (
+            result.action ===
+            "pushed"
+        ) {
+
+            console.log(
+                `JAIMIE Sync: "${record.key}" uploaded.`
+            );
+
+        }
+
+        else if (
+            result.action ===
+            "pulled"
+        ) {
+
+            console.log(
+                `JAIMIE Sync: "${record.key}" resolved from cloud.`
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            `JAIMIE Sync: "${record.key}" remains locally pending.`,
+            error
+        );
+
+    }
 
 }
 
@@ -412,12 +1168,9 @@ function startRealtimeListener() {
     unsubscribeSnapshot =
         onSnapshot(
             collectionRef,
+
             async snapshot => {
 
-                /*
-                 * Ignore local writes that haven't
-                 * reached Firestore yet.
-                 */
                 for (
                     const change
                     of snapshot.docChanges()
@@ -425,9 +1178,9 @@ function startRealtimeListener() {
 
                     if (
                         change.type !==
-                        "added" &&
+                            "added" &&
                         change.type !==
-                        "modified"
+                            "modified"
                     ) {
 
                         continue;
@@ -436,11 +1189,8 @@ function startRealtimeListener() {
 
 
                     /*
-                     * Firebase marks local pending
-                     * writes in metadata.
-                     *
-                     * getDocSnapshots from this listener
-                     * may contain local optimistic state.
+                     * Ignore Firestore's local optimistic
+                     * snapshot before the server confirms it.
                      */
                     if (
                         change.doc.metadata
@@ -453,24 +1203,45 @@ function startRealtimeListener() {
 
 
                     const remote =
-                        change.doc.data();
+                        normalizeRemoteRecord(
+                            change.doc.id,
+                            change.doc.data()
+                        );
 
 
                     try {
 
+                        const localData =
+                            await JAIMIEData.getAll();
+
+
+                        const local =
+                            localData[
+                                remote.key
+                            ]
+                                ? normalizeLocalRecord(
+                                    remote.key,
+                                    localData[
+                                        remote.key
+                                    ]
+                                )
+                                : null;
+
+
                         const result =
-                            await JAIMIEData.applyRemote(
+                            await reconcileRecord(
+                                local,
                                 remote
                             );
 
 
                         if (
-                            result.conflict
+                            result.action ===
+                            "pulled"
                         ) {
 
-                            console.warn(
-                                `JAIMIE Sync: local conflict on "${remote.key}".`,
-                                result
+                            console.log(
+                                `JAIMIE Sync: "${remote.key}" updated from cloud.`
                             );
 
                         }
@@ -480,7 +1251,7 @@ function startRealtimeListener() {
                     catch (error) {
 
                         console.error(
-                            "JAIMIE Sync: failed to apply remote data.",
+                            `JAIMIE Sync: realtime reconciliation failed for "${remote.key}".`,
                             error
                         );
 
@@ -504,157 +1275,6 @@ function startRealtimeListener() {
 
 
 /* =========================================================
-   SYNC NOW
-   ========================================================= */
-
-async function syncNow({
-    getChanges,
-    applyRemote
-}) {
-
-    if (syncing) {
-
-        return {
-            skipped: true
-        };
-
-    }
-
-
-    syncing = true;
-
-
-    try {
-
-        /*
-         * Wait for Firebase Auth initialization.
-         */
-        const user =
-            await authReady;
-
-
-        if (!user) {
-
-            console.warn(
-                "JAIMIE Sync: no Firebase user."
-            );
-
-            return {
-                enabled: true,
-                authenticated: false,
-                pushed: 0,
-                pulled: 0,
-                conflicts: 0
-            };
-
-        }
-
-
-        /*
-         * First pull remote state.
-         */
-        const pulled =
-            await pullRemote(
-                applyRemote
-            );
-
-
-        /*
-         * Then push local changes.
-         */
-        const pushed =
-            await pushChanges(
-                getChanges
-            );
-
-
-        return {
-
-            enabled: true,
-
-            authenticated: true,
-
-            uid:
-                user.uid,
-
-            pushed:
-                pushed.pushed,
-
-            pulled:
-                pulled.pulled,
-
-            conflicts:
-                pulled.conflicts
-
-        };
-
-    }
-
-    finally {
-
-        syncing =
-            false;
-
-    }
-
-}
-
-
-/* =========================================================
-   LOCAL CHANGE HOOK
-   ========================================================= */
-
-async function onLocalChange(
-    record
-) {
-
-    /*
-     * Don't do anything until Auth
-     * has a user.
-     */
-    if (
-        !currentUser
-    ) {
-
-        return;
-
-    }
-
-
-    try {
-
-        await pushRecord(
-            record
-        );
-
-
-        console.log(
-            `JAIMIE Sync: "${record.key}" synced.`
-        );
-
-    }
-
-    catch (error) {
-
-        /*
-         * IMPORTANT:
-         * Do NOT clear dirty state if Firebase
-         * rejected/offline-failed.
-         *
-         * The record stays dirty and can be
-         * retried later.
-         */
-        console.warn(
-            `JAIMIE Sync: "${record.key}" remains pending.`,
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================================
    CONNECTION STATUS
    ========================================================= */
 
@@ -663,6 +1283,171 @@ function connected() {
     return !!currentUser;
 
 }
+
+
+async function status() {
+
+    const local =
+        await getLocalData();
+
+
+    return {
+
+        enabled: true,
+
+        connected:
+            !!currentUser,
+
+        authenticated:
+            !!currentUser,
+
+        uid:
+            currentUser?.uid ||
+            null,
+
+        datasets:
+            Object.keys(
+                local
+            ).length,
+
+        pending:
+            (
+                Object.values(
+                    local
+                )
+            ).filter(
+                entry =>
+                    entry.dirty
+            ).length,
+
+        lastSyncAt
+
+    };
+
+}
+
+
+/* =========================================================
+   AUTH STATE
+   ========================================================= */
+
+observe(
+    async user => {
+
+        /*
+         * No authenticated user.
+         *
+         * JAIMIE automatically gets an anonymous
+         * Firebase identity so local-first sync
+         * can still function.
+         */
+        if (!user) {
+
+            currentUser =
+                null;
+
+
+            if (
+                unsubscribeSnapshot
+            ) {
+
+                unsubscribeSnapshot();
+
+                unsubscribeSnapshot =
+                    null;
+
+            }
+
+
+            try {
+
+                await signInAnonymous();
+
+            }
+
+            catch (error) {
+
+                console.warn(
+                    "JAIMIE Sync: anonymous authentication failed.",
+                    error
+                );
+
+            }
+
+
+            return;
+
+        }
+
+
+        /*
+         * New authenticated state.
+         */
+        const changedUser =
+            !currentUser ||
+            currentUser.uid !==
+                user.uid;
+
+
+        currentUser =
+            user;
+
+
+        if (
+            unsubscribeSnapshot
+        ) {
+
+            unsubscribeSnapshot();
+
+            unsubscribeSnapshot =
+                null;
+
+        }
+
+
+        /*
+         * Reconcile when:
+         *
+         * - Firebase account first appears
+         * - Google account changes
+         * - user signs into another account
+         */
+        if (
+            changedUser
+        ) {
+
+            try {
+
+                const result =
+                    await syncNow();
+
+
+                console.log(
+                    "JAIMIE Sync: initial reconciliation complete.",
+                    result
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "JAIMIE Sync: initial reconciliation failed.",
+                    error
+                );
+
+            }
+
+        }
+
+
+        /*
+         * Listen for future cloud changes.
+         */
+        startRealtimeListener();
+
+    }
+);
 
 
 /* =========================================================
@@ -691,7 +1476,9 @@ function initialize() {
         onLocalChange,
 
         sync:
-            syncNow
+            syncNow,
+
+        status
 
     });
 
@@ -705,51 +1492,4 @@ function initialize() {
 }
 
 
-/* =========================================================
-   START
-   ========================================================= */
-
 initialize();
-
-
-/* =========================================================
-   INITIAL INITIAL SYNC
-   ========================================================= */
-
-authReady.then(
-    async user => {
-
-        if (!user) {
-
-            return;
-
-        }
-
-
-        /*
-         * Give the auth state a moment to settle.
-         */
-        try {
-
-            const result =
-                await JAIMIEData.sync.now();
-
-
-            console.log(
-                "JAIMIE Sync: initial sync complete.",
-                result
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "JAIMIE Sync: initial sync failed.",
-                error
-            );
-
-        }
-
-    }
-);

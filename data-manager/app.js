@@ -920,8 +920,11 @@
     ===================================================== */
 
     async function applyRemote(
-        remoteRecord
-    ) {
+    remoteRecord,
+    {
+        force = false
+    } = {}
+) {
 
         if (
             !remoteRecord ||
@@ -964,7 +967,7 @@
          * this as a conflict.
          */
         if (
-            local.dirty
+            local.dirty && !force
         ) {
 
             return {
