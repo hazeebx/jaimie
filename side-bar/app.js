@@ -390,39 +390,50 @@ function loadSettingsScript() {
             /*
              * side-bar/app.js is inside:
              *
-             * JAIMIE/side-bar/
+             * JAIMIE/
+             * └── side-bar/
+             *     └── app.js
              *
-             * Therefore ../settings/app.js
-             * points to the Settings system.
+             * Therefore "../settings/app.js"
+             * must be resolved relative to
+             * side-bar/app.js itself.
              */
 
-            const script =
+            const settingsScript =
                 document.createElement(
                     "script"
                 );
 
 
-            script.src =
-                "../settings/app.js";
+            const settingsPath =
+                new URL(
+                    "../settings/app.js",
+                    script.src
+                ).href;
 
 
-            script.async = true;
+            settingsScript.src =
+                settingsPath;
 
 
-            script.onload =
+            settingsScript.async = true;
+
+
+            settingsScript.onload =
                 () => resolve();
 
 
-            script.onerror =
-                () => reject(
-                    new Error(
-                        "Could not load settings/app.js"
-                    )
-                );
+            settingsScript.onerror =
+                () =>
+                    reject(
+                        new Error(
+                            `Could not load ${settingsPath}`
+                        )
+                    );
 
 
             document.head.appendChild(
-                script
+                settingsScript
             );
 
         }
