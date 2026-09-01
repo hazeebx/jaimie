@@ -166,6 +166,12 @@
             );
 
 
+            document.body.classList.toggle(
+                "jaimie-menu-collapsed",
+                collapsed
+            );
+
+
             document
                 .querySelectorAll(
                     ".jaimie-content"
@@ -263,7 +269,36 @@ if (settingsButton) {
            ================================================= */
 
         const currentPath =
-            window.location.pathname;
+            normalizePagePath(
+                window.location.pathname
+            );
+
+
+        function normalizePagePath(pathname) {
+
+            let normalized =
+                pathname.replace(
+                    /\/index\.html$/i,
+                    ""
+                );
+
+
+            if (
+                normalized.length > 1
+            ) {
+
+                normalized =
+                    normalized.replace(
+                        /\/$/,
+                        ""
+                    );
+
+            }
+
+
+            return normalized || "/";
+
+        }
 
 
         menu
@@ -285,10 +320,12 @@ if (settingsButton) {
                 try {
 
                     const itemPath =
-                        new URL(
-                            href,
-                            window.location.href
-                        ).pathname;
+                        normalizePagePath(
+                            new URL(
+                                href,
+                                window.location.href
+                            ).pathname
+                        );
 
 
                     if (

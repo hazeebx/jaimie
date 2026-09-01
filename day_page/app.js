@@ -12,7 +12,9 @@ let state = {
     data: {}
 };
 
-let mode = "quest";
+let mode = "quests";
+
+let editing = null;
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -129,6 +131,17 @@ function reminders() {
 }
 
 
+function collection(type) {
+
+    if (type === "reminder") {
+        return reminders();
+    }
+
+    return current()[type];
+
+}
+
+
 /* =========================================================
    HTML ESCAPING
    ========================================================= */
@@ -215,12 +228,39 @@ function render() {
 
                     </div>
 
-                    <button
-                        class="mini"
-                        data-del="schedule,${index}"
-                    >
-                        ×
-                    </button>
+                    <div class="item-actions">
+
+                        <button
+                            class="mini"
+                            data-move="schedule,${index},-1"
+                            aria-label="Move ${esc(item.title)} up"
+                            title="Move up"
+                            ${index === 0 ? "disabled" : ""}
+                        >↑</button>
+
+                        <button
+                            class="mini"
+                            data-move="schedule,${index},1"
+                            aria-label="Move ${esc(item.title)} down"
+                            title="Move down"
+                            ${index === day.schedule.length - 1 ? "disabled" : ""}
+                        >↓</button>
+
+                        <button
+                            class="mini"
+                            data-edit="schedule,${index}"
+                            aria-label="Edit ${esc(item.title)}"
+                            title="Edit"
+                        >✎</button>
+
+                        <button
+                            class="mini"
+                            data-del="schedule,${index}"
+                            aria-label="Delete ${esc(item.title)}"
+                            title="Delete"
+                        >×</button>
+
+                    </div>
 
                 </div>
 
@@ -279,7 +319,32 @@ function render() {
 
                         <button
                             class="mini"
+                            data-move="quests,${index},-1"
+                            aria-label="Move ${esc(item.title)} up"
+                            title="Move up"
+                            ${index === 0 ? "disabled" : ""}
+                        >↑</button>
+
+                        <button
+                            class="mini"
+                            data-move="quests,${index},1"
+                            aria-label="Move ${esc(item.title)} down"
+                            title="Move down"
+                            ${index === day.quests.length - 1 ? "disabled" : ""}
+                        >↓</button>
+
+                        <button
+                            class="mini"
+                            data-edit="quests,${index}"
+                            aria-label="Edit ${esc(item.title)}"
+                            title="Edit"
+                        >✎</button>
+
+                        <button
+                            class="mini"
                             data-post="${index}"
+                            aria-label="Postpone ${esc(item.title)} until tomorrow"
+                            title="Postpone until tomorrow"
                         >
                             →
                         </button>
@@ -287,6 +352,8 @@ function render() {
                         <button
                             class="mini"
                             data-del="quests,${index}"
+                            aria-label="Delete ${esc(item.title)}"
+                            title="Delete"
                         >
                             ×
                         </button>
@@ -375,12 +442,39 @@ function render() {
 
                     </div>
 
-                    <button
-                        class="mini"
-                        data-rdel="${index}"
-                    >
-                        ×
-                    </button>
+                    <div class="item-actions">
+
+                        <button
+                            class="mini"
+                            data-move="reminder,${index},-1"
+                            aria-label="Move ${esc(item.title)} up"
+                            title="Move up"
+                            ${index === 0 ? "disabled" : ""}
+                        >↑</button>
+
+                        <button
+                            class="mini"
+                            data-move="reminder,${index},1"
+                            aria-label="Move ${esc(item.title)} down"
+                            title="Move down"
+                            ${index === list.length - 1 ? "disabled" : ""}
+                        >↓</button>
+
+                        <button
+                            class="mini"
+                            data-edit="reminder,${index}"
+                            aria-label="Edit ${esc(item.title)}"
+                            title="Edit"
+                        >✎</button>
+
+                        <button
+                            class="mini"
+                            data-rdel="${index}"
+                            aria-label="Delete ${esc(item.title)}"
+                            title="Delete"
+                        >×</button>
+
+                    </div>
 
                 </div>
 
@@ -399,25 +493,43 @@ function render() {
    MODAL
    ========================================================= */
 
-function openModal(type) {
+function openModal(type, index = null) {
 
     mode = type;
+
+    editing =
+        index === null
+            ? null
+            : { type, index };
+
+
+    const item =
+        editing
+            ? collection(type)[index]
+            : null;
+
+
+    if (editing && !item) return;
 
 
     if (type === "schedule") {
 
         $("#modalTitle").textContent =
-            "Add Schedule Entry";
+            editing
+                ? "Edit Schedule Entry"
+                : "Add Schedule Entry";
 
         $("#modalType").textContent =
             "01 / TIME GRID";
 
     }
 
-    else if (type === "quest") {
+    else if (type === "quests") {
 
         $("#modalTitle").textContent =
-            "Add Main Quest";
+            editing
+                ? "Edit Main Quest"
+                : "Add Main Quest";
 
         $("#modalType").textContent =
             "02 / ACTIVE OBJECTIVES";
@@ -427,7 +539,9 @@ function openModal(type) {
     else {
 
         $("#modalTitle").textContent =
-            "Add Persistent Reminder";
+            editing
+                ? "Edit Persistent Reminder"
+                : "Add Persistent Reminder";
 
         $("#modalType").textContent =
             "03 / PERSISTENT";
@@ -441,9 +555,15 @@ function openModal(type) {
             : "none";
 
 
-    $("#title").value = "";
-    $("#note").value = "";
-    $("#time").value = "";
+    $("#title").value = item?.title || "";
+    $("#note").value = item?.note || "";
+    $("#time").value = item?.time || "";
+
+
+    $("#submitTask").textContent =
+        editing
+            ? "SAVE CHANGES"
+            : "ADD TO DAY";
 
 
     $("#modal").hidden = false;
@@ -457,6 +577,8 @@ function openModal(type) {
 function closeModal() {
 
     $("#modal").hidden = true;
+
+    editing = null;
 
 }
 
@@ -509,7 +631,7 @@ $("#addSchedule").onclick = () => {
 
 $("#addQuest").onclick = () => {
 
-    openModal("quest");
+    openModal("quests");
 
 };
 
@@ -544,6 +666,15 @@ $("#form").onsubmit = async (event) => {
     if (!title) return;
 
 
+    const target = collection(mode);
+
+
+    const previous =
+        editing
+            ? target[editing.index]
+            : null;
+
+
     const item = {
 
         title,
@@ -554,26 +685,19 @@ $("#form").onsubmit = async (event) => {
         time:
             $("#time").value,
 
-        done: false
+        done:
+            previous?.done || false
 
     };
 
 
-    if (mode === "schedule") {
+    if (editing) {
 
-        current().schedule.push(item);
+        target[editing.index] = item;
 
-    }
+    } else {
 
-    else if (mode === "quest") {
-
-        current().quests.push(item);
-
-    }
-
-    else {
-
-        reminders().push(item);
+        target.push(item);
 
     }
 
@@ -596,6 +720,83 @@ $("#form").onsubmit = async (event) => {
 document.addEventListener(
     "click",
     async (event) => {
+
+
+        /* -------------------------------------------------
+           MANUAL REORDERING
+        ------------------------------------------------- */
+
+        const move =
+            event.target.closest(
+                "[data-move]"
+            );
+
+
+        if (move) {
+
+            const [
+                type,
+                rawIndex,
+                rawDirection
+            ] = move.dataset.move.split(",");
+
+
+            const items = collection(type);
+            const index = Number(rawIndex);
+            const destination =
+                index + Number(rawDirection);
+
+
+            if (
+                destination < 0 ||
+                destination >= items.length
+            ) return;
+
+
+            [
+                items[index],
+                items[destination]
+            ] = [
+                items[destination],
+                items[index]
+            ];
+
+
+            await saveData();
+
+            render();
+
+            return;
+
+        }
+
+
+        /* -------------------------------------------------
+           EDIT ITEM
+        ------------------------------------------------- */
+
+        const edit =
+            event.target.closest(
+                "[data-edit]"
+            );
+
+
+        if (edit) {
+
+            const [
+                type,
+                rawIndex
+            ] = edit.dataset.edit.split(",");
+
+
+            openModal(
+                type,
+                Number(rawIndex)
+            );
+
+            return;
+
+        }
 
 
         /* -------------------------------------------------

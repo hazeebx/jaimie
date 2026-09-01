@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>JAIMIE — Habits</title>
+
+    <link
+        rel="stylesheet"
+        href="../side-bar/styles.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+</head>
+
+<body>
+
+    <div id="side-menu"></div>
+
+
+    <main class="app">
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
+
+        <header class="topbar">
+
+            <div class="brand">
+
+                <div class="logo">
+                    J
+                </div>
+
+                <div>
+
+                    <div class="eyebrow">
+                        LIFE SYSTEM / HABITS
+                    </div>
+
+                    <h1>
+                        Habits
+                    </h1>
+
+                </div>
+
+            </div>
+
+            <div class="today-block">
+
+                <div
+                    id="todayLabel"
+                    class="today-label"
+                >
+                    —
+                </div>
+
+                <button
+                    id="todayBtn"
+                    class="secondary"
+                    type="button"
+                >
+                    TODAY
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             DAILY HABITS
+        ====================================================== -->
+
+        <section class="section-block">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        DAILY SYSTEM
+                    </div>
+
+                    <h2>
+                        Today's Habits
+                    </h2>
+
+                    <p>
+                        Keep the things that matter consistent.
+                    </p>
+
+                </div>
+
+                <button
+                    id="addHabitBtn"
+                    class="primary"
+                    type="button"
+                >
+                    + ADD HABIT
+                </button>
+
+            </div>
+
+
+            <div
+                id="habitList"
+                class="habit-list"
+            ></div>
+
+        </section>
+
+
+        <!-- =====================================================
+             FOOD RECENCY
+        ====================================================== -->
+
+        <section class="section-block">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        NUTRIENT / FOOD RECENCY
+                    </div>
+
+                    <h2>
+                        Last Eaten Tracker
+                    </h2>
+
+                    <p>
+                        Keep track of foods you want to eat
+                        within a specific time window.
+                    </p>
+
+                </div>
+
+                <button
+                    id="addFoodBtn"
+                    class="secondary"
+                    type="button"
+                >
+                    + ADD FOOD TO TRACK
+                </button>
+
+            </div>
+
+
+            <div
+                id="foodTracker"
+                class="food-tracker"
+            ></div>
+
+        </section>
+
+
+        <!-- =====================================================
+             FOOD LIST
+        ====================================================== -->
+
+        <section class="section-block">
+
+            <div class="section-heading compact-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        TRACKED FOODS
+                    </div>
+
+                    <h2>
+                        Food List
+                    </h2>
+
+                </div>
+
+                <div
+                    id="foodCount"
+                    class="count-label"
+                >
+                    0 FOODS
+                </div>
+
+            </div>
+
+
+            <div
+                id="foodList"
+                class="food-list"
+            ></div>
+
+        </section>
+
+
+        <!-- =====================================================
+             STATUS
+        ====================================================== -->
+
+        <footer class="status-bar">
+
+            <span>
+                <i class="status-dot"></i>
+                HABITS READY
+            </span>
+
+            <span id="saveStatus">
+                SAVED
+            </span>
+
+        </footer>
+
+    </main>
+
+
+    <!-- =====================================================
+         ADD / EDIT HABIT MODAL
+    ====================================================== -->
+
+    <div
+        id="habitModal"
+        class="modal-backdrop hidden"
+    >
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <div class="eyebrow">
+                        HABIT CONFIGURATION
+                    </div>
+
+                    <h3 id="habitModalTitle">
+                        Add Habit
+                    </h3>
+
+                </div>
+
+                <button
+                    class="modal-close"
+                    data-close="habitModal"
+                    type="button"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form
+                id="habitForm"
+                class="modal-body"
+            >
+
+                <div class="field">
+
+                    <label for="habitName">
+                        HABIT NAME
+                    </label>
+
+                    <input
+                        id="habitName"
+                        type="text"
+                        maxlength="100"
+                        placeholder="e.g. Read"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="habitFrequency">
+                        FREQUENCY
+                    </label>
+
+                    <select id="habitFrequency">
+
+                        <option value="daily">
+                            Every day
+                        </option>
+
+                        <option value="weekdays">
+                            Weekdays
+                        </option>
+
+                        <option value="weekly">
+                            Once per week
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="secondary"
+                        data-close="habitModal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary"
+                    >
+                        SAVE HABIT
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ADD / EDIT FOOD MODAL
+    ====================================================== -->
+
+    <div
+        id="foodModal"
+        class="modal-backdrop hidden"
+    >
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <div class="eyebrow">
+                        FOOD RECENCY
+                    </div>
+
+                    <h3 id="foodModalTitle">
+                        Add Food to Track
+                    </h3>
+
+                </div>
+
+                <button
+                    class="modal-close"
+                    data-close="foodModal"
+                    type="button"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form
+                id="foodForm"
+                class="modal-body"
+            >
+
+                <div class="field">
+
+                    <label for="foodName">
+                        FOOD NAME
+                    </label>
+
+                    <input
+                        id="foodName"
+                        type="text"
+                        maxlength="100"
+                        placeholder="e.g. Yoghurt"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="foodInterval">
+                        MAXIMUM INTERVAL
+                    </label>
+
+                    <div class="interval-input">
+
+                        <input
+                            id="foodInterval"
+                            type="number"
+                            min="1"
+                            max="365"
+                            value="3"
+                            required
+                        >
+
+                        <span>
+                            DAYS
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="foodLastEaten">
+                        LAST EATEN
+                    </label>
+
+                    <input
+                        id="foodLastEaten"
+                        type="date"
+                    >
+
+                    <small class="field-help">
+                        Leave empty if you have not
+                        eaten it yet.
+                    </small>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="secondary"
+                        data-close="foodModal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary"
+                    >
+                        SAVE FOOD
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <script src="../data-manager/app.js"></script>
+    <script src="../side-bar/app.js"></script>
+    <script src="app.js"></script>
+
+</body>
+
+</html>

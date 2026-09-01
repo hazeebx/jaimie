@@ -6,6 +6,8 @@ Includes:
 - Separate data per calendar date
 - Schedule entries with optional time and notes
 - Main Quest tasks
+- Manual up/down reordering for schedule entries, quests, and reminders
+- Edit controls for schedule entries, quests, and reminders
 - Tick/untick, delete, and postpone-to-next-day
 - Daily completion percentage
 - Persistent Reminders visible across all dates

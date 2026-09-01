@@ -2,14 +2,29 @@
    JAIMIE — COLLAPSIBLE SIDE MENU
    ========================================================= */
 
+:root {
+    --jaimie-menu-width: 250px;
+    --jaimie-menu-collapsed-width: 72px;
+}
+
+body:has(> #side-menu) {
+    box-sizing: border-box;
+    padding-left: var(--jaimie-menu-width);
+    transition: padding-left 220ms ease;
+}
+
+body:has(> #side-menu).jaimie-menu-collapsed {
+    padding-left: var(--jaimie-menu-collapsed-width);
+}
+
 .side-menu,
 .side-menu * {
     box-sizing: border-box;
 }
 
 .side-menu {
-    --menu-width: 250px;
-    --collapsed-width: 72px;
+    --menu-width: var(--jaimie-menu-width);
+    --collapsed-width: var(--jaimie-menu-collapsed-width);
     --bg: #151619;
     --bg-deep: #111214;
     --border: #303238;
@@ -168,6 +183,15 @@
     border-color: #303238;
 }
 
+.side-menu__item.is-disabled,
+.side-menu__item.is-disabled:hover {
+    color: var(--muted);
+    background: transparent;
+    border-color: transparent;
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
 .side-menu__item.active {
     color: var(--orange);
     background: #211a16;
@@ -275,12 +299,11 @@
    to move automatically when the menu expands/collapses. */
 
 .jaimie-content {
-    margin-left: var(--jaimie-menu-width, 250px);
     transition: margin-left 220ms ease;
 }
 
 .jaimie-content.menu-collapsed {
-    margin-left: 72px;
+    margin-left: 0;
 }
 
 @media (max-width: 700px) {
@@ -311,7 +334,12 @@
     }
 
     .jaimie-content {
-        margin-left: 72px;
+        margin-left: 0;
+    }
+
+    body:has(> #side-menu),
+    body:has(> #side-menu).jaimie-menu-collapsed {
+        padding-left: var(--jaimie-menu-collapsed-width);
     }
 }
 

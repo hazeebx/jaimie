@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>JAIMIE — Journal</title>
+
+    <!-- Shared sidebar -->
+    <link
+        rel="stylesheet"
+        href="../side-bar/styles.css"
+    >
+
+    <!-- Journal -->
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+</head>
+
+<body>
+
+    <!-- Shared JAIMIE sidebar -->
+    <div id="side-menu"></div>
+
+
+    <main class="app">
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
+
+        <header class="topbar">
+
+            <div class="brand">
+
+                <div class="sigil">
+                    ◆
+                </div>
+
+                <div>
+
+                    <div class="eyebrow">
+                        LIFE SYSTEM / JOURNAL
+                    </div>
+
+                    <h1>
+                        Journal
+                    </h1>
+
+                </div>
+
+            </div>
+
+
+            <div class="day-nav">
+
+                <button
+                    id="prevDay"
+                    class="ghost nav-btn"
+                    aria-label="Previous day"
+                >
+                    ‹
+                </button>
+
+
+                <button
+                    id="todayBtn"
+                    class="ghost"
+                >
+                    TODAY
+                </button>
+
+
+                <button
+                    id="nextDay"
+                    class="ghost nav-btn"
+                    aria-label="Next day"
+                >
+                    ›
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             MAIN GRID
+        ====================================================== -->
+
+        <section class="journal-grid">
+
+
+            <!-- =================================================
+                 ENTRY
+            ================================================== -->
+
+            <section class="journal-card entry-card">
+
+                <div class="card-head">
+
+                    <div>
+
+                        <div class="eyebrow">
+                            DAILY ENTRY
+                        </div>
+
+                        <h2 id="entryTitle">
+                            AUGUST 27, 2026
+                        </h2>
+
+                    </div>
+
+
+                    <div
+                        id="saveState"
+                        class="save-state"
+                    >
+                        SAVED
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     PROMPTS
+                ================================================== -->
+
+                <div class="journal-fields">
+
+
+                    <div class="journal-field">
+
+                        <label
+                            for="howDay"
+                        >
+                            HOW WAS TODAY?
+                        </label>
+
+                        <textarea
+                            id="howDay"
+                            rows="5"
+                            maxlength="4000"
+                            placeholder="How did today feel?"
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="journal-field">
+
+                        <label
+                            for="whatHappened"
+                        >
+                            WHAT HAPPENED?
+                        </label>
+
+                        <textarea
+                            id="whatHappened"
+                            rows="7"
+                            maxlength="6000"
+                            placeholder="Record the important things from today."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="journal-field">
+
+                        <label
+                            for="thinking"
+                        >
+                            WHAT AM I THINKING?
+                        </label>
+
+                        <textarea
+                            id="thinking"
+                            rows="7"
+                            maxlength="6000"
+                            placeholder="Thoughts, worries, ideas, realizations..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="journal-field">
+
+                        <label
+                            for="grateful"
+                        >
+                            GRATITUDE
+                        </label>
+
+                        <textarea
+                            id="grateful"
+                            rows="4"
+                            maxlength="3000"
+                            placeholder="Something you're grateful for."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="journal-field">
+
+                        <label
+                            for="tomorrow"
+                        >
+                            TOMORROW
+                        </label>
+
+                        <textarea
+                            id="tomorrow"
+                            rows="5"
+                            maxlength="4000"
+                            placeholder="What matters tomorrow?"
+                        ></textarea>
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="entry-footer">
+
+                    <span
+                        id="charCount"
+                        class="char-count"
+                    >
+                        0 characters
+                    </span>
+
+
+                    <button
+                        id="saveBtn"
+                        class="primary"
+                    >
+                        SAVE ENTRY
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 HISTORY
+            ================================================== -->
+
+            <aside class="journal-card history-card">
+
+                <div class="card-head">
+
+                    <div>
+
+                        <div class="eyebrow">
+                            ARCHIVE
+                        </div>
+
+                        <h2>
+                            Journal History
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="historyList"
+                    class="history-list"
+                ></div>
+
+
+                <div class="history-footer">
+
+                    <span id="entryCount">
+                        0 ENTRIES
+                    </span>
+
+                </div>
+
+            </aside>
+
+
+        </section>
+
+
+        <!-- =====================================================
+             STATUS BAR
+        ====================================================== -->
+
+        <footer class="status-bar">
+
+            <span>
+                <i class="status-dot"></i>
+                JOURNAL READY
+            </span>
+
+            <span id="dateStatus">
+                —
+            </span>
+
+        </footer>
+
+    </main>
+
+
+    <!-- Shared sidebar -->
+    <script src="../side-bar/app.js"></script>
+
+    <!-- Unified JAIMIE data manager -->
+    <script src="../data-manager/app.js"></script>
+
+    <!-- Journal -->
+    <script src="app.js"></script>
+
+</body>
+
+</html>
