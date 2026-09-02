@@ -86,6 +86,7 @@ async function saveData() {
         DATA_KEY,
         state.data
     );
+    window.dispatchEvent(new Event("jaimie-schedule-changed"));
 }
 
 
@@ -95,7 +96,7 @@ async function saveData() {
 
 function key(date) {
 
-    return date.toISOString().slice(0, 10);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
 }
 
@@ -215,6 +216,10 @@ function render() {
                         <div class="title">
                             ${esc(item.title)}
                         </div>
+
+                        ${[0, 5, 10, 15].includes(item.notifyMinutes)
+                            ? `<div class="notification-label">Reminder: ${item.notifyMinutes === 0 ? "at scheduled time" : item.notifyMinutes + " min before"}</div>`
+                            : ""}
 
                         ${
                             item.note
@@ -558,6 +563,12 @@ function openModal(type, index = null) {
     $("#title").value = item?.title || "";
     $("#note").value = item?.note || "";
     $("#time").value = item?.time || "";
+    $("#time").setCustomValidity("");
+    $("#notificationRow").hidden = type !== "schedule";
+    $("#notificationMinutes").value =
+        [0, 5, 10, 15].includes(item?.notifyMinutes)
+            ? String(item.notifyMinutes)
+            : "off";
 
 
     $("#submitTask").textContent =
@@ -665,6 +676,15 @@ $("#form").onsubmit = async (event) => {
 
     if (!title) return;
 
+    const notifyMinutes = mode === "schedule" && $("#notificationMinutes").value !== "off"
+        ? Number($("#notificationMinutes").value)
+        : null;
+    if (notifyMinutes !== null && !$("#time").value) {
+        $("#time").setCustomValidity("Choose a time for this reminder.");
+        $("#time").reportValidity();
+        return;
+    }
+
 
     const target = collection(mode);
 
@@ -676,6 +696,8 @@ $("#form").onsubmit = async (event) => {
 
 
     const item = {
+
+        ...previous,
 
         title,
 
@@ -689,6 +711,13 @@ $("#form").onsubmit = async (event) => {
             previous?.done || false
 
     };
+
+    if (mode === "schedule") {
+        item.id = previous?.id || (typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join("-"));
+        item.notifyMinutes = notifyMinutes;
+    }
 
 
     if (editing) {
@@ -1012,6 +1041,15 @@ async function init() {
          */
         await loadData();
 
+        // Notification clicks open the selected local calendar day.
+        const dateParam = new URLSearchParams(location.search).get("date");
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam || "")) {
+            const date = new Date(`${dateParam}T12:00:00`);
+            if (!Number.isNaN(date.getTime()) && key(date) === dateParam) {
+                state.date = date;
+            }
+        }
+
 
         /*
          * Now render the page.
@@ -1042,4 +1080,6 @@ async function init() {
 }
 
 
+$("#time").addEventListener("input", () => $("#time").setCustomValidity(""));
+$("#notificationMinutes").addEventListener("change", () => $("#time").setCustomValidity(""));
 init();

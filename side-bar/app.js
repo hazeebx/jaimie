@@ -33,6 +33,15 @@
     const jaimieRoot =
         new URL("../", script.src);
 
+    // Keep Day reminders running while any JAIMIE page is open.
+    const notificationsScript = document.createElement("script");
+    notificationsScript.src = new URL("day_page/schedule-notifications.js", jaimieRoot).href;
+    notificationsScript.onerror = () => {
+        const status = document.getElementById("scheduleNotificationStatus");
+        if (status) status.textContent = "Notifications could not load. Reload to retry.";
+    };
+    document.head.appendChild(notificationsScript);
+
 
     /* =====================================================
        LOAD SIDE BAR COMPONENT

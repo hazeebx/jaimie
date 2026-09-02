@@ -11,6 +11,7 @@
 
 <!-- Day page CSS -->
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="notifications.css">
 </head>
 
 <body>
@@ -31,6 +32,18 @@
 
             <button id="nextDay" class="nav">→</button>
         </header>
+
+        <section class="notification-controls" aria-label="Schedule notifications">
+            <div>
+                <strong>Schedule notifications</strong>
+                <p id="scheduleNotificationStatus" role="status">Loading notification settings…</p>
+                <small>Keep a JAIMIE tab open. Windows controls sound and Do Not Disturb. Task titles may appear on your lock screen.</small>
+            </div>
+            <div class="notification-buttons">
+                <button id="enableScheduleNotifications" type="button" disabled>Enable notifications</button>
+                <button id="testScheduleNotification" type="button" disabled>Test notification</button>
+            </div>
+        </section>
 
         <main>
 
@@ -127,6 +140,18 @@
                     >
                 </label>
 
+                <label id="notificationRow" hidden>
+                    Notify me
+                    <select id="notificationMinutes">
+                        <option value="off">Off</option>
+                        <option value="0">At scheduled time</option>
+                        <option value="5">5 minutes before</option>
+                        <option value="10">10 minutes before</option>
+                        <option value="15">15 minutes before</option>
+                    </select>
+                    <small>Uses this computer’s local timezone. Requires a time and notification permission.</small>
+                </label>
+
                 <label>
                     Notes
                     <textarea
@@ -153,6 +178,9 @@
     ====================================================== -->
 
     <script src="../data-manager/app.js"></script>
+
+    <!-- Load directly so cached sidebar code cannot leave the controls unbound. -->
+    <script src="schedule-notifications.js?v=2"></script>
 
     <!-- Side menu -->
     <script src="../side-bar/app.js"></script>

@@ -700,6 +700,16 @@ function exercise(exerciseData) {
         <article class="exercise">
 
 
+            <button
+                class="exercise-edit-menu"
+                data-edit-exercise="${exerciseData.id}"
+                aria-label="Edit ${esc(exerciseData.name)}"
+                title="Edit exercise"
+            >
+                ⋮
+            </button>
+
+
             <div class="exercise-main">
 
 
@@ -980,6 +990,31 @@ function bind() {
                                     button.dataset.use
                             )
                         );
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            "[data-edit-exercise]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    () => {
+
+                        syncVisibleReps(
+                            button.dataset.editExercise
+                        );
+
+
+                        editExerciseModal(
+                            button.dataset.editExercise
+                        );
+
+                    };
 
             }
         );
@@ -1433,6 +1468,280 @@ function addModal() {
             render();
 
         };
+
+}
+
+
+/* =========================================================
+   EDIT EXERCISE
+   ========================================================= */
+
+function editExerciseModal(id) {
+
+    const item =
+        day()
+            .exercises
+            .find(
+                exerciseData =>
+                    exerciseData.id === id
+            );
+
+
+    if (!item) {
+        return;
+    }
+
+
+    modal(`
+
+        <div class="modal-header">
+
+            <div class="modal-title">
+                Edit Exercise
+            </div>
+
+            <button
+                class="close"
+                data-close
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form
+            class="modal-body"
+            id="editExerciseForm"
+        >
+
+            <div class="field">
+
+                <label for="editExerciseName">
+                    Exercise name
+                </label>
+
+                <input
+                    id="editExerciseName"
+                    value="${esc(item.name)}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label for="editExerciseSets">
+                    Number of sets
+                </label>
+
+                <input
+                    id="editExerciseSets"
+                    type="number"
+                    min="1"
+                    value="${item.sets.length}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label for="editExerciseReps">
+                    Target reps per set
+                </label>
+
+                <input
+                    id="editExerciseReps"
+                    type="number"
+                    min="0"
+                    value="${item.targetReps || 0}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="side-copy edit-exercise-note">
+                Completed sets and manually adjusted reps are preserved.
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="secondary"
+                    data-close
+                >
+                    Cancel
+                </button>
+
+                <button class="primary">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    `);
+
+
+    document
+        .querySelector(
+            "#editExerciseForm"
+        )
+        .onsubmit =
+        async event => {
+
+            event.preventDefault();
+
+
+            const name =
+                document
+                    .querySelector(
+                        "#editExerciseName"
+                    )
+                    .value
+                    .trim();
+
+
+            const setCount =
+                +document
+                    .querySelector(
+                        "#editExerciseSets"
+                    )
+                    .value;
+
+
+            const targetReps =
+                +document
+                    .querySelector(
+                        "#editExerciseReps"
+                    )
+                    .value;
+
+
+            if (
+                !name ||
+                setCount < 1 ||
+                targetReps < 0
+            ) {
+
+                return;
+
+            }
+
+
+            const previousTarget =
+                Number(item.targetReps) || 0;
+
+
+            const preservedSets =
+                item.sets
+                    .slice(0, setCount)
+                    .map(
+                        set => ({
+
+                            ...set,
+
+                            reps:
+                                !set.done &&
+                                Number(set.reps) ===
+                                    previousTarget
+
+                                    ? targetReps
+                                    : set.reps
+
+                        })
+                    );
+
+
+            while (
+                preservedSets.length <
+                setCount
+            ) {
+
+                preservedSets.push({
+
+                    reps:
+                        targetReps,
+
+                    done:
+                        false
+
+                });
+
+            }
+
+
+            item.name = name;
+            item.targetReps = targetReps;
+            item.sets = preservedSets;
+
+
+            await save();
+
+
+            document
+                .querySelector(
+                    "#modal"
+                )
+                .remove();
+
+
+            render();
+
+        };
+
+}
+
+
+function syncVisibleReps(id) {
+
+    const item =
+        day()
+            .exercises
+            .find(
+                exerciseData =>
+                    exerciseData.id === id
+            );
+
+
+    if (!item) {
+        return;
+    }
+
+
+    [
+        ...document.querySelectorAll(
+            "[data-reps]"
+        )
+    ]
+        .filter(
+            input =>
+                input.dataset.reps === id
+        )
+        .forEach(
+            input => {
+
+                const index =
+                    Number(input.dataset.i);
+
+
+                if (item.sets[index]) {
+
+                    item.sets[index].reps =
+                        Number(input.value) || 0;
+
+                }
+
+            }
+        );
 
 }
 
