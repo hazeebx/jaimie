@@ -245,6 +245,66 @@ h2 {
 }
 
 
+.date-nav {
+
+    width:
+        40px;
+
+    height:
+        40px;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    padding:
+        0;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        9px;
+
+    background:
+        #15171a;
+
+    color:
+        var(--text);
+
+    font-size:
+        18px;
+
+    cursor:
+        pointer;
+
+}
+
+
+.date-nav:hover {
+
+    border-color:
+        var(--orange);
+
+    color:
+        var(--orange);
+
+}
+
+
+.today-block .secondary:disabled {
+
+    opacity:
+        .45;
+
+    cursor:
+        default;
+
+}
+
+
 .today-label {
 
     color:
@@ -720,6 +780,124 @@ h2 {
 /* =========================================================
    FOOD TRACKER
    ========================================================= */
+
+/* Card layout overrides for the habit activity view. */
+.habit-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    padding: 20px;
+}
+
+.habit-item,
+.habit-item:last-child {
+    display: block;
+    min-height: 245px;
+    padding: 16px;
+    border: 1px solid #34373d;
+    border-radius: 13px;
+    background: #141619;
+}
+
+.habit-card-header {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.habit-check:hover {
+    border-color: var(--habit-color);
+}
+
+.habit-item.completed .habit-check {
+    border-color: var(--habit-color);
+    background: color-mix(in srgb, var(--habit-color) 15%, transparent);
+    color: var(--habit-color);
+}
+
+.habit-item.completed .habit-name {
+    color: #e1e2e5;
+    text-decoration: none;
+}
+
+.habit-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(15px, 1fr));
+    gap: 6px;
+    padding: 11px;
+    border: 1px solid #2d3035;
+    border-radius: 11px;
+    background: #101214;
+}
+
+.habit-grid-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 18px 2px 7px;
+    color: #686d75;
+    font: 8px monospace;
+    letter-spacing: .07em;
+}
+
+.habit-grid-streak strong {
+    color: var(--habit-color);
+}
+
+.habit-day,
+.history-day {
+    aspect-ratio: 1;
+    min-width: 0;
+    padding: 0;
+    border: 1px solid #3a3d43;
+    border-radius: 4px;
+    background: #1d2024;
+    cursor: pointer;
+}
+
+.habit-day {
+    display: grid;
+    place-items: center;
+    color: #81868e;
+    font: 9px monospace;
+}
+
+.habit-day.marked {
+    color: #111214;
+    font-weight: 700;
+}
+
+.habit-day:hover,
+.history-day:hover,
+.habit-day.selected,
+.history-day.selected {
+    outline: 1px solid var(--habit-color);
+    outline-offset: 1px;
+}
+
+.habit-day.marked,
+.history-day.marked {
+    border-color: var(--habit-color);
+    background: var(--habit-color);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--habit-color) 25%, transparent);
+}
+
+.history-button {
+    width: 100%;
+    margin-top: 13px;
+    padding: 8px;
+    border: 0;
+    background: transparent;
+    color: #727780;
+    font: 9px monospace;
+    letter-spacing: .09em;
+    cursor: pointer;
+}
+
+.history-button:hover {
+    color: var(--habit-color);
+}
+
 
 .food-tracker {
 
@@ -1433,6 +1611,102 @@ h2 {
 }
 
 
+.color-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.field .color-field input[type="color"] {
+    width: 54px;
+    min-height: 42px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.color-field span {
+    color: #727780;
+    font-size: 11px;
+}
+
+.history-modal {
+    width: min(980px, 100%);
+    max-width: calc(100vw - 48px);
+}
+
+.habit-list > .empty-state {
+    grid-column: 1 / -1;
+}
+
+.history-body {
+    padding: 20px;
+}
+
+.history-summary,
+.history-legend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    color: #737780;
+    font: 9px monospace;
+    letter-spacing: .08em;
+}
+
+.history-summary {
+    margin-bottom: 14px;
+}
+
+.history-summary strong {
+    color: var(--habit-color);
+}
+
+.history-scroll {
+    overflow-x: auto;
+    padding: 4px 2px 12px;
+}
+
+.history-grid {
+    display: grid;
+    grid-template-rows: repeat(7, 12px);
+    grid-auto-flow: column;
+    grid-auto-columns: 12px;
+    gap: 4px;
+    width: max-content;
+    min-width: 100%;
+}
+
+.history-day {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.history-legend {
+    justify-content: flex-end;
+    margin-top: 5px;
+}
+
+.history-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.history-key {
+    width: 10px;
+    height: 10px;
+    border: 1px solid #3a3d43;
+    border-radius: 2px;
+    background: #1d2024;
+}
+
+.history-key.marked {
+    border-color: var(--habit-color);
+    background: var(--habit-color);
+}
+
+
 .modal-footer {
 
     display:
@@ -1455,6 +1729,13 @@ h2 {
    ========================================================= */
 
 @media (max-width: 900px) {
+
+    .habit-list {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
 
     .app {
 
@@ -1506,6 +1787,16 @@ h2 {
 
 @media (max-width: 600px) {
 
+    .habit-list {
+
+        grid-template-columns:
+            1fr;
+
+        padding:
+            14px;
+
+    }
+
     .app {
 
         padding:
@@ -1521,6 +1812,28 @@ h2 {
 
         flex-direction:
             column;
+
+    }
+
+
+    .today-block {
+
+        width:
+            100%;
+
+        justify-content:
+            space-between;
+
+    }
+
+
+    .today-label {
+
+        flex:
+            1;
+
+        text-align:
+            center;
 
     }
 

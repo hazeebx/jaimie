@@ -59,12 +59,33 @@
 
             <div class="today-block">
 
+                <button
+                    id="prevDay"
+                    class="date-nav"
+                    type="button"
+                    aria-label="Previous day"
+                    title="Previous day"
+                >
+                    ←
+                </button>
+
                 <div
                     id="todayLabel"
                     class="today-label"
+                    aria-live="polite"
                 >
                     —
                 </div>
+
+                <button
+                    id="nextDay"
+                    class="date-nav"
+                    type="button"
+                    aria-label="Next day"
+                    title="Next day"
+                >
+                    →
+                </button>
 
                 <button
                     id="todayBtn"
@@ -89,17 +110,9 @@
 
                 <div>
 
-                    <div class="eyebrow">
-                        DAILY SYSTEM
-                    </div>
-
-                    <h2>
+                    <h2 id="habitsHeading">
                         Today's Habits
                     </h2>
-
-                    <p>
-                        Keep the things that matter consistent.
-                    </p>
 
                 </div>
 
@@ -284,25 +297,23 @@
 
                 <div class="field">
 
-                    <label for="habitFrequency">
-                        FREQUENCY
+                    <label for="habitColor">
+                        HABIT COLOR
                     </label>
 
-                    <select id="habitFrequency">
+                    <div class="color-field">
 
-                        <option value="daily">
-                            Every day
-                        </option>
+                        <input
+                            id="habitColor"
+                            type="color"
+                            value="#ff8a2a"
+                        >
 
-                        <option value="weekdays">
-                            Weekdays
-                        </option>
+                        <span>
+                            Used for completed days and the habit tag.
+                        </span>
 
-                        <option value="weekly">
-                            Once per week
-                        </option>
-
-                    </select>
+                    </div>
 
                 </div>
 
@@ -327,6 +338,62 @@
                 </div>
 
             </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         HABIT HISTORY MODAL
+    ====================================================== -->
+
+    <div
+        id="habitHistoryModal"
+        class="modal-backdrop hidden"
+    >
+
+        <div class="modal history-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <div class="eyebrow">
+                        12 MONTH ACTIVITY
+                    </div>
+
+                    <h3 id="habitHistoryTitle">
+                        Habit History
+                    </h3>
+
+                </div>
+
+                <button
+                    class="modal-close"
+                    data-close="habitHistoryModal"
+                    type="button"
+                    aria-label="Close history"
+                >
+                    ×
+                </button>
+
+            </div>
+
+            <div class="history-body">
+
+                <div id="habitHistorySummary" class="history-summary"></div>
+
+                <div class="history-scroll">
+                    <div id="habitHistoryGrid" class="history-grid"></div>
+                </div>
+
+                <div class="history-legend">
+                    <span><i class="history-key unmarked"></i> UNMARKED</span>
+                    <span><i class="history-key marked"></i> MARKED</span>
+                </div>
+
+            </div>
 
         </div>
 

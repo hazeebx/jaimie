@@ -11,7 +11,8 @@
        {
            selectedDate: "YYYY-MM-DD",
            days: {},
-           workouts: []
+           workouts: [],
+           personalRecords: []
        }
    ========================================================= */
 
@@ -35,7 +36,9 @@ const fresh = () => ({
 
     days: {},
 
-    workouts: []
+    workouts: [],
+
+    personalRecords: []
 
 });
 
@@ -99,6 +102,17 @@ async function loadData() {
         }
 
 
+        if (
+            !Array.isArray(
+                state.personalRecords
+            )
+        ) {
+
+            state.personalRecords = [];
+
+        }
+
+
         return;
 
     }
@@ -150,6 +164,17 @@ async function loadData() {
             ) {
 
                 state.workouts = [];
+
+            }
+
+
+            if (
+                !Array.isArray(
+                    state.personalRecords
+                )
+            ) {
+
+                state.personalRecords = [];
 
             }
 
@@ -585,6 +610,8 @@ function render() {
                     </section>
 
 
+                    <div class="side-column">
+
                     <aside class="side-panel">
 
                         <div class="side-title">
@@ -672,6 +699,95 @@ function render() {
                         </div>
 
                     </aside>
+
+
+                    <aside class="side-panel pr-panel">
+
+                        <div class="pr-header">
+
+                            <div>
+                                <div class="side-title">
+                                    Personal Records
+                                </div>
+
+                                <div class="side-copy">
+                                    Track your best 1RM, 3RM and 5RM lifts.
+                                </div>
+                            </div>
+
+                            <button
+                                class="mini-btn pr-add"
+                                data-a="add-pr"
+                            >
+                                + Add PR
+                            </button>
+
+                        </div>
+
+
+                        <div class="pr-list">
+
+                            ${
+                                state.personalRecords.length
+                                    ? state.personalRecords
+                                        .slice()
+                                        .sort(
+                                            (a, b) =>
+                                                String(a.lift).localeCompare(String(b.lift)) ||
+                                                Number(a.reps) - Number(b.reps)
+                                        )
+                                        .map(
+                                            record => `
+
+                                                <div class="pr-item">
+
+                                                    <div class="pr-main">
+                                                        <strong>${esc(record.lift)}</strong>
+                                                        <span>${esc(record.date || "Date not set")}</span>
+                                                    </div>
+
+                                                    <div class="pr-result">
+                                                        <span class="pr-type">${Number(record.reps) || 1}RM</span>
+                                                        <strong>${esc(record.weight)} ${esc(record.unit || "kg")}</strong>
+                                                    </div>
+
+                                                    <div class="pr-actions">
+                                                        <button
+                                                            class="pr-icon"
+                                                            data-edit-pr="${record.id}"
+                                                            aria-label="Edit ${esc(record.lift)} PR"
+                                                            title="Edit PR"
+                                                        >
+                                                            ✎
+                                                        </button>
+
+                                                        <button
+                                                            class="pr-icon danger"
+                                                            data-delete-pr="${record.id}"
+                                                            aria-label="Delete ${esc(record.lift)} PR"
+                                                            title="Delete PR"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+
+                                                </div>
+
+                                            `
+                                        )
+                                        .join("")
+                                    : `
+                                        <div class="pr-empty">
+                                            No personal records yet.
+                                        </div>
+                                    `
+                            }
+
+                        </div>
+
+                    </aside>
+
+                    </div>
 
 
                 </div>
@@ -972,6 +1088,80 @@ function bind() {
         )
         .onclick =
         manageModal;
+
+
+    document
+        .querySelector(
+            "[data-a=add-pr]"
+        )
+        .onclick =
+        () =>
+            personalRecordModal();
+
+
+    document
+        .querySelectorAll(
+            "[data-edit-pr]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    () =>
+                        personalRecordModal(
+                            button.dataset.editPr
+                        );
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            "[data-delete-pr]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    async () => {
+
+                        const record =
+                            state.personalRecords.find(
+                                item =>
+                                    item.id ===
+                                    button.dataset.deletePr
+                            );
+
+
+                        if (
+                            !record ||
+                            !confirm(
+                                `Delete the ${record.reps}RM record for ${record.lift}?`
+                            )
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        state.personalRecords =
+                            state.personalRecords.filter(
+                                item =>
+                                    item.id !==
+                                    record.id
+                            );
+
+
+                        await save();
+
+                        render();
+
+                    };
+
+            }
+        );
 
 
     document
@@ -1277,6 +1467,228 @@ function modal(html) {
                     () =>
                         modalBackdrop.remove()
         );
+
+}
+
+
+/* =========================================================
+   PERSONAL RECORDS
+   ========================================================= */
+
+function personalRecordModal(
+    recordId = null
+) {
+
+    const record =
+        state.personalRecords.find(
+            item =>
+                item.id ===
+                recordId
+        );
+
+
+    modal(`
+
+        <div class="modal-header">
+
+            <div class="modal-title">
+                ${record ? "Edit" : "Add"} Personal Record
+            </div>
+
+            <button class="close" data-close>
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="pr-form">
+
+            <div class="modal-body">
+
+                <div class="field">
+                    <label for="pr-lift">Lift</label>
+                    <input
+                        id="pr-lift"
+                        maxlength="100"
+                        placeholder="e.g. Barbell Back Squat"
+                        value="${esc(record?.lift || "")}"
+                        required
+                    >
+                </div>
+
+
+                <div class="pr-form-grid">
+
+                    <div class="field">
+                        <label for="pr-reps">Record type</label>
+                        <select id="pr-reps" required>
+                            ${[1, 3, 5]
+                                .map(
+                                    reps => `
+                                        <option
+                                            value="${reps}"
+                                            ${Number(record?.reps || 1) === reps ? "selected" : ""}
+                                        >
+                                            ${reps}RM
+                                        </option>
+                                    `
+                                )
+                                .join("")}
+                        </select>
+                    </div>
+
+
+                    <div class="field">
+                        <label for="pr-weight">Weight</label>
+                        <input
+                            id="pr-weight"
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value="${esc(record?.weight || "")}"
+                            placeholder="0"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="field">
+                        <label for="pr-unit">Unit</label>
+                        <select id="pr-unit">
+                            <option value="kg" ${record?.unit !== "lb" ? "selected" : ""}>kg</option>
+                            <option value="lb" ${record?.unit === "lb" ? "selected" : ""}>lb</option>
+                        </select>
+                    </div>
+
+                </div>
+
+
+                <div class="field">
+                    <label for="pr-date">Date achieved</label>
+                    <input
+                        id="pr-date"
+                        type="date"
+                        value="${esc(record?.date || key(new Date()))}"
+                    >
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+                <button type="button" class="secondary" data-close>
+                    Cancel
+                </button>
+                <button type="submit" class="primary">
+                    Save PR
+                </button>
+            </div>
+
+        </form>
+
+    `);
+
+
+    document
+        .querySelector(
+            "#pr-form"
+        )
+        .onsubmit =
+        async event => {
+
+            event.preventDefault();
+
+
+            const lift =
+                document
+                    .querySelector("#pr-lift")
+                    .value
+                    .trim();
+
+
+            const weight =
+                Number(
+                    document
+                        .querySelector("#pr-weight")
+                        .value
+                );
+
+
+            if (
+                !lift ||
+                !Number.isFinite(weight) ||
+                weight <= 0
+            ) {
+
+                return;
+
+            }
+
+
+            const updatedRecord = {
+
+                id:
+                    record?.id ||
+                    uid(),
+
+                lift,
+
+                reps:
+                    Number(
+                        document
+                            .querySelector("#pr-reps")
+                            .value
+                    ),
+
+                weight,
+
+                unit:
+                    document
+                        .querySelector("#pr-unit")
+                        .value,
+
+                date:
+                    document
+                        .querySelector("#pr-date")
+                        .value ||
+                    key(new Date())
+
+            };
+
+
+            if (record) {
+
+                state.personalRecords =
+                    state.personalRecords.map(
+                        item =>
+                            item.id === record.id
+                                ? updatedRecord
+                                : item
+                    );
+
+            }
+
+            else {
+
+                state.personalRecords.push(
+                    updatedRecord
+                );
+
+            }
+
+
+            await save();
+
+            document
+                .querySelector(
+                    "#modal"
+                )
+                ?.remove();
+
+            render();
+
+        };
 
 }
 

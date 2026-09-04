@@ -228,23 +228,16 @@ async function saveEntry() {
 
     const entry = {
 
+        ...(
+            currentEntry() ||
+            {}
+        ),
+
         date:
             selectedDate,
 
         howDay:
             $("howDay").value
-                .trim(),
-
-        whatHappened:
-            $("whatHappened").value
-                .trim(),
-
-        thinking:
-            $("thinking").value
-                .trim(),
-
-        grateful:
-            $("grateful").value
                 .trim(),
 
         tomorrow:
@@ -338,21 +331,6 @@ function renderEntry() {
 
     $("howDay").value =
         entry?.howDay ||
-        "";
-
-
-    $("whatHappened").value =
-        entry?.whatHappened ||
-        "";
-
-
-    $("thinking").value =
-        entry?.thinking ||
-        "";
-
-
-    $("grateful").value =
-        entry?.grateful ||
         "";
 
 
@@ -555,9 +533,6 @@ function getPreview(
     const fields = [
 
         entry?.howDay,
-        entry?.whatHappened,
-        entry?.thinking,
-        entry?.grateful,
         entry?.tomorrow
 
     ];
@@ -604,9 +579,6 @@ function updateCharCount() {
     const total =
         [
             $("howDay"),
-            $("whatHappened"),
-            $("thinking"),
-            $("grateful"),
             $("tomorrow")
         ]
             .reduce(
@@ -700,9 +672,6 @@ function bindInputs() {
 
     [
         $("howDay"),
-        $("whatHappened"),
-        $("thinking"),
-        $("grateful"),
         $("tomorrow")
     ]
         .forEach(

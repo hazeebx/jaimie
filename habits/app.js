@@ -34,6 +34,14 @@ let editingFoodId =
     null;
 
 
+let historyHabitId =
+    null;
+
+
+const DEFAULT_HABIT_COLOR =
+    "#ff8a2a";
+
+
 /* =========================================================
    HELPERS
    ========================================================= */
@@ -244,6 +252,82 @@ function renderDate() {
             date
         ).toUpperCase();
 
+
+    const isToday =
+        selectedDate ===
+        key(
+            new Date()
+        );
+
+
+    $("todayBtn")
+        .disabled =
+        isToday;
+
+
+    $("habitsHeading")
+        .textContent =
+        isToday
+            ? "Today's Habits"
+            : "Habits for This Day";
+
+}
+
+
+function habitColor(
+    habit
+) {
+
+    const color =
+        String(
+            habit?.color ||
+            DEFAULT_HABIT_COLOR
+        );
+
+
+    return /^#[0-9a-f]{6}$/i.test(
+        color
+    )
+        ? color
+        : DEFAULT_HABIT_COLOR;
+
+}
+
+
+function dateRangeEndingOn(
+    endDateKey,
+    count
+) {
+
+    const end =
+        dateFromKey(
+            endDateKey
+        );
+
+
+    return Array.from(
+        { length: count },
+        (_, index) => {
+
+            const date =
+                new Date(
+                    end
+                );
+
+
+            date.setDate(
+                date.getDate() -
+                (count - index - 1)
+            );
+
+
+            return key(
+                date
+            );
+
+        }
+    );
+
 }
 
 
@@ -285,11 +369,27 @@ function isHabitComplete(
 
 
 function toggleHabit(
-    habitId
+    habitId,
+    dateKey = selectedDate
 ) {
 
+    if (
+        !state.completions[
+            dateKey
+        ]
+    ) {
+
+        state.completions[
+            dateKey
+        ] = {};
+
+    }
+
+
     const bucket =
-        getCompletionBucket();
+        state.completions[
+            dateKey
+        ];
 
 
     bucket[
@@ -304,70 +404,15 @@ function toggleHabit(
 
     renderHabits();
 
-}
-
-
-function frequencyLabel(
-    frequency
-) {
 
     if (
-        frequency ===
-        "weekdays"
+        historyHabitId ===
+        habitId
     ) {
 
-        return "WEEKDAYS";
+        renderHabitHistory();
 
     }
-
-
-    if (
-        frequency ===
-        "weekly"
-    ) {
-
-        return "WEEKLY";
-
-    }
-
-
-    return "DAILY";
-
-}
-
-
-function shouldShowHabit(
-    habit
-) {
-
-    const date =
-        dateFromKey(
-            selectedDate
-        );
-
-
-    if (
-        habit.frequency ===
-        "weekdays"
-    ) {
-
-        const day =
-            date.getDay();
-
-
-        return (
-            day >= 1 &&
-            day <= 5
-        );
-
-    }
-
-
-    /*
-     * Weekly habits are shown every day
-     * in this V1 implementation.
-     */
-    return true;
 
 }
 
@@ -425,6 +470,62 @@ function calculateHabitStreak(
 }
 
 
+function habitDayCells(
+    habit,
+    days,
+    className
+) {
+
+    return days
+        .map(
+            dateKey => {
+
+                const marked =
+                    !!state.completions?.[
+                        dateKey
+                    ]?.[
+                        habit.id
+                    ];
+
+
+                const date =
+                    dateFromKey(
+                        dateKey
+                    );
+
+
+                const label =
+                    `${formatDate(date)}: ${
+                        marked
+                            ? "completed"
+                            : "not completed"
+                    }`;
+
+
+                return `
+
+                    <button
+                        class="${className} ${marked ? "marked" : ""} ${dateKey === selectedDate ? "selected" : ""}"
+                        type="button"
+                        data-habit-day="${escapeHtml(habit.id)}"
+                        data-date="${dateKey}"
+                        aria-label="${escapeHtml(label)}"
+                        title="${escapeHtml(label)}"
+                    >${
+                        className === "habit-day"
+                            ? `<span>${date.getDate()}</span>`
+                            : ""
+                    }</button>
+
+                `;
+
+            }
+        )
+        .join("");
+
+}
+
+
 function renderHabits() {
 
     const list =
@@ -434,9 +535,6 @@ function renderHabits() {
     const habits =
         Object.values(
             state.habits
-        )
-        .filter(
-            shouldShowHabit
         )
         .sort(
             (
@@ -496,6 +594,19 @@ function renderHabits() {
                         );
 
 
+                    const color =
+                        habitColor(
+                            habit
+                        );
+
+
+                    const recentDays =
+                        dateRangeEndingOn(
+                            selectedDate,
+                            28
+                        );
+
+
                     return `
 
                         <article
@@ -504,7 +615,10 @@ function renderHabits() {
                                     ? "completed"
                                     : ""
                             }"
+                            style="--habit-color: ${color}"
                         >
+
+                            <div class="habit-card-header">
 
                             <button
                                 class="habit-check"
@@ -536,37 +650,6 @@ function renderHabits() {
                                 </div>
 
 
-                                <div
-                                    class="habit-meta"
-                                >
-
-                                    <span>
-                                        ${frequencyLabel(
-                                            habit.frequency
-                                        )}
-                                    </span>
-
-                                    <span>
-                                        ADDED ${
-                                            escapeHtml(
-                                                habit.createdAt
-                                            )
-                                        }
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-
-                            <div
-                                class="habit-streak"
-                            >
-                                ${
-                                    streak > 0
-                                        ? `<strong>${streak}</strong> DAY STREAK`
-                                        : "NO STREAK"
-                                }
                             </div>
 
 
@@ -599,6 +682,48 @@ function renderHabits() {
 
                             </div>
 
+                            </div>
+
+
+                            <div class="habit-grid-header">
+                                <span class="habit-grid-streak">
+                                    ${
+                                        streak > 0
+                                            ? `<strong>${streak}</strong> DAY STREAK`
+                                            : "NO STREAK"
+                                    }
+                                </span>
+                                <span>
+                                    ${escapeHtml(
+                                        dateFromKey(recentDays[0]).toLocaleDateString(
+                                            undefined,
+                                            { month: "short", day: "numeric" }
+                                        ).toUpperCase()
+                                    )}
+                                    —
+                                    ${escapeHtml(
+                                        dateFromKey(recentDays[recentDays.length - 1]).toLocaleDateString(
+                                            undefined,
+                                            { month: "short", day: "numeric" }
+                                        ).toUpperCase()
+                                    )}
+                                </span>
+                            </div>
+
+
+                            <div class="habit-grid" aria-label="Last 28 days">
+                                ${habitDayCells(habit, recentDays, "habit-day")}
+                            </div>
+
+
+                            <button
+                                class="history-button"
+                                type="button"
+                                data-show-history="${escapeHtml(habit.id)}"
+                            >
+                                SHOW 1 YEAR HISTORY
+                            </button>
+
                         </article>
 
                     `;
@@ -614,6 +739,40 @@ function renderHabits() {
 
 
 function bindHabitButtons() {
+
+    document
+        .querySelectorAll(
+            "[data-habit-day]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    () =>
+                        toggleHabit(
+                            button.dataset.habitDay,
+                            button.dataset.date
+                        );
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            "[data-show-history]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    () =>
+                        openHabitHistory(
+                            button.dataset.showHistory
+                        );
+
+            }
+        );
 
     document
         .querySelectorAll(
@@ -721,6 +880,126 @@ function bindHabitButtons() {
 }
 
 
+function openHabitHistory(
+    habitId
+) {
+
+    historyHabitId =
+        habitId;
+
+
+    renderHabitHistory();
+
+    openModal(
+        "habitHistoryModal"
+    );
+
+}
+
+
+function renderHabitHistory() {
+
+    const habit =
+        state.habits[
+            historyHabitId
+        ];
+
+
+    if (!habit) {
+
+        closeModal(
+            "habitHistoryModal"
+        );
+
+        return;
+
+    }
+
+
+    const days =
+        dateRangeEndingOn(
+            selectedDate,
+            365
+        );
+
+
+    const markedCount =
+        days.filter(
+            dateKey =>
+                !!state.completions?.[
+                    dateKey
+                ]?.[
+                    habit.id
+                ]
+        ).length;
+
+
+    const color =
+        habitColor(
+            habit
+        );
+
+
+    $("habitHistoryTitle")
+        .textContent =
+        `${habit.name} History`;
+
+
+    $("habitHistorySummary")
+        .innerHTML = `
+            <span>365 DAYS ENDING ${escapeHtml(formatDate(dateFromKey(selectedDate)).toUpperCase())}</span>
+            <strong>${markedCount} MARKED</strong>
+        `;
+
+
+    $("habitHistoryGrid")
+        .style
+        .setProperty(
+            "--habit-color",
+            color
+        );
+
+
+    $("habitHistoryGrid")
+        .closest(
+            ".history-modal"
+        )
+        .style
+        .setProperty(
+            "--habit-color",
+            color
+        );
+
+
+    $("habitHistoryGrid")
+        .innerHTML =
+        habitDayCells(
+            habit,
+            days,
+            "history-day"
+        );
+
+
+    $("habitHistoryGrid")
+        .querySelectorAll(
+            "[data-habit-day]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    () =>
+                        toggleHabit(
+                            button.dataset.habitDay,
+                            button.dataset.date
+                        );
+
+            }
+        );
+
+}
+
+
 /* =========================================================
    HABIT MODAL
    ========================================================= */
@@ -754,10 +1033,11 @@ function openHabitModal(
         "";
 
 
-    $("habitFrequency")
+    $("habitColor")
         .value =
-        habit?.frequency ||
-        "daily";
+        habitColor(
+            habit
+        );
 
 
     openModal(
@@ -780,9 +1060,12 @@ async function submitHabit(
             .trim();
 
 
-    const frequency =
-        $("habitFrequency")
-            .value;
+    const color =
+        habitColor({
+            color:
+                $("habitColor")
+                    .value
+        });
 
 
     if (!name) {
@@ -805,7 +1088,7 @@ async function submitHabit(
 
         name,
 
-        frequency,
+        color,
 
         createdAt:
             state.habits[
