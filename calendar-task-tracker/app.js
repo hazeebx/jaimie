@@ -179,6 +179,11 @@ async function saveTasks() {
    */
   await saveToJaimieData();
 
+  if (window.JAIMIEReminderCalendarSync) {
+    const synced = await JAIMIEReminderCalendarSync.sync("calendar");
+    state.tasks = synced.calendar;
+  }
+
   /*
    * Temporary legacy backup.
    *
@@ -257,6 +262,11 @@ async function refreshTasks() {
       JAIMIE_DATA_KEY,
       state.tasks
     );
+  }
+
+  if (window.JAIMIEReminderCalendarSync) {
+    const synced = await JAIMIEReminderCalendarSync.sync();
+    state.tasks = synced.calendar;
   }
 
   state.tasks.sort((a, b) => {
@@ -629,6 +639,7 @@ function renderSelectedDay() {
 
         <div class="selected-task-meta">
           ${escapeHtml(task.category)}
+          ${task.time ? ` · ${escapeHtml(task.time)}` : ""}
           ${
             task.notes
               ? " · Has notes"
@@ -737,6 +748,16 @@ function openTaskEditor(
   $("taskDate").value =
     task?.date || dateKey(date);
 
+  $("taskTime").value =
+    task?.time || "";
+
+  $("taskTime").setCustomValidity("");
+
+  $("taskNotificationMinutes").value =
+    [0, 5, 10, 15].includes(task?.notifyMinutes)
+      ? String(task.notifyMinutes)
+      : "off";
+
   $("taskCategory").value =
     task?.category || "Personal";
 
@@ -769,7 +790,21 @@ async function saveTask(event) {
   const date =
     $("taskDate").value;
 
+  const time =
+    $("taskTime").value;
+
+  const notifyMinutes =
+    $("taskNotificationMinutes").value === "off"
+      ? null
+      : Number($("taskNotificationMinutes").value);
+
   if (!title || !date) {
+    return;
+  }
+
+  if (notifyMinutes !== null && !time) {
+    $("taskTime").setCustomValidity("Choose a time for this notification.");
+    $("taskTime").reportValidity();
     return;
   }
 
@@ -791,6 +826,8 @@ async function saveTask(event) {
 
     date,
 
+    time,
+
     category:
       $("taskCategory").value,
 
@@ -798,6 +835,11 @@ async function saveTask(event) {
       $("taskNotes")
         .value
         .trim(),
+
+    notifyMinutes,
+
+    linkedReminderId:
+      existing?.linkedReminderId || null,
 
     completed:
       existing?.completed ||
@@ -866,6 +908,16 @@ async function removeEditingTask() {
     return;
   }
 
+  const removedTask =
+    state.tasks.find(
+      task =>
+        task.id === state.editingTaskId
+    );
+
+  if (removedTask?.id && window.JAIMIEReminderCalendarSync) {
+    await JAIMIEReminderCalendarSync.removeReminderForCalendarTask(removedTask.id);
+  }
+
   state.tasks =
     state.tasks.filter(
       (task) =>
@@ -922,6 +974,14 @@ function openDetails(id) {
             )
           )}
         </span>
+
+        ${task.time
+          ? `<span class="chip">${escapeHtml(task.time)}</span>`
+          : ""}
+
+        ${[0, 5, 10, 15].includes(task.notifyMinutes)
+          ? `<span class="chip">Notify ${task.notifyMinutes === 0 ? "at time" : `${task.notifyMinutes} min before`}</span>`
+          : ""}
 
         <span class="chip">
           ${
@@ -991,6 +1051,10 @@ function openDetails(id) {
           (item) =>
             item.id !== task.id
         );
+
+      if (window.JAIMIEReminderCalendarSync) {
+        await JAIMIEReminderCalendarSync.removeReminderForCalendarTask(task.id);
+      }
 
       await saveTasks();
 
@@ -1269,6 +1333,9 @@ function bindEvents() {
       saveTask
     );
 
+  $("taskTime").addEventListener("input", () => $("taskTime").setCustomValidity(""));
+  $("taskNotificationMinutes").addEventListener("change", () => $("taskTime").setCustomValidity(""));
+
   $("deleteTaskButton")
     .addEventListener(
       "click",
@@ -1392,5 +1459,22 @@ async function init() {
     );
   }
 }
+
+let linkedDataRefreshInFlight = false;
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState !== "visible" || linkedDataRefreshInFlight) {
+    return;
+  }
+
+  linkedDataRefreshInFlight = true;
+  try {
+    await refreshTasks();
+    render();
+  } catch (error) {
+    console.error("Could not refresh linked Calendar tasks:", error);
+  } finally {
+    linkedDataRefreshInFlight = false;
+  }
+});
 
 init();

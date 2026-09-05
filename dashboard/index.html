@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JAIMIE — Dashboard</title>
+    <link rel="stylesheet" href="../side-bar/styles.css">
+    <link rel="stylesheet" href="styles.css?v=4">
+</head>
+<body>
+    <div id="side-menu"></div>
+
+    <main class="dashboard-app jaimie-content">
+        <header class="dashboard-header">
+            <div class="dashboard-brand">
+                <div class="dashboard-mark">J</div>
+                <div>
+                    <div class="eyebrow">JAIMIE / DASHBOARD</div>
+                    <h1>Dashboard</h1>
+                    <p id="dashboardDate"></p>
+                </div>
+            </div>
+
+            <button class="add-widget-button" id="addWidgetButton" type="button" aria-haspopup="dialog">
+                <span aria-hidden="true">＋</span>
+                ADD WIDGET
+            </button>
+        </header>
+
+        <section class="dashboard-grid" id="dashboardGrid" aria-live="polite"></section>
+
+        <section class="dashboard-empty" id="dashboardEmpty" hidden>
+            <div class="empty-icon">＋</div>
+            <h2>Build your dashboard</h2>
+            <p>Add widgets for the parts of JAIMIE you want to see at a glance.</p>
+            <button class="add-widget-button" id="emptyAddWidgetButton" type="button">＋ ADD YOUR FIRST WIDGET</button>
+        </section>
+    </main>
+
+    <dialog class="widget-dialog" id="widgetDialog">
+        <form method="dialog" class="dialog-card">
+            <header class="dialog-header">
+                <div>
+                    <div class="eyebrow">WIDGET LIBRARY</div>
+                    <h2>Add to Dashboard</h2>
+                </div>
+                <button class="icon-button" value="cancel" aria-label="Close widget library" type="submit">×</button>
+            </header>
+
+            <div class="widget-options" id="widgetOptions"></div>
+        </form>
+    </dialog>
+
+    <div class="dashboard-toast" id="dashboardToast" role="status" aria-live="polite"></div>
+
+    <script src="../data-manager/app.js"></script>
+    <script src="../side-bar/app.js"></script>
+    <script src="widgets/registry.js?v=2"></script>
+    <script src="widgets/workout-widget.js?v=2"></script>
+    <script src="widgets/countdown-widget.js?v=3"></script>
+    <script src="app.js"></script>
+</body>
+</html>

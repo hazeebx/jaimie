@@ -25,13 +25,6 @@
     </header>
 
     <main class="calendar-page">
-      <section class="intro">
-        <div>
-          <p class="eyebrow">Your schedule</p>
-          <h1>Calendar</h1>
-           </div>
-      </section>
-
       <section class="workspace">
         <aside class="upcoming-panel panel">
           <div class="panel-heading">
@@ -87,6 +80,18 @@
         <label>Date
           <input id="taskDate" type="date" required>
         </label>
+        <label>Time
+          <input id="taskTime" type="time">
+        </label>
+        <label>Notify me
+          <select id="taskNotificationMinutes">
+            <option value="off">Off</option>
+            <option value="0">At task time</option>
+            <option value="5">5 minutes before</option>
+            <option value="10">10 minutes before</option>
+            <option value="15">15 minutes before</option>
+          </select>
+        </label>
         <label>Category
           <select id="taskCategory">
             <option>Personal</option>
@@ -137,8 +142,9 @@
 
   <div id="toast" class="toast" role="status"></div>
   <script src="../data-manager/app.js"></script>
+  <script src="../shared/reminder-calendar-sync.js"></script>
 <script src="../side-bar/app.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=2"></script>
 
 </body>
 </html>

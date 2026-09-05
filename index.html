@@ -11,22 +11,204 @@
 
 <body>
     <div id="side-menu"></div>
-    <main class="welcome">
-        <div class="system-tag">JAIMIE // Just An Intelligent Memory Integrated Environment</div>
+    <main class="home-shell">
 
-        <h1>Hello Hazeeb.</h1>
+        <header class="home-header">
+            <div>
+                <div class="system-tag">JAIMIE // LOCAL INTELLIGENCE</div>
+                <h1>JAIMIE AI</h1>
+                <p>Your private intelligence layer, running on this computer.</p>
+            </div>
 
-        <p>
-            “The day I stopped worrying abt breaking everything was the day nothing broke”
-        </p>
+            <div class="privacy-badge">
+                <span></span>
+                LOCAL PROCESSING
+            </div>
+        </header>
 
-        <div class="status">
-            <span class="status-dot"></span>
-            SYSTEM READY
-        </div>
+
+        <section class="ai-panel" id="aiPanel">
+
+            <div class="connection-hero">
+                <div class="engine-orb is-offline" id="engineOrb" aria-hidden="true">
+                    <span></span>
+                </div>
+
+                <div>
+                    <div class="connection-label" id="connectionLabel">AI ENGINE OFFLINE</div>
+                    <h2 id="connectionTitle">Connect your local AI engine</h2>
+                    <p id="connectionCopy">
+                        Start the JAIMIE AI Engine on this computer, then connect to enable local AI functionality.
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="engine-details" id="engineDetails" hidden>
+                <div class="detail-card">
+                    <span>MODEL</span>
+                    <strong id="modelName">—</strong>
+                </div>
+
+                <div class="detail-card">
+                    <span>ENGINE</span>
+                    <strong id="engineName">—</strong>
+                </div>
+
+                <div class="detail-card">
+                    <span>DEVICE</span>
+                    <strong id="deviceName">—</strong>
+                </div>
+
+                <div class="detail-card">
+                    <span>BACKEND</span>
+                    <strong id="backendName">—</strong>
+                </div>
+            </div>
+
+
+            <div class="connection-error" id="connectionError" role="status" hidden></div>
+
+
+            <div class="connection-controls">
+                <label for="engineUrl">LOCAL ENGINE ADDRESS</label>
+
+                <div class="address-row">
+                    <input
+                        id="engineUrl"
+                        type="url"
+                        value="http://127.0.0.1:8765"
+                        spellcheck="false"
+                        autocomplete="off"
+                    >
+
+                    <button class="primary-button" id="connectButton" type="button">
+                        CONNECT AI ENGINE
+                    </button>
+                </div>
+
+                <small>Only localhost and 127.0.0.1 addresses are accepted.</small>
+            </div>
+
+
+            <div class="engine-actions">
+                <button class="secondary-button" id="retryButton" type="button">
+                    RETRY CONNECTION
+                </button>
+
+                <button class="secondary-button" id="disconnectButton" type="button" hidden>
+                    DISCONNECT
+                </button>
+
+                <button class="assistant-button" id="assistantButton" type="button" disabled>
+                    OPEN AI ASSISTANT
+                </button>
+            </div>
+
+
+            <div class="pairing-panel" id="pairingPanel" hidden>
+                <div>
+                    <div class="connection-label">SECURE PAIRING REQUIRED</div>
+                    <h3>Enter the code shown in the engine terminal</h3>
+                    <p>The code is single-use and expires after ten minutes.</p>
+                </div>
+
+                <form class="pairing-form" id="pairingForm">
+                    <input
+                        id="pairingCode"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        maxlength="6"
+                        placeholder="000000"
+                        autocomplete="one-time-code"
+                        aria-label="Six-digit pairing code"
+                        required
+                    >
+                    <button class="primary-button" type="submit">PAIR ENGINE</button>
+                </form>
+
+                <div class="pairing-message" id="pairingMessage" role="status"></div>
+            </div>
+
+        </section>
+
+
+        <section class="chat-panel" id="chatPanel" hidden>
+            <div class="chat-header">
+                <div>
+                    <div class="system-tag">PRIVATE SESSION</div>
+                    <h2>Ask JAIMIE</h2>
+                    <p>Relevant JAIMIE data is selected in this browser and processed only by your local model.</p>
+                </div>
+
+                <button class="secondary-button" id="clearChatButton" type="button">
+                    CLEAR CHAT
+                </button>
+            </div>
+
+
+            <div class="suggested-prompts" id="suggestedPrompts">
+                <button type="button" data-prompt="What do I have planned today?">Today's overview</button>
+                <button type="button" data-prompt="What should I prioritize today?">Prioritize today</button>
+                <button type="button" data-prompt="Summarize my week.">Summarize my week</button>
+                <button type="button" data-prompt="What workout do I have today?">Today's workout</button>
+            </div>
+
+
+            <div class="chat-messages" id="chatMessages" aria-live="polite">
+                <div class="chat-empty" id="chatEmpty">
+                    <span>J</span>
+                    <strong>Your local assistant is ready.</strong>
+                    <p>Messages and selected context remain between this tab and your local engine.</p>
+                </div>
+            </div>
+
+
+            <form class="chat-composer" id="chatForm">
+                <label for="chatInput">MESSAGE</label>
+                <textarea
+                    id="chatInput"
+                    rows="3"
+                    maxlength="8000"
+                    placeholder="Ask JAIMIE anything…"
+                    required
+                ></textarea>
+
+                <div class="composer-footer">
+                    <span id="chatStatus">READY</span>
+                    <div>
+                        <button class="secondary-button" id="stopButton" type="button" hidden>STOP</button>
+                        <button class="primary-button" id="sendButton" type="submit">SEND</button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+
+        <section class="setup-panel">
+            <div>
+                <div class="setup-number">01</div>
+                <h3>Start Ollama</h3>
+                <p>Keep Ollama running with your installed <code>qwen3:1.7b</code> model available.</p>
+            </div>
+
+            <div>
+                <div class="setup-number">02</div>
+                <h3>Start the engine</h3>
+                <code class="command">python local-ai-engine/jaimie_ai.py</code>
+            </div>
+
+            <div>
+                <div class="setup-number">03</div>
+                <h3>Connect locally</h3>
+                <p>Use the button above. Normal JAIMIE features continue working while AI is offline.</p>
+            </div>
+        </section>
+
     </main>
 
     <script src="./data-manager/app.js"></script>
     <script src="./side-bar/app.js"></script>
+    <script src="./home.js?v=4"></script>
 </body>
 </html>

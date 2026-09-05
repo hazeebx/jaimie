@@ -29,3 +29,23 @@ node scripts/smoke-test.mjs
 ```
 
 The smoke test checks JavaScript syntax, required page files, shared script order and sidebar destinations. It does not modify browser data.
+
+## Local AI engine
+
+The Home page includes Phase 3 local-engine connection detection, secure
+pairing, streamed chat, and selective read-only context from JAIMIE. With Ollama running, start the
+dependency-free Python service from the repository root:
+
+```bash
+python local-ai-engine/jaimie_ai.py
+```
+
+It binds to `127.0.0.1:8765` and uses the faster `qwen3:1.7b` by default. Enter the one-time
+pairing code printed in its terminal on the Home page. The browser selects
+relevant Day, Calendar, Workout, Habit, or explicitly requested Journal data for
+each prompt. The engine has no database credentials and cannot modify JAIMIE.
+See `local-ai-engine/README.md` for configuration and security details.
+
+The engine directory is explicitly excluded from Firebase Hosting in
+`firebase.json`. Engine source remains versioned, while local models, virtual
+environments, caches, and secrets are excluded by `.gitignore`.

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json",
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "local-ai-engine/**",
+      "scripts/**",
+      "prototyping/**",
+      "**/*.md"
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false
+  }
+}

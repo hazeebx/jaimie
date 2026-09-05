@@ -39,8 +39,8 @@
             status.textContent = errorMessage || notificationProblem() || (!available
                 ? "Scheduled reminders need Web Locks support. Test notification can still check desktop notifications independently."
                 : active
-                        ? "Enabled on this browser. Choose a reminder time when adding or editing a Schedule entry."
-                        : "Off on this browser. Existing entries stay off until you choose a reminder time.");
+                        ? "Enabled on this browser. Schedule entries and dated reminders can notify you."
+                        : "Off on this browser. Turn it on, then choose a notification time on a Schedule entry or Reminder.");
         } catch {
             status.textContent = "Browser storage is unavailable; notifications cannot be enabled safely.";
             toggle.disabled = false;
@@ -109,6 +109,31 @@
                         }
                     }
                 }
+
+                for (const item of Array.isArray(data?.reminders) ? data.reminders : []) {
+                    const date = item?.date;
+                    if (item?.done || !item?.id || !/^\d{4}-\d{2}-\d{2}$/.test(date || "") ||
+                        ![0, 5, 10, 15].includes(item.notifyMinutes) ||
+                        !/^([01]\d|2[0-3]):[0-5]\d$/.test(item.time || "")) continue;
+                    const scheduled = new Date(`${date}T${item.time}:00`);
+                    const localDate = `${scheduled.getFullYear()}-${String(scheduled.getMonth() + 1).padStart(2, "0")}-${String(scheduled.getDate()).padStart(2, "0")}`;
+                    if (localDate !== date) continue;
+                    const due = scheduled.getTime() - item.notifyMinutes * MINUTE;
+                    if (now < due || now - due > CATCH_UP) continue;
+                    const receipt = JSON.stringify(["reminder", date, item.id, item.time, item.notifyMinutes]);
+                    if (Object.hasOwn(receipts, receipt)) continue;
+                    receipts[receipt] = now;
+                    localStorage.setItem(RECEIPTS, JSON.stringify(receipts));
+                    try {
+                        notify(`JAIMIE · ${item.title || "Reminder"}`,
+                            `${item.time} · ${scheduled.toLocaleDateString()}${now > due + MINUTE ? " · Delayed reminder" : ""}`,
+                            receipt, date);
+                    } catch (error) {
+                        delete receipts[receipt];
+                        localStorage.setItem(RECEIPTS, JSON.stringify(receipts));
+                        throw error;
+                    }
+                }
                 localStorage.setItem(RECEIPTS, JSON.stringify(receipts));
             });
         } catch (error) {
@@ -163,7 +188,7 @@
                     errorMessage = notificationProblem() || "Permission was not granted. Click Test again and choose Allow in the browser prompt.";
                 } else {
                     errorMessage = "Test requested from the browser. If nothing appears, check Windows notification settings for this browser and Do Not Disturb.";
-                    notify("JAIMIE · Test notification", "Schedule reminders use this popup. Sound follows your Windows settings.", `jaimie-schedule-test-${Date.now()}`, null, () => {
+                    notify("JAIMIE · Test notification", "Schedule entries and Reminders use this popup. Sound follows your Windows settings.", `jaimie-schedule-test-${Date.now()}`, null, () => {
                         errorMessage = "Browser confirmed the test notification was shown. Sound still depends on Windows notification settings.";
                         refreshUI();
                     });

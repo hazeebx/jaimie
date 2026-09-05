@@ -86,6 +86,12 @@ async function saveData() {
         DATA_KEY,
         state.data
     );
+
+    if (window.JAIMIEReminderCalendarSync) {
+        const synced = await JAIMIEReminderCalendarSync.sync("day");
+        state.data = synced.day;
+    }
+
     window.dispatchEvent(new Event("jaimie-schedule-changed"));
 }
 
@@ -307,6 +313,14 @@ function render() {
                         >
                             ${esc(item.title)}
                         </div>
+
+                        ${item.date
+                            ? `<div class="reminder-when">${esc(item.date)}${item.time ? ` · ${esc(item.time)}` : ""}</div>`
+                            : ""}
+
+                        ${[0, 5, 10, 15].includes(item.notifyMinutes)
+                            ? `<div class="notification-label">Notification: ${item.notifyMinutes === 0 ? "at reminder time" : item.notifyMinutes + " min before"}</div>`
+                            : ""}
 
                         ${
                             item.note
@@ -555,16 +569,24 @@ function openModal(type, index = null) {
 
 
     $("#timeRow").style.display =
-        type === "schedule"
+        type === "schedule" || type === "reminder"
             ? "block"
             : "none";
+
+
+    $("#dateRow").hidden =
+        type !== "reminder";
+
+    $("#reminderDate").required =
+        type === "reminder";
 
 
     $("#title").value = item?.title || "";
     $("#note").value = item?.note || "";
     $("#time").value = item?.time || "";
+    $("#reminderDate").value = item?.date || key(state.date);
     $("#time").setCustomValidity("");
-    $("#notificationRow").hidden = type !== "schedule";
+    $("#notificationRow").hidden = type !== "schedule" && type !== "reminder";
     $("#notificationMinutes").value =
         [0, 5, 10, 15].includes(item?.notifyMinutes)
             ? String(item.notifyMinutes)
@@ -676,7 +698,7 @@ $("#form").onsubmit = async (event) => {
 
     if (!title) return;
 
-    const notifyMinutes = mode === "schedule" && $("#notificationMinutes").value !== "off"
+    const notifyMinutes = mode !== "quests" && $("#notificationMinutes").value !== "off"
         ? Number($("#notificationMinutes").value)
         : null;
     if (notifyMinutes !== null && !$("#time").value) {
@@ -708,7 +730,10 @@ $("#form").onsubmit = async (event) => {
             $("#time").value,
 
         done:
-            previous?.done || false
+            previous?.done || false,
+
+        updatedAt:
+            Date.now()
 
     };
 
@@ -717,6 +742,19 @@ $("#form").onsubmit = async (event) => {
             ? crypto.randomUUID()
             : Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join("-"));
         item.notifyMinutes = notifyMinutes;
+    }
+
+    if (mode === "reminder") {
+        item.id = previous?.id || (typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        item.date = $("#reminderDate").value;
+        item.notifyMinutes = notifyMinutes;
+        item.createdAt = previous?.createdAt || Date.now();
+        if (!item.date) {
+            $("#reminderDate").reportValidity();
+            return;
+        }
     }
 
 
@@ -876,6 +914,9 @@ document.addEventListener(
             reminders()[index].done =
                 !reminders()[index].done;
 
+            reminders()[index].updatedAt =
+                Date.now();
+
 
             await saveData();
 
@@ -931,8 +972,18 @@ document.addEventListener(
 
         if (reminderDelete) {
 
+            const index =
+                Number(reminderDelete.dataset.rdel);
+
+            const removed =
+                reminders()[index];
+
+            if (removed?.id && window.JAIMIEReminderCalendarSync) {
+                await JAIMIEReminderCalendarSync.removeCalendarTaskForReminder(removed.id);
+            }
+
             reminders().splice(
-                Number(reminderDelete.dataset.rdel),
+                index,
                 1
             );
 
@@ -1041,6 +1092,11 @@ async function init() {
          */
         await loadData();
 
+        if (window.JAIMIEReminderCalendarSync) {
+            const synced = await JAIMIEReminderCalendarSync.sync();
+            state.data = synced.day;
+        }
+
         // Notification clicks open the selected local calendar day.
         const dateParam = new URLSearchParams(location.search).get("date");
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam || "")) {
@@ -1082,4 +1138,23 @@ async function init() {
 
 $("#time").addEventListener("input", () => $("#time").setCustomValidity(""));
 $("#notificationMinutes").addEventListener("change", () => $("#time").setCustomValidity(""));
+
+let linkedDataRefreshInFlight = false;
+document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState !== "visible" || linkedDataRefreshInFlight || !window.JAIMIEReminderCalendarSync) {
+        return;
+    }
+
+    linkedDataRefreshInFlight = true;
+    try {
+        const synced = await JAIMIEReminderCalendarSync.sync();
+        state.data = synced.day;
+        render();
+    } catch (error) {
+        console.error("Could not refresh linked reminders:", error);
+    } finally {
+        linkedDataRefreshInFlight = false;
+    }
+});
+
 init();

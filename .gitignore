@@ -1,0 +1,13 @@
+# JAIMIE local AI runtime
+local-ai-engine/.venv/
+local-ai-engine/venv/
+local-ai-engine/__pycache__/
+local-ai-engine/.env
+local-ai-engine/models/
+local-ai-engine/*.log
+*.gguf
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/

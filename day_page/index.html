@@ -33,11 +33,11 @@
             <button id="nextDay" class="nav">→</button>
         </header>
 
-        <section class="notification-controls" aria-label="Schedule notifications">
+        <section class="notification-controls" aria-label="Task notifications">
             <div>
-                <strong>Schedule notifications</strong>
+                <strong>Task notifications</strong>
                 <p id="scheduleNotificationStatus" role="status">Loading notification settings…</p>
-                <small>Keep a JAIMIE tab open. Windows controls sound and Do Not Disturb. Task titles may appear on your lock screen.</small>
+                <small>Schedule entries and dated reminders can notify you. Keep a JAIMIE tab open; Windows controls sound and Do Not Disturb.</small>
             </div>
             <div class="notification-buttons">
                 <button id="enableScheduleNotifications" type="button" disabled>Enable notifications</button>
@@ -140,6 +140,14 @@
                     >
                 </label>
 
+                <label id="dateRow" hidden>
+                    Date
+                    <input
+                        id="reminderDate"
+                        type="date"
+                    >
+                </label>
+
                 <label id="notificationRow" hidden>
                     Notify me
                     <select id="notificationMinutes">
@@ -179,14 +187,16 @@
 
     <script src="../data-manager/app.js"></script>
 
+    <script src="../shared/reminder-calendar-sync.js"></script>
+
     <!-- Load directly so cached sidebar code cannot leave the controls unbound. -->
-    <script src="schedule-notifications.js?v=2"></script>
+    <script src="schedule-notifications.js?v=3"></script>
 
     <!-- Side menu -->
     <script src="../side-bar/app.js"></script>
 
     <!-- Day page -->
-    <script src="app.js"></script>
+    <script src="app.js?v=2"></script>
 
 </body>
 </html>

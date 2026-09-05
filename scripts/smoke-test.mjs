@@ -10,6 +10,7 @@ const failures = [];
 const featureFolders = [
     "braindump",
     "calendar-task-tracker",
+    "dashboard",
     "day_page",
     "diet-tracker",
     "event-countdown-widget",
@@ -46,7 +47,7 @@ for (const folder of featureFolders) {
 
     const html = readFileSync(htmlPath, "utf8");
     const dataManagerIndex = html.indexOf("../data-manager/app.js");
-    const featureAppIndex = html.indexOf('src="app.js"');
+    const featureAppIndex = html.search(/src=["']app\.js(?:\?[^"']*)?["']/);
 
     if (dataManagerIndex === -1) {
         fail(`${folder}/index.html does not load the shared data manager`);

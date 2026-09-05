@@ -18,8 +18,12 @@ const LEGACY_STORAGE_KEY =
 
 const state = {
   screen: "home",
-  events: []
+  events: [],
+  editingId: null
 };
+
+
+const DEFAULT_EVENT_COLOR = "#ff9d45";
 
 
 /* =========================================================
@@ -213,6 +217,19 @@ function escapeHtml(value) {
       "'": "&#039;"
     }[char])
   );
+
+}
+
+
+function eventColor(event) {
+
+  const color =
+    String(event?.color || "");
+
+
+  return /^#[0-9a-f]{6}$/i.test(color)
+    ? color
+    : DEFAULT_EVENT_COLOR;
 
 }
 
@@ -430,7 +447,10 @@ function renderCard(event) {
 
   return `
 
-    <article class="card">
+    <article
+      class="card"
+      style="--event-color:${eventColor(event)}"
+    >
 
       <div class="card-head">
 
@@ -442,10 +462,16 @@ function renderCard(event) {
             )}
           </h2>
 
-          <div class="card-date">
-            ${formatDate(
-              event.date
-            )}
+          <div class="card-meta">
+            <span
+              class="card-color-tag"
+              aria-label="Event color ${eventColor(event)}"
+            ></span>
+            <span class="card-date">
+              ${formatDate(
+                event.date
+              )}
+            </span>
           </div>
 
         </div>
@@ -464,6 +490,13 @@ function renderCard(event) {
             class="menu-panel"
             id="menu-${event.id}"
           >
+
+            <button
+              data-action="edit"
+              data-id="${event.id}"
+            >
+              Edit
+            </button>
 
             <button
               data-action="delete"
@@ -551,6 +584,19 @@ function renderAdd() {
       .slice(0, 10);
 
 
+  const editingEvent =
+    state.editingId
+      ? state.events.find(
+          event =>
+            event.id === state.editingId
+        )
+      : null;
+
+
+  const isEditing =
+    Boolean(editingEvent);
+
+
   return `
 
     <section class="form-screen">
@@ -560,16 +606,19 @@ function renderAdd() {
         <div>
 
           <div class="eyebrow">
-            Countdown / New Event
+            Countdown / ${isEditing ? "Edit Event" : "New Event"}
           </div>
 
           <h1>
-            Add New Event
+            ${isEditing ? "Edit Countdown" : "Add New Event"}
           </h1>
 
           <p class="subtitle">
-            Create a countdown and
-            track the days remaining.
+            ${
+              isEditing
+                ? "Update this countdown without losing its history."
+                : "Create a countdown and track the days remaining."
+            }
           </p>
 
         </div>
@@ -595,6 +644,7 @@ function renderAdd() {
             maxlength="80"
             placeholder="e.g. Vacation, Exam, Project Launch"
             autocomplete="off"
+            value="${escapeHtml(editingEvent?.name || "")}"
             required
           >
 
@@ -611,9 +661,30 @@ function renderAdd() {
             id="event-date"
             name="date"
             type="date"
-            min="${today}"
+            ${isEditing ? "" : `min="${today}"`}
+            value="${escapeHtml(editingEvent?.date || "")}"
             required
           >
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="event-color">
+            Color tag
+          </label>
+
+          <div class="color-control">
+            <input
+              id="event-color"
+              name="color"
+              type="color"
+              value="${eventColor(editingEvent)}"
+              aria-label="Countdown color"
+            >
+            <span>Used for the progress ring and event accent.</span>
+          </div>
 
         </div>
 
@@ -660,7 +731,7 @@ function renderAdd() {
             type="submit"
             class="primary"
           >
-            Create Countdown
+            ${isEditing ? "Save Changes" : "Create Countdown"}
           </button>
 
         </div>
@@ -697,6 +768,9 @@ function bindEvents() {
             state.screen =
               "home";
 
+            state.editingId =
+              null;
+
             render();
 
           }
@@ -722,6 +796,9 @@ function bindEvents() {
 
             state.screen =
               "add";
+
+            state.editingId =
+              null;
 
             render();
 
@@ -765,6 +842,37 @@ function bindEvents() {
               .toggle(
                 "open"
               );
+
+          }
+        );
+
+      }
+    );
+
+
+  /*
+   * Edit
+   */
+  document
+    .querySelectorAll(
+      "[data-action='edit']"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          event => {
+
+            event.stopPropagation();
+
+            state.editingId =
+              button.dataset.id;
+
+            state.screen =
+              "edit";
+
+            render();
 
           }
         );
@@ -843,8 +951,11 @@ function bindEvents() {
 
     form.addEventListener(
       "submit",
-      createEvent
+      saveEvent
     );
+
+
+    updatePreview();
 
   }
 
@@ -935,10 +1046,10 @@ function updatePreview() {
 
 
 /* =========================================================
-   CREATE EVENT
+   SAVE EVENT
    ========================================================= */
 
-async function createEvent(event) {
+async function saveEvent(event) {
 
   event.preventDefault();
 
@@ -964,27 +1075,71 @@ async function createEvent(event) {
       .value;
 
 
+  const color =
+    eventColor({
+      color:
+        form
+          .querySelector(
+            "#event-color"
+          )
+          .value
+    });
+
+
   if (!name || !date) {
     return;
   }
 
 
-  state.events.unshift({
+  const existingIndex =
+    state.events.findIndex(
+      item =>
+        item.id === state.editingId
+    );
 
-    id:
-      crypto.randomUUID
-        ? crypto.randomUUID()
-        : Date.now().toString(),
 
-    name,
+  if (existingIndex >= 0) {
 
-    date,
+    state.events[existingIndex] = {
 
-    createdAt:
-      new Date()
-        .toISOString()
+      ...state.events[existingIndex],
 
-  });
+      name,
+
+      date,
+
+      color,
+
+      updatedAt:
+        new Date()
+          .toISOString()
+
+    };
+
+  }
+
+  else {
+
+    state.events.unshift({
+
+      id:
+        crypto.randomUUID
+          ? crypto.randomUUID()
+          : Date.now().toString(),
+
+      name,
+
+      date,
+
+      color,
+
+      createdAt:
+        new Date()
+          .toISOString()
+
+    });
+
+  }
 
 
   await saveEvents();
@@ -992,6 +1147,10 @@ async function createEvent(event) {
 
   state.screen =
     "home";
+
+
+  state.editingId =
+    null;
 
 
   render();

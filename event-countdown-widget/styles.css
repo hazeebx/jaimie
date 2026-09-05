@@ -157,6 +157,7 @@ h1 {
 }
 
 .card {
+  --event-color: var(--orange);
   position: relative;
   min-height: 335px;
   padding: 22px;
@@ -172,7 +173,7 @@ h1 {
   position: absolute;
   left: 0; right: 0; top: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--orange), transparent);
+  background: linear-gradient(90deg, transparent, var(--event-color), transparent);
   opacity: .7;
 }
 
@@ -191,7 +192,22 @@ h1 {
 .card-date {
   color: var(--muted);
   font-size: 11px;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   margin-top: 6px;
+}
+
+.card-color-tag {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--event-color);
+  box-shadow: 0 0 9px var(--event-color);
 }
 
 .menu {
@@ -248,7 +264,7 @@ h1 {
   height: 168px;
   border-radius: 50%;
   background:
-    conic-gradient(var(--orange) var(--progress), #41434a var(--progress));
+    conic-gradient(var(--event-color) var(--progress), #41434a var(--progress));
   padding: 7px;
   transform: rotate(-90deg);
   box-shadow: 0 0 28px rgba(255,157,69,.08);
@@ -272,10 +288,10 @@ h1 {
   position: absolute;
   width: 6px;
   height: 6px;
-  background: var(--orange);
+  background: var(--event-color);
   border-radius: 50%;
   top: 14px;
-  box-shadow: 0 0 12px var(--orange);
+  box-shadow: 0 0 12px var(--event-color);
 }
 
 .days {
@@ -356,6 +372,31 @@ input {
 input:focus {
   border-color: var(--orange);
   box-shadow: 0 0 0 3px rgba(255,157,69,.09);
+}
+
+.color-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 9px 11px;
+  border: 1px solid #42444c;
+  border-radius: 7px;
+  background: #202126;
+}
+
+.color-control input[type="color"] {
+  width: 42px;
+  height: 38px;
+  flex: 0 0 42px;
+  padding: 3px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.color-control span {
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .days-preview {
