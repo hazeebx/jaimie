@@ -836,8 +836,8 @@ h2 {
     gap: 8px;
     margin: 18px 2px 7px;
     color: #686d75;
-    font: 8px monospace;
-    letter-spacing: .07em;
+    font: 10px monospace;
+    letter-spacing: .05em;
 }
 
 .habit-grid-streak strong {
