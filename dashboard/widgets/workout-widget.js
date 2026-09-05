@@ -81,10 +81,9 @@
 
         const summary = element("div", "workout-summary");
         const summaryText = element("div");
-        summaryText.append(
-            element("strong", "", `${completedSets} / ${totalSets} sets`),
-            element("span", "", `${progress}% complete`)
-        );
+        const completedText = element("strong", "", `${completedSets} / ${totalSets} sets`);
+        const percentText = element("span", "", `${progress}% complete`);
+        summaryText.append(completedText, percentText);
         const progressTrack = element("div", "workout-progress");
         const progressBar = element("span");
         progressBar.style.width = `${progress}%`;
@@ -102,8 +101,45 @@
 
             const sets = element("div", "exercise-sets");
             (Array.isArray(exercise?.sets) ? exercise.sets : []).forEach((set, index) => {
-                const pill = element("span", set?.done ? "set-pill is-done" : "set-pill", `${index + 1}`);
+                const pill = element("button", set?.done ? "set-pill is-done" : "set-pill", `${index + 1}`);
+                pill.type = "button";
+                pill.setAttribute("aria-pressed", String(Boolean(set?.done)));
+                pill.setAttribute("aria-label", `${exercise?.name || "Exercise"}, set ${index + 1}${set?.done ? ", complete" : ", incomplete"}`);
                 pill.title = `Set ${index + 1}: ${Number(set?.reps) || 0} reps${set?.done ? ", complete" : ""}`;
+
+                pill.addEventListener("click", async () => {
+                    pill.disabled = true;
+                    try {
+                        const latestWorkout = await data.load("workout");
+                        const latestExercise = latestWorkout?.days?.[dateKey]?.exercises?.find(
+                            item => item?.id === exercise?.id
+                        );
+                        const latestSet = latestExercise?.sets?.[index];
+                        if (!latestSet) return;
+
+                        latestSet.done = !latestSet.done;
+                        await data.save("workout", latestWorkout);
+                        set.done = latestSet.done;
+
+                        pill.classList.toggle("is-done", latestSet.done);
+                        pill.setAttribute("aria-pressed", String(latestSet.done));
+                        pill.setAttribute("aria-label", `${exercise?.name || "Exercise"}, set ${index + 1}${latestSet.done ? ", complete" : ", incomplete"}`);
+                        pill.title = `Set ${index + 1}: ${Number(latestSet.reps) || 0} reps${latestSet.done ? ", complete" : ""}`;
+
+                        const nowComplete = exercises.reduce(
+                            (sum, item) => sum + (Array.isArray(item.sets) ? item.sets.filter(itemSet => itemSet?.done).length : 0),
+                            0
+                        );
+                        const nextProgress = totalSets ? Math.round((nowComplete / totalSets) * 100) : 0;
+                        completedText.textContent = `${nowComplete} / ${totalSets} sets`;
+                        percentText.textContent = `${nextProgress}% complete`;
+                        progressBar.style.width = `${nextProgress}%`;
+                    } catch (error) {
+                        console.error("Could not update workout set:", error);
+                    } finally {
+                        pill.disabled = false;
+                    }
+                });
                 sets.appendChild(pill);
             });
             row.append(exerciseCopy, sets);

@@ -59,7 +59,9 @@ h1 { font-size: clamp(26px, 3vw, 38px); letter-spacing: -.035em; }
 .exercise-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .exercise-copy span { color: var(--muted); font-size: 9px; }
 .exercise-sets { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
-.set-pill { width: 23px; height: 23px; display: grid; place-items: center; border: 1px solid #3a3d43; border-radius: 6px; color: var(--muted); font: 9px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.set-pill { width: 23px; height: 23px; padding: 0; display: grid; place-items: center; border: 1px solid #3a3d43; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font: 9px/1 ui-monospace, SFMono-Regular, Consolas, monospace; transition: border-color .15s ease, background .15s ease, color .15s ease, transform .15s ease; }
+.set-pill:hover, .set-pill:focus-visible { border-color: var(--orange); color: var(--orange); outline: none; transform: translateY(-1px); }
+.set-pill:disabled { cursor: wait; opacity: .65; }
 .set-pill.is-done { border-color: #3b8060; background: rgba(101, 214, 157, .1); color: var(--green); }
 .workout-empty { min-height: 150px; display: grid; place-items: center; align-content: center; gap: 8px; text-align: center; color: var(--muted); }
 .workout-empty-mark { color: var(--orange); font-size: 26px; }
