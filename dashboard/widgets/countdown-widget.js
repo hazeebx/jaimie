@@ -25,7 +25,7 @@
     }
 
     function progressDegrees(event, days) {
-        const created = new Date(event.createdAt);
+        const created = new Date(event.createdAt || `${event.date}T00:00:00`);
         const target = new Date(`${event.date}T00:00:00`);
         const ageDays = Math.max(1, Math.ceil((target - created) / 86400000));
         return Math.min(360, Math.max(0, ((ageDays - days) / ageDays) * 360));
@@ -33,7 +33,7 @@
 
     function eventColor(event) {
         const color = String(event?.color || "");
-        return /^#[0-9a-f]{6}$/i.test(color) ? color : "#ff8a2a";
+        return /^#[0-9a-f]{6}$/i.test(color) ? color : "#ff9d45";
     }
 
     async function render({ container, data, dateKey, instance, remove, updateSettings }) {

@@ -49,7 +49,7 @@
 
     const componentPath =
         new URL(
-            "component.html",
+            "component.html?v=music-1",
             script.src
         ).href;
 
@@ -453,7 +453,7 @@ function loadSettingsScript() {
 
             const settingsPath =
                 new URL(
-                    "../settings/app.js",
+                    "../settings/app.js?v=3",
                     script.src
                 ).href;
 

@@ -416,6 +416,7 @@ async function boot() {
     ) {
 
         dietData = {
+            ...stored,
             targets:
                 stored.targets ||
                 targets,
@@ -846,17 +847,7 @@ function round(x) {
 }
 
 function esc(value) {
-
-    return String(value ?? "").replace(
-        /[&<>"']/g,
-        char => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        }[char])
-    );
+    return window.JAIMIESafeContent.escapeHtml(value);
 
 }
 
@@ -1590,11 +1581,11 @@ function renderFoodPicker() {
                         </strong>
 
                         <small>
-                            ${food.calories}
+                            ${Number(food.calories) || 0}
                             kcal ·
-                            ${food.protein}g
+                            ${Number(food.protein) || 0}g
                             protein /
-                            ${food.serving}g
+                            ${Number(food.serving) || 0}g
                         </small>
 
                     </div>
@@ -1887,9 +1878,9 @@ function renderLibrary() {
                         </strong>
 
                         <small>
-                            ${food.serving}g ·
-                            ${food.calories} kcal ·
-                            ${food.protein}g protein
+                            ${Number(food.serving) || 0}g ·
+                            ${Number(food.calories) || 0} kcal ·
+                            ${Number(food.protein) || 0}g protein
                         </small>
 
                     </div>
@@ -2079,6 +2070,8 @@ $("foodForm").onsubmit =
 
         const food = {
 
+            ...(editingFood || {}),
+
             id:
                 editingFood?.id ||
                 uid(),
@@ -2210,6 +2203,8 @@ $("settingsForm").onsubmit =
 
 
         targets = {
+
+            ...targets,
 
             calories:
                 +$("tCal").value,

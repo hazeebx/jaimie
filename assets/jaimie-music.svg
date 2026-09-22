@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">JAIMIE Music</title>
+  <rect width="512" height="512" rx="112" fill="#111214"/>
+  <rect x="18" y="18" width="476" height="476" rx="96" fill="none" stroke="#ff8a2a" stroke-width="18"/>
+  <path d="M326 116v232c0 48-39 82-91 82-47 0-83-27-83-66 0-40 37-68 86-68 17 0 32 3 45 9V158l139-30v68l-96 21z" fill="#ff8a2a"/>
+</svg>

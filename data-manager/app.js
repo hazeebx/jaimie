@@ -403,6 +403,63 @@
 
 
     /* =====================================================
+       VALIDATION BOUNDARY
+
+       Phase 2 runs in compatibility mode: registered
+       validators may report issues, but the original value
+       is always preserved and operations are never blocked.
+       ===================================================== */
+
+    function inspectValue(
+        key,
+        value,
+        source
+    ) {
+
+        const validation =
+            window.JAIMIEValidation;
+
+
+        if (
+            !validation ||
+            typeof validation.inspect !==
+                "function"
+        ) {
+
+            return value;
+
+        }
+
+
+        try {
+
+            return validation.inspect(
+                key,
+                value,
+                {
+                    source,
+                    mode:
+                        "compatibility"
+                }
+            ).value;
+
+        }
+
+        catch (error) {
+
+            console.warn(
+                `JAIMIE validation inspection failed for "${key}". The original value was preserved.`,
+                error
+            );
+
+            return value;
+
+        }
+
+    }
+
+
+    /* =====================================================
        SAVE
        ===================================================== */
 
@@ -422,6 +479,13 @@
             );
 
         }
+
+
+        value = inspectValue(
+            key,
+            value,
+            "local-save"
+        );
 
 
         const existing =
@@ -569,7 +633,11 @@
 
 
         return record
-            ? record.value
+            ? inspectValue(
+                key,
+                record.value,
+                "local-load"
+            )
             : null;
 
     }
@@ -765,7 +833,11 @@
                             ] = {
 
                                 value:
-                                    entry.value,
+                                    inspectValue(
+                                        entry.key,
+                                        entry.value,
+                                        "local-read-all"
+                                    ),
 
                                 updatedAt:
                                     entry.updatedAt ||
@@ -1078,7 +1150,11 @@
                 record.key,
 
             value:
-                record.value,
+                inspectValue(
+                    record.key,
+                    record.value,
+                    "remote-apply"
+                ),
 
             updatedAt:
                 record.updatedAt ||
@@ -1482,7 +1558,11 @@
             key,
 
             value:
-                entry?.value,
+                inspectValue(
+                    key,
+                    entry?.value,
+                    "backup-import"
+                ),
 
             updatedAt:
                 importedAt,

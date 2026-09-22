@@ -844,20 +844,7 @@ let authInitialized = false;
     function escapeHtml(
         value
     ) {
-
-        return String(
-            value
-        ).replace(
-            /[&<>"']/g,
-            char =>
-                ({
-                    "&": "&amp;",
-                    "<": "&lt;",
-                    ">": "&gt;",
-                    '"': "&quot;",
-                    "'": "&#039;"
-                })[char]
-        );
+        return window.JAIMIESafeContent.escapeHtml(value);
 
     }
 

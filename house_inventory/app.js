@@ -38,6 +38,8 @@ const state = {
   shopping: []
 };
 
+let inventoryData = {};
+
 
 /* =========================================================
    LEGACY INDEXEDDB
@@ -221,11 +223,15 @@ async function saveState() {
 
   const payload = {
 
+    ...inventoryData,
+
     items: state.items,
 
     shopping: state.shopping
 
   };
+
+  inventoryData = payload;
 
 
   /*
@@ -271,8 +277,11 @@ async function load() {
 
   if (
     stored &&
-    typeof stored === "object"
+    typeof stored === "object" &&
+    !Array.isArray(stored)
   ) {
+
+    inventoryData = stored;
 
     state.items =
       Array.isArray(
@@ -337,6 +346,8 @@ async function load() {
       ? legacyShopping.value
       : [];
 
+  inventoryData = {};
+
 
   /*
    * Write the migrated dataset
@@ -399,17 +410,7 @@ function fmt(number) {
 
 
 function esc(value) {
-
-  return String(value).replace(
-    /[&<>"']/g,
-    char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[char])
-  );
+  return window.JAIMIESafeContent.escapeHtml(value);
 
 }
 
@@ -563,7 +564,7 @@ function card(item) {
           </div>
 
           <div class="category">
-            ${item.category}
+            ${esc(item.category)}
           </div>
 
         </div>
@@ -576,7 +577,7 @@ function card(item) {
         ${fmt(item.qty)}
 
         <span>
-          ${item.unit}
+          ${esc(item.unit)}
         </span>
 
       </div>
@@ -596,7 +597,7 @@ function card(item) {
         <span class="min">
           MIN
           ${fmt(item.min)}
-          ${item.unit}
+          ${esc(item.unit)}
         </span>
 
 
@@ -604,21 +605,24 @@ function card(item) {
 
           <button
             class="mini"
-            onclick="changeQty('${item.id}', -1)"
+            data-inventory-action="decrease"
+            data-item-id="${esc(item.id)}"
           >
             −
           </button>
 
           <button
             class="mini"
-            onclick="changeQty('${item.id}', 1)"
+            data-inventory-action="increase"
+            data-item-id="${esc(item.id)}"
           >
             +
           </button>
 
           <button
             class="mini"
-            onclick="editItem('${item.id}')"
+            data-inventory-action="edit"
+            data-item-id="${esc(item.id)}"
           >
             EDIT
           </button>
@@ -628,7 +632,8 @@ function card(item) {
               ? `
                 <button
                   class="mini"
-                  onclick="addLow('${item.id}')"
+                  data-inventory-action="add-low"
+                  data-item-id="${esc(item.id)}"
                 >
                   SHOP
                 </button>
@@ -665,7 +670,8 @@ function shopRow(item) {
 
       <button
         class="check-btn"
-        onclick="toggleShop('${item.id}')"
+        data-inventory-action="toggle-shop"
+        data-item-id="${esc(item.id)}"
       >
         ${
           item.done
@@ -684,7 +690,7 @@ function shopRow(item) {
 
       <div class="shop-qty">
         ${fmt(item.qty)}
-        ${item.unit}
+        ${esc(item.unit)}
       </div>
 
 
@@ -692,14 +698,16 @@ function shopRow(item) {
 
         <button
           class="mini"
-          onclick="buyShop('${item.id}')"
+          data-inventory-action="buy-shop"
+          data-item-id="${esc(item.id)}"
         >
           ADD TO INV
         </button>
 
         <button
           class="mini danger"
-          onclick="removeShop('${item.id}')"
+          data-inventory-action="remove-shop"
+          data-item-id="${esc(item.id)}"
         >
           ×
         </button>
@@ -845,7 +853,20 @@ $("#itemForm").onsubmit =
     event.preventDefault();
 
 
+    const existingIndex =
+      state.items.findIndex(
+        item =>
+          item.id ===
+          $("editId").value
+      );
+
     const value = {
+
+      ...(
+        existingIndex >= 0
+          ? state.items[existingIndex]
+          : {}
+      ),
 
       id:
         $("#editId")
@@ -885,12 +906,7 @@ $("#itemForm").onsubmit =
     };
 
 
-    const index =
-      state.items.findIndex(
-        item =>
-          item.id ===
-          value.id
-      );
+    const index = existingIndex;
 
 
     if (index >= 0) {
@@ -1457,6 +1473,65 @@ async function buyShop(
   render();
 
 }
+
+
+/* =========================================================
+   SAFE DYNAMIC ACTIONS
+   ========================================================= */
+
+document.addEventListener(
+  "click",
+  async event => {
+
+    const button =
+      event.target.closest(
+        "[data-inventory-action]"
+      );
+
+
+    if (!button) return;
+
+
+    const itemId =
+      button.dataset.itemId;
+
+
+    switch (
+      button.dataset.inventoryAction
+    ) {
+
+      case "decrease":
+        await changeQty(itemId, -1);
+        break;
+
+      case "increase":
+        await changeQty(itemId, 1);
+        break;
+
+      case "edit":
+        editItem(itemId);
+        break;
+
+      case "add-low":
+        await addLow(itemId);
+        break;
+
+      case "toggle-shop":
+        await toggleShop(itemId);
+        break;
+
+      case "buy-shop":
+        await buyShop(itemId);
+        break;
+
+      case "remove-shop":
+        await removeShop(itemId);
+        break;
+
+    }
+
+  }
+);
 
 
 /* =========================================================

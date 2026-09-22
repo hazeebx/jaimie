@@ -7,6 +7,13 @@ local-ai-engine/models/
 local-ai-engine/*.log
 *.gguf
 
+# Node / Firebase local tooling
+node_modules/
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
 # Python tooling
 __pycache__/
 *.py[cod]

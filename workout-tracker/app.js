@@ -335,17 +335,7 @@ function fmt(date) {
 
 
 function esc(value) {
-
-    return String(value).replace(
-        /[&<>"']/g,
-        char => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        }[char])
-    );
+    return window.JAIMIESafeContent.escapeHtml(value);
 
 }
 
@@ -659,7 +649,7 @@ function render() {
 
                                                     <button
                                                         class="mini-btn"
-                                                        data-use="${workout.id}"
+                                                        data-use="${esc(workout.id)}"
                                                     >
                                                         Use
                                                     </button>
@@ -754,7 +744,7 @@ function render() {
                                                     <div class="pr-actions">
                                                         <button
                                                             class="pr-icon"
-                                                            data-edit-pr="${record.id}"
+                                                            data-edit-pr="${esc(record.id)}"
                                                             aria-label="Edit ${esc(record.lift)} PR"
                                                             title="Edit PR"
                                                         >
@@ -763,7 +753,7 @@ function render() {
 
                                                         <button
                                                             class="pr-icon danger"
-                                                            data-delete-pr="${record.id}"
+                                                            data-delete-pr="${esc(record.id)}"
                                                             aria-label="Delete ${esc(record.lift)} PR"
                                                             title="Delete PR"
                                                         >
@@ -818,7 +808,7 @@ function exercise(exerciseData) {
 
             <button
                 class="exercise-edit-menu"
-                data-edit-exercise="${exerciseData.id}"
+                data-edit-exercise="${esc(exerciseData.id)}"
                 aria-label="Edit ${esc(exerciseData.name)}"
                 title="Edit exercise"
             >
@@ -847,7 +837,7 @@ function exercise(exerciseData) {
                         }
                         sets planned · target
                         ${
-                            exerciseData.targetReps ||
+                            Number(exerciseData.targetReps) ||
                             "—"
                         }
                         reps
@@ -881,7 +871,7 @@ function exercise(exerciseData) {
                                             </small>
 
                                             ${
-                                                set.reps
+                                                Number(set.reps) || 0
                                             }
                                             reps
 
@@ -895,7 +885,7 @@ function exercise(exerciseData) {
 
                         <button
                             class="counter-btn"
-                            data-setadd="${exerciseData.id}"
+                            data-setadd="${esc(exerciseData.id)}"
                         >
                             +
                         </button>
@@ -909,7 +899,7 @@ function exercise(exerciseData) {
 
                     <button
                         class="mini-btn"
-                        data-done="${exerciseData.id}"
+                        data-done="${esc(exerciseData.id)}"
                     >
                         1 Set Done
                     </button>
@@ -917,7 +907,7 @@ function exercise(exerciseData) {
 
                     <button
                         class="mini-btn"
-                        data-undo="${exerciseData.id}"
+                        data-undo="${esc(exerciseData.id)}"
                     >
                         Undo 1
                     </button>
@@ -925,7 +915,7 @@ function exercise(exerciseData) {
 
                     <button
                         class="danger-btn"
-                        data-remove="${exerciseData.id}"
+                        data-remove="${esc(exerciseData.id)}"
                     >
                         ×
                     </button>
@@ -956,8 +946,8 @@ function exercise(exerciseData) {
                                     class="rep-input"
                                     type="number"
                                     min="0"
-                                    value="${set.reps}"
-                                    data-reps="${exerciseData.id}"
+                                    value="${Number(set.reps) || 0}"
+                                    data-reps="${esc(exerciseData.id)}"
                                     data-i="${index}"
                                 >
 
@@ -1628,6 +1618,8 @@ function personalRecordModal(
 
             const updatedRecord = {
 
+                ...(record || {}),
+
                 id:
                     record?.id ||
                     uid(),
@@ -1970,7 +1962,7 @@ function editExerciseModal(id) {
                     id="editExerciseReps"
                     type="number"
                     min="0"
-                    value="${item.targetReps || 0}"
+                    value="${Number(item.targetReps) || 0}"
                     required
                 >
 
@@ -2231,7 +2223,7 @@ function pickModal() {
 
                                     <button
                                         class="primary"
-                                        data-pick="${workout.id}"
+                                        data-pick="${esc(workout.id)}"
                                     >
                                         Use
                                     </button>
@@ -2456,7 +2448,7 @@ function manageModal() {
                                 <button
                                     type="button"
                                     class="danger-btn"
-                                    data-delw="${workout.id}"
+                                    data-delw="${esc(workout.id)}"
                                 >
                                     Delete
                                 </button>

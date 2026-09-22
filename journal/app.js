@@ -125,20 +125,7 @@ function formatHistoryDate(
 function escapeHtml(
     value
 ) {
-
-    return String(
-        value
-    ).replace(
-        /[&<>"']/g,
-        char =>
-            ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#039;"
-            })[char]
-    );
+    return window.JAIMIESafeContent.escapeHtml(value);
 
 }
 
@@ -164,9 +151,14 @@ async function loadJournal() {
 
             journalData = {
 
+                ...stored,
+
                 entries:
-                    stored.entries ||
-                    {}
+                    stored.entries &&
+                    typeof stored.entries === "object" &&
+                    !Array.isArray(stored.entries)
+                        ? stored.entries
+                        : {}
 
             };
 
@@ -259,12 +251,9 @@ async function saveEntry() {
         Object.keys(entry)
             .some(
                 field =>
-                    [
-                        "howDay",
-                        "whatHappened",
-                        "thinking",
-                        "grateful",
-                        "tomorrow"
+                    ![
+                        "date",
+                        "updatedAt"
                     ].includes(field) &&
                     entry[field]
             );

@@ -136,20 +136,7 @@ function formatDate(
 function escapeHtml(
     value
 ) {
-
-    return String(
-        value
-    ).replace(
-        /[&<>"']/g,
-        char =>
-            ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#039;"
-            })[char]
-    );
+    return window.JAIMIESafeContent.escapeHtml(value);
 
 }
 
@@ -172,6 +159,8 @@ async function load() {
     ) {
 
         state = {
+
+            ...stored,
 
             habits:
                 stored.habits ||
@@ -1084,6 +1073,8 @@ async function submitHabit(
         id
     ] = {
 
+        ...(state.habits[id] || {}),
+
         id,
 
         name,
@@ -1837,6 +1828,8 @@ async function submitFood(
     state.foodTrackers[
         id
     ] = {
+
+        ...(state.foodTrackers[id] || {}),
 
         id,
 

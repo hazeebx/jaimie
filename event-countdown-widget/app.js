@@ -206,17 +206,7 @@ function formatDate(
    ========================================================= */
 
 function escapeHtml(value) {
-
-  return String(value).replace(
-    /[&<>"']/g,
-    (char) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[char])
-  );
+  return window.JAIMIESafeContent.escapeHtml(value);
 
 }
 
@@ -411,7 +401,8 @@ function renderCard(event) {
 
   const created =
     new Date(
-      event.createdAt
+      event.createdAt ||
+      event.date + "T00:00:00"
     );
 
 
@@ -481,26 +472,26 @@ function renderCard(event) {
 
           <button
             class="menu-btn"
-            data-menu="${event.id}"
+            data-menu="${escapeHtml(event.id)}"
           >
             ⋮
           </button>
 
           <div
             class="menu-panel"
-            id="menu-${event.id}"
+            data-menu-panel="${escapeHtml(event.id)}"
           >
 
             <button
               data-action="edit"
-              data-id="${event.id}"
+              data-id="${escapeHtml(event.id)}"
             >
               Edit
             </button>
 
             <button
               data-action="delete"
-              data-id="${event.id}"
+              data-id="${escapeHtml(event.id)}"
               class="delete"
             >
               Delete
@@ -1059,12 +1050,14 @@ async function saveEvent(event) {
 
 
   const name =
-    form
-      .querySelector(
-        "#event-name"
-      )
-      .value
-      .trim();
+    window.JAIMIESafeContent.normalizeText(
+      form
+        .querySelector(
+          "#event-name"
+        )
+        .value,
+      { maxLength: 80 }
+    );
 
 
   const date =

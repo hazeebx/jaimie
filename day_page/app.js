@@ -82,6 +82,8 @@ async function loadData() {
 
 async function saveData() {
 
+    window.JAIMIEScheduleOrder.sortDayData(state.data);
+
     await JAIMIEData.save(
         DATA_KEY,
         state.data
@@ -154,16 +156,7 @@ function collection(type) {
    ========================================================= */
 
 function esc(value) {
-
-    return String(value ?? "").replace(
-        /[&<>"]/g,
-        (char) => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;"
-        }[char])
-    );
+    return window.JAIMIESafeContent.escapeHtml(value);
 
 }
 
@@ -176,6 +169,8 @@ function render() {
 
     const date = state.date;
     const day = current();
+
+    window.JAIMIEScheduleOrder.sortInPlace(day.schedule);
 
 
     /* -----------------------------------------------------
@@ -240,22 +235,6 @@ function render() {
                     </div>
 
                     <div class="item-actions">
-
-                        <button
-                            class="mini"
-                            data-move="schedule,${index},-1"
-                            aria-label="Move ${esc(item.title)} up"
-                            title="Move up"
-                            ${index === 0 ? "disabled" : ""}
-                        >↑</button>
-
-                        <button
-                            class="mini"
-                            data-move="schedule,${index},1"
-                            aria-label="Move ${esc(item.title)} down"
-                            title="Move down"
-                            ${index === day.schedule.length - 1 ? "disabled" : ""}
-                        >↓</button>
 
                         <button
                             class="mini"

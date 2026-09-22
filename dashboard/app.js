@@ -16,6 +16,8 @@
 
     let state = { version: 1, widgets: [] };
     let toastTimer;
+    let refreshPromise = null;
+    let refreshQueued = false;
 
     function uid() {
         return crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -89,7 +91,7 @@
         state.widgets.push({ id: uid(), type, settings: {} });
         await save();
         elements.dialog.close();
-        await render();
+        await refresh();
         showToast(`${definition.label} added`);
     }
 
@@ -97,14 +99,13 @@
         const widget = state.widgets.find(item => item.id === id);
         state.widgets = state.widgets.filter(item => item.id !== id);
         await save();
-        await render();
+        await refresh();
         showToast(`${registry.get(widget?.type)?.label || "Widget"} removed`);
     }
 
     async function render() {
-        elements.grid.replaceChildren();
-        elements.empty.hidden = state.widgets.length > 0;
-        elements.grid.hidden = state.widgets.length === 0;
+        const widgets = state.widgets.slice();
+        const nextGrid = document.createDocumentFragment();
 
         const today = new Date();
         const context = {
@@ -118,12 +119,12 @@
             })
         };
 
-        for (const instance of state.widgets) {
+        for (const instance of widgets) {
             const definition = registry.get(instance.type);
             if (!definition) continue;
             try {
                 await definition.render({
-                    container: elements.grid,
+                    container: nextGrid,
                     instance,
                     ...context,
                     remove: () => removeWidget(instance.id),
@@ -138,14 +139,39 @@
                 const failed = document.createElement("article");
                 failed.className = "dashboard-widget widget-error";
                 failed.textContent = `${definition.label} could not load.`;
-                elements.grid.appendChild(failed);
+                nextGrid.appendChild(failed);
             }
         }
+
+        elements.grid.replaceChildren(nextGrid);
+        elements.empty.hidden = widgets.length > 0;
+        elements.grid.hidden = widgets.length === 0;
     }
 
-    async function refresh() {
-        await load();
-        await render();
+    async function runRefreshLoop() {
+        do {
+            refreshQueued = false;
+            await load();
+            await render();
+        } while (refreshQueued);
+    }
+
+    function refresh() {
+        if (refreshPromise) {
+            refreshQueued = true;
+            return refreshPromise;
+        }
+
+        refreshPromise = runRefreshLoop().finally(() => {
+            refreshPromise = null;
+        });
+        return refreshPromise;
+    }
+
+    function requestRefresh() {
+        void refresh().catch(error => {
+            console.error("JAIMIE Dashboard refresh failed:", error);
+        });
     }
 
     async function init() {
@@ -160,9 +186,9 @@
         });
         elements.add.addEventListener("click", openLibrary);
         elements.emptyAdd.addEventListener("click", openLibrary);
-        window.addEventListener("focus", refresh);
+        window.addEventListener("focus", requestRefresh);
         document.addEventListener("visibilitychange", () => {
-            if (!document.hidden) refresh();
+            if (!document.hidden) requestRefresh();
         });
         await refresh();
     }

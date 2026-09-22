@@ -291,6 +291,8 @@ async function loadData() {
 
         sleepData = {
 
+            ...stored,
+
             days:
                 stored.days ||
                 {}
@@ -683,6 +685,8 @@ async function save() {
 
 
     const entry = {
+
+        ...(sleepData.days[selectedDate] || {}),
 
         date:
             selectedDate,

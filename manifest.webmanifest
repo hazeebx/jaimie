@@ -1,0 +1,18 @@
+{
+  "name": "JAIMIE Music",
+  "short_name": "Music",
+  "description": "A private, device-local music library and player.",
+  "start_url": "./music/index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101113",
+  "theme_color": "#111214",
+  "icons": [
+    {
+      "src": "./assets/jaimie-music.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

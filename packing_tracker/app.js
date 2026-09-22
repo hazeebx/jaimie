@@ -34,6 +34,8 @@ const state = {
     checks: {}
 };
 
+let packingData = {};
+
 
 const $ = (selector) =>
     document.querySelector(selector);
@@ -217,6 +219,8 @@ async function save() {
 
     const payload = {
 
+        ...packingData,
+
         profiles:
             state.profiles,
 
@@ -227,6 +231,8 @@ async function save() {
             state.checks
 
     };
+
+    packingData = payload;
 
 
     /*
@@ -277,8 +283,11 @@ async function loadData() {
 
     if (
         stored &&
-        typeof stored === "object"
+        typeof stored === "object" &&
+        !Array.isArray(stored)
     ) {
+
+        packingData = stored;
 
         state.profiles =
             Array.isArray(
@@ -397,6 +406,8 @@ async function loadData() {
             "object"
             ? legacyChecks.value
             : {};
+
+    packingData = {};
 
 
     /*
@@ -564,17 +575,7 @@ function isChecked(id) {
 
 
 function esc(value) {
-
-    return String(value).replace(
-        /[&<>"']/g,
-        char => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        }[char])
-    );
+    return window.JAIMIESafeContent.escapeHtml(value);
 
 }
 
@@ -717,7 +718,8 @@ function group(name, items) {
 
             <button
                 class="category-add"
-                onclick="openItem(null, '${esc(name)}')"
+                data-packing-action="add-category"
+                data-category="${esc(name)}"
             >
                 + ADD TO ${esc(name)}
             </button>
@@ -744,7 +746,8 @@ function itemHtml(item) {
 
             <button
                 class="check"
-                onclick="toggle('${item.id}')"
+                data-packing-action="toggle"
+                data-item-id="${esc(item.id)}"
             >
                 ${
                     isChecked(item.id)
@@ -760,13 +763,14 @@ function itemHtml(item) {
 
 
             <span class="qty">
-                ×${item.qty}
+                ×${Number(item.qty) || 0}
             </span>
 
 
             <button
                 class="edit"
-                onclick="openItem('${item.id}')"
+                data-packing-action="edit"
+                data-item-id="${esc(item.id)}"
             >
                 ⋮
             </button>
@@ -1008,7 +1012,20 @@ $("#itemForm")
         event.preventDefault();
 
 
+        const existingIndex =
+            state.items.findIndex(
+                item =>
+                    item.id ===
+                    $("itemId").value
+            );
+
         const value = {
+
+            ...(
+                existingIndex >= 0
+                    ? state.items[existingIndex]
+                    : {}
+            ),
 
             id:
                 $("#itemId")
@@ -1035,12 +1052,7 @@ $("#itemForm")
         };
 
 
-        const index =
-            state.items.findIndex(
-                item =>
-                    item.id ===
-                    value.id
-            );
+        const index = existingIndex;
 
 
         if (index >= 0) {
@@ -1177,7 +1189,8 @@ function renderProfiles() {
 
                             <button
                                 class="secondary"
-                                onclick="switchProfile('${profile.id}')"
+                                data-packing-action="switch-profile"
+                                data-profile-id="${esc(profile.id)}"
                             >
                                 SELECT
                             </button>
@@ -1190,7 +1203,8 @@ function renderProfiles() {
                                     ? `
                                         <button
                                             class="danger"
-                                            onclick="removeProfile('${profile.id}')"
+                                            data-packing-action="remove-profile"
+                                            data-profile-id="${esc(profile.id)}"
                                         >
                                             ×
                                         </button>
@@ -1299,6 +1313,64 @@ async function removeProfile(
     render();
 
 }
+
+
+/* =========================================================
+   SAFE DYNAMIC ACTIONS
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    async event => {
+
+        const button =
+            event.target.closest(
+                "[data-packing-action]"
+            );
+
+
+        if (!button) return;
+
+
+        switch (
+            button.dataset.packingAction
+        ) {
+
+            case "add-category":
+                openItem(
+                    null,
+                    button.dataset.category
+                );
+                break;
+
+            case "toggle":
+                await toggle(
+                    button.dataset.itemId
+                );
+                break;
+
+            case "edit":
+                openItem(
+                    button.dataset.itemId
+                );
+                break;
+
+            case "switch-profile":
+                await switchProfile(
+                    button.dataset.profileId
+                );
+                break;
+
+            case "remove-profile":
+                await removeProfile(
+                    button.dataset.profileId
+                );
+                break;
+
+        }
+
+    }
+);
 
 
 $("#manageBtn")
