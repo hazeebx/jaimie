@@ -22,7 +22,7 @@
         const cardBalance = cards.reduce((total, card) => total + Math.max(0, number(card.balance)), 0);
         const monthTransactions = transactions.filter(transaction => monthKey(transaction.date) === currentMonth);
         const monthExpenses = monthTransactions
-            .filter(transaction => transaction.type === "expense")
+            .filter(transaction => transaction.type === "expense" && transaction.sourceKind === "account")
             .reduce((total, transaction) => total + Math.max(0, number(transaction.amount)), 0);
         const monthIncome = monthTransactions
             .filter(transaction => transaction.type === "income")
@@ -46,5 +46,9 @@
             });
     }
 
-    window.JAIMIEFinanceModel = Object.freeze({ summarize, sortTransactions });
+    function applyBalanceImpact(balance, impact) {
+        return Math.round((number(balance) + number(impact) + Number.EPSILON) * 100) / 100;
+    }
+
+    window.JAIMIEFinanceModel = Object.freeze({ summarize, sortTransactions, applyBalanceImpact });
 })();

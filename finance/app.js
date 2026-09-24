@@ -12,6 +12,7 @@
         cards: [],
         transactions: []
     };
+    let activeLedgerAccountId = "";
 
     function text(value, maxLength = 100) {
         return safeContent.normalizeText(value, { maxLength });
@@ -92,7 +93,6 @@
         $("cardTotal").textContent = formatMoney(summary.cardBalance);
         $("netPosition").textContent = formatMoney(summary.netPosition);
         $("monthExpenses").textContent = formatMoney(summary.monthExpenses);
-        $("monthIncome").textContent = `Income: ${formatMoney(summary.monthIncome)}`;
         $("accountCount").textContent = `${data.accounts.length} ${data.accounts.length === 1 ? "account" : "accounts"}`;
         $("cardCount").textContent = `${data.cards.length} ${data.cards.length === 1 ? "card" : "cards"}`;
     }
@@ -113,7 +113,17 @@
         const edit = element("button", "edit-btn", "Edit");
         edit.type = "button";
         edit.addEventListener("click", () => kind === "account" ? openAccount(item.id) : openCard(item.id));
-        top.append(copy, edit);
+        const actions = element("div", "entity-actions");
+        if (kind === "account") {
+            const ledger = element("button", "menu-btn", "☰");
+            ledger.type = "button";
+            ledger.setAttribute("aria-label", `Open ledger for ${item.name || "account"}`);
+            ledger.title = "Open account ledger";
+            ledger.addEventListener("click", () => openAccountLedger(item.id));
+            actions.append(ledger);
+        }
+        actions.append(edit);
+        top.append(copy, actions);
         card.append(top);
 
         if (kind === "account") {
@@ -147,46 +157,36 @@
         data.cards.forEach(card => list.append(createEntityCard(card, "card")));
     }
 
-    function sourceName(transaction) {
-        if (transaction.sourceKind === "account") {
-            const account = data.accounts.find(item => item.id === transaction.sourceId);
-            return account ? account.name : "Deleted account";
-        }
-        if (transaction.sourceKind === "card") {
-            const card = data.cards.find(item => item.id === transaction.sourceId);
-            return card ? card.name : "Deleted card";
-        }
-        return "Not linked";
-    }
-
-    function renderTransactions() {
-        const list = $("transactionList");
-        const filter = $("transactionFilter").value;
+    function renderAccountLedger() {
+        const account = data.accounts.find(item => item.id === activeLedgerAccountId);
+        if (!account) return;
+        $("ledgerAccountName").textContent = account.name || "Account";
+        $("ledgerAccountBalance").textContent = formatMoney(account.balance);
+        const list = $("accountLedgerList");
         const transactions = model.sortTransactions(data.transactions)
-            .filter(transaction => filter === "all" || transaction.type === filter);
+            .filter(transaction => transaction.type === "expense" && transaction.sourceKind === "account" && transaction.sourceId === account.id);
         list.replaceChildren();
         if (!transactions.length) {
-            list.append(emptyState("No ledger entries", filter === "all" ? "Add income or an expense manually." : `No ${filter} entries match this filter.`));
+            list.append(emptyState("No expenses yet", "Add an expense for this account above."));
             return;
         }
 
         transactions.forEach(transaction => {
-            const income = transaction.type === "income";
-            const row = element("article", `transaction-row${income ? " income" : ""}`);
+            const row = element("article", "transaction-row");
             const main = element("div", "transaction-main");
-            main.append(element("span", "transaction-sign", income ? "+" : "−"));
+            main.append(element("span", "transaction-sign", "−"));
             const copy = element("div", "transaction-copy");
             copy.append(element("strong", "", transaction.category || "Uncategorized"));
-            const metadata = [formatDate(transaction.date), sourceName(transaction), transaction.note].filter(Boolean).join(" · ");
+            const metadata = [formatDate(transaction.date), transaction.note].filter(Boolean).join(" · ");
             copy.append(element("span", "", metadata));
             main.append(copy);
 
             const side = element("div", "transaction-side");
-            side.append(element("div", "transaction-amount", `${income ? "+" : "−"}${formatMoney(transaction.amount)}`));
-            const edit = element("button", "edit-btn", "Edit");
-            edit.type = "button";
-            edit.addEventListener("click", () => openTransaction(transaction.id));
-            side.append(edit);
+            side.append(element("div", "transaction-amount", `−${formatMoney(transaction.amount)}`));
+            const remove = element("button", "edit-btn", "Delete");
+            remove.type = "button";
+            remove.addEventListener("click", () => deleteLedgerExpense(transaction.id));
+            side.append(remove);
             row.append(main, side);
             list.append(row);
         });
@@ -197,7 +197,7 @@
         renderSummary();
         renderAccounts();
         renderCards();
-        renderTransactions();
+        if ($("accountLedgerDialog").open) renderAccountLedger();
     }
 
     function closeDialog(id) {
@@ -235,39 +235,33 @@
         $("cardDialog").showModal();
     }
 
-    function populateSources(selected = "none:") {
-        const select = $("transactionSource");
-        select.replaceChildren();
-        select.add(new Option("Not linked", "none:"));
-        if (data.accounts.length) {
-            const group = document.createElement("optgroup");
-            group.label = "Accounts";
-            data.accounts.forEach(account => group.append(new Option(account.name, `account:${account.id}`)));
-            select.append(group);
-        }
-        if (data.cards.length) {
-            const group = document.createElement("optgroup");
-            group.label = "Cards";
-            data.cards.forEach(card => group.append(new Option(card.name, `card:${card.id}`)));
-            select.append(group);
-        }
-        const optionExists = [...select.options].some(option => option.value === selected);
-        select.value = optionExists ? selected : "none:";
+    function openAccountLedger(accountId) {
+        if (!data.accounts.some(item => item.id === accountId)) return;
+        activeLedgerAccountId = accountId;
+        $("accountExpenseForm").reset();
+        $("expenseDate").value = todayKey();
+        renderAccountLedger();
+        $("accountLedgerDialog").showModal();
     }
 
-    function openTransaction(transactionId = "") {
-        const current = data.transactions.find(item => item.id === transactionId);
-        $("transactionForm").reset();
-        $("transactionId").value = current?.id || "";
-        $("transactionType").value = current?.type || "expense";
-        $("transactionDate").value = current?.date || todayKey();
-        $("transactionAmount").value = current?.amount ?? "";
-        $("transactionCategory").value = current?.category || "";
-        $("transactionNote").value = current?.note || "";
-        populateSources(current ? `${current.sourceKind || "none"}:${current.sourceId || ""}` : "none:");
-        $("transactionDialogTitle").textContent = current ? "Edit Entry" : "Add Entry";
-        $("deleteTransactionBtn").classList.toggle("hidden", !current);
-        $("transactionDialog").showModal();
+    async function deleteLedgerExpense(transactionId) {
+        const transaction = data.transactions.find(item => item.id === transactionId);
+        const account = data.accounts.find(item => item.id === transaction?.sourceId);
+        if (!transaction || !account || !confirm(`Delete this ${formatMoney(transaction.amount)} expense?`)) return;
+
+        // Only entries created by the balance-linked ledger carry this value.
+        // Older records remain removable without retroactively altering balance.
+        const reverseImpact = Object.hasOwn(transaction, "balanceImpact")
+            ? -amount(transaction.balanceImpact)
+            : 0;
+        const updatedAccount = {
+            ...account,
+            balance: model.applyBalanceImpact(account.balance, reverseImpact),
+            updatedAt: new Date().toISOString()
+        };
+        data.accounts = data.accounts.map(item => item.id === account.id ? updatedAccount : item);
+        data.transactions = data.transactions.filter(item => item.id !== transactionId);
+        await saveAndRender();
     }
 
     $("accountForm").addEventListener("submit", async event => {
@@ -312,26 +306,34 @@
         await saveAndRender();
     });
 
-    $("transactionForm").addEventListener("submit", async event => {
+    $("accountExpenseForm").addEventListener("submit", async event => {
         event.preventDefault();
-        const existing = data.transactions.find(item => item.id === $("transactionId").value);
-        const [sourceKind, sourceId = ""] = $("transactionSource").value.split(":");
+        const account = data.accounts.find(item => item.id === activeLedgerAccountId);
+        const expenseAmount = Math.max(0, amount($("expenseAmount").value));
+        if (!account || expenseAmount <= 0) return;
         const now = new Date().toISOString();
         const transaction = {
-            ...(existing || {}),
-            id: existing?.id || id("transaction"),
-            type: $("transactionType").value,
-            amount: Math.max(0, amount($("transactionAmount").value)),
-            date: $("transactionDate").value,
-            category: text($("transactionCategory").value, 60),
-            sourceKind,
-            sourceId,
-            note: text($("transactionNote").value, 160),
-            createdAt: existing?.createdAt || now,
+            id: id("transaction"),
+            type: "expense",
+            amount: expenseAmount,
+            balanceImpact: -expenseAmount,
+            date: $("expenseDate").value,
+            category: text($("expenseCategory").value, 60),
+            sourceKind: "account",
+            sourceId: account.id,
+            note: text($("expenseNote").value, 160),
+            createdAt: now,
             updatedAt: now
         };
-        data.transactions = existing ? data.transactions.map(item => item.id === existing.id ? transaction : item) : [...data.transactions, transaction];
-        closeDialog("transactionDialog");
+        const updatedAccount = {
+            ...account,
+            balance: model.applyBalanceImpact(account.balance, transaction.balanceImpact),
+            updatedAt: now
+        };
+        data.accounts = data.accounts.map(item => item.id === account.id ? updatedAccount : item);
+        data.transactions = [...data.transactions, transaction];
+        $("accountExpenseForm").reset();
+        $("expenseDate").value = todayKey();
         await saveAndRender();
     });
 
@@ -353,18 +355,8 @@
         await saveAndRender();
     });
 
-    $("deleteTransactionBtn").addEventListener("click", async () => {
-        const transactionId = $("transactionId").value;
-        if (!data.transactions.some(item => item.id === transactionId) || !confirm("Delete this ledger entry?")) return;
-        data.transactions = data.transactions.filter(item => item.id !== transactionId);
-        closeDialog("transactionDialog");
-        await saveAndRender();
-    });
-
     $("addAccountBtn").addEventListener("click", () => openAccount());
     $("addCardBtn").addEventListener("click", () => openCard());
-    $("addTransactionBtn").addEventListener("click", () => openTransaction());
-    $("transactionFilter").addEventListener("change", renderTransactions);
     $("currencySelect").addEventListener("change", async event => {
         data = { ...data, currency: event.target.value };
         await saveAndRender();

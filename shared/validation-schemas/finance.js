@@ -73,7 +73,7 @@
         }
         const type = text(value.type || "checking", `${path}.type`, "Account type", issues, { maxLength: 30 });
         if (!ACCOUNT_TYPES.has(type)) issue(issues, "finance.account-type.invalid", "Account type is not supported.", `${path}.type`);
-        return {
+        const normalized = {
             ...value,
             id: uniqueId(value.id, `${path}.id`, "Account", issues, ids),
             name: text(value.name, `${path}.name`, "Account name", issues, { required: true, maxLength: 80 }),
@@ -83,6 +83,7 @@
             balance: money(value.balance, `${path}.balance`, "Account balance", issues),
             color: color(value.color)
         };
+        return normalized;
     }
 
     function card(value, index, issues, ids) {
@@ -91,7 +92,7 @@
             issue(issues, "finance.card.invalid", "Cards must be objects.", path);
             return null;
         }
-        return {
+        const normalized = {
             ...value,
             id: uniqueId(value.id, `${path}.id`, "Card", issues, ids),
             name: text(value.name, `${path}.name`, "Card name", issues, { required: true, maxLength: 80 }),
@@ -101,6 +102,7 @@
             balance: Math.max(0, money(value.balance, `${path}.balance`, "Outstanding balance", issues)),
             color: color(value.color)
         };
+        return normalized;
     }
 
     function transaction(value, index, issues, ids) {
@@ -113,7 +115,7 @@
         const sourceKind = text(value.sourceKind || "none", `${path}.sourceKind`, "Source kind", issues, { maxLength: 20 });
         if (!TRANSACTION_TYPES.has(type)) issue(issues, "finance.transaction-type.invalid", "Transaction type is not supported.", `${path}.type`);
         if (!SOURCE_KINDS.has(sourceKind)) issue(issues, "finance.source-kind.invalid", "Transaction source kind is not supported.", `${path}.sourceKind`);
-        return {
+        const normalized = {
             ...value,
             id: uniqueId(value.id, `${path}.id`, "Transaction", issues, ids),
             type: TRANSACTION_TYPES.has(type) ? type : "expense",
@@ -124,6 +126,10 @@
             sourceId: text(value.sourceId, `${path}.sourceId`, "Source ID", issues, { maxLength: 80 }),
             note: text(value.note, `${path}.note`, "Note", issues, { maxLength: 160 })
         };
+        if (Object.hasOwn(value, "balanceImpact")) {
+            normalized.balanceImpact = money(value.balanceImpact, `${path}.balanceImpact`, "Balance impact", issues);
+        }
+        return normalized;
     }
 
     function validateFinance(value) {

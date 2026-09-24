@@ -44,7 +44,7 @@
             <article class="summary-card"><span>Account balances</span><strong id="accountTotal">—</strong><small id="accountCount">0 accounts</small></article>
             <article class="summary-card debt"><span>Card balance</span><strong id="cardTotal">—</strong><small id="cardCount">0 cards</small></article>
             <article class="summary-card net"><span>Net position</span><strong id="netPosition">—</strong><small>Accounts minus card balance</small></article>
-            <article class="summary-card spend"><span>Spent this month</span><strong id="monthExpenses">—</strong><small id="monthIncome">Income: —</small></article>
+            <article class="summary-card spend"><span>Spent this month</span><strong id="monthExpenses">—</strong><small>Across account ledgers</small></article>
         </section>
 
         <section class="finance-grid">
@@ -53,7 +53,7 @@
                     <div><div class="eyebrow">CASH POSITION</div><h2>Bank Accounts</h2></div>
                     <button id="addAccountBtn" class="secondary" type="button">+ Add account</button>
                 </div>
-                <div id="accountsList" class="entity-list"></div>
+                <div id="accountsList" class="account-widget-grid"></div>
             </section>
 
             <section class="panel cards-panel">
@@ -64,21 +64,6 @@
                 <div id="cardsList" class="entity-list"></div>
             </section>
 
-            <section class="panel transactions-panel">
-                <div class="panel-head transaction-head">
-                    <div><div class="eyebrow">MANUAL LEDGER</div><h2>Income &amp; Expenses</h2></div>
-                    <div class="panel-actions">
-                        <select id="transactionFilter" aria-label="Filter transactions">
-                            <option value="all">All entries</option>
-                            <option value="expense">Expenses</option>
-                            <option value="income">Income</option>
-                        </select>
-                        <button id="addTransactionBtn" class="primary" type="button">+ Add entry</button>
-                    </div>
-                </div>
-                <p class="ledger-note">Ledger entries are manual records and do not automatically change the balances above.</p>
-                <div id="transactionList" class="transaction-list"></div>
-            </section>
         </section>
     </main>
 
@@ -116,22 +101,23 @@
         </form>
     </dialog>
 
-    <dialog id="transactionDialog" class="modal">
-        <form id="transactionForm">
-            <div class="modal-head"><div><div class="eyebrow">MANUAL LEDGER</div><h2 id="transactionDialogTitle">Add Entry</h2></div><button class="icon-btn" type="button" data-close="transactionDialog" aria-label="Close">×</button></div>
-            <input id="transactionId" type="hidden">
-            <div class="form-row">
-                <label>Entry type<select id="transactionType"><option value="expense">Expense</option><option value="income">Income</option></select></label>
-                <label>Date<input id="transactionDate" type="date" required></label>
-            </div>
-            <div class="form-row">
-                <label>Amount<input id="transactionAmount" type="number" min="0.01" step="0.01" required></label>
-                <label>Category<input id="transactionCategory" maxlength="60" required placeholder="e.g. Food"></label>
-            </div>
-            <label>Account or card<select id="transactionSource"><option value="none:">Not linked</option></select></label>
-            <label>Note<input id="transactionNote" maxlength="160" placeholder="Optional"></label>
-            <div class="modal-actions"><button id="deleteTransactionBtn" class="danger hidden" type="button">Delete</button><span></span><button class="secondary" type="button" data-close="transactionDialog">Cancel</button><button class="primary" type="submit">Save entry</button></div>
-        </form>
+    <dialog id="accountLedgerDialog" class="modal ledger-modal">
+        <div class="ledger-shell">
+            <div class="modal-head"><div><div class="eyebrow">ACCOUNT LEDGER</div><h2 id="ledgerAccountName">Account</h2></div><button class="icon-btn" type="button" data-close="accountLedgerDialog" aria-label="Close">×</button></div>
+            <div class="ledger-balance"><span>Current balance</span><strong id="ledgerAccountBalance">—</strong></div>
+            <form id="accountExpenseForm" class="expense-form">
+                <div class="expense-form-title">Add expense</div>
+                <div class="form-row">
+                    <label>Amount<input id="expenseAmount" type="number" min="0.01" step="0.01" required></label>
+                    <label>Date<input id="expenseDate" type="date" required></label>
+                </div>
+                <label>Category<input id="expenseCategory" maxlength="60" required placeholder="e.g. Food"></label>
+                <label>Note<input id="expenseNote" maxlength="160" placeholder="Optional"></label>
+                <button class="primary add-expense-btn" type="submit">Add expense</button>
+            </form>
+            <div class="ledger-history-head"><span>Expense history</span><small>Deleting a new expense restores its balance impact.</small></div>
+            <div id="accountLedgerList" class="transaction-list"></div>
+        </div>
     </dialog>
 
     <script src="../shared/safe-content.js"></script>

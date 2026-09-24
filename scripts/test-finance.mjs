@@ -32,7 +32,7 @@ const data = {
         color: "#6ec8ff"
     }],
     transactions: [
-        { id: "t1", type: "expense", amount: 250, date: "2026-09-10", category: "Food", sourceKind: "card", sourceId: "card-1", note: "Groceries", createdAt: "2026-09-10T12:00:00Z" },
+        { id: "t1", type: "expense", amount: 250, balanceImpact: -250, date: "2026-09-10", category: "Food", sourceKind: "account", sourceId: "account-1", note: "Groceries", createdAt: "2026-09-10T12:00:00Z" },
         { id: "t2", type: "income", amount: 1000, date: "2026-09-11", category: "Salary", sourceKind: "account", sourceId: "account-1", note: "", createdAt: "2026-09-11T12:00:00Z" }
     ]
 };
@@ -53,6 +53,9 @@ if (summary.monthExpenses !== 250 || summary.monthIncome !== 1000) {
 if (model.sortTransactions(data.transactions)[0].id !== "t2") {
     throw new Error("Finance transactions are not sorted newest first.");
 }
+if (model.applyBalanceImpact(5000, -250) !== 4750 || model.applyBalanceImpact(4750, 250) !== 5000) {
+    throw new Error("Finance account balance impacts are not reversible.");
+}
 
 const invalid = validation.validate("finance", {
     currency: "XYZ",
@@ -72,8 +75,15 @@ const html = readFileSync(new URL("../finance/index.html", import.meta.url), "ut
 if (/id=["'][^"']*(?:cardNumber|accountNumber|cvv|pin)[^"']*["']/i.test(html) || /type=["']password["']/i.test(html)) {
     throw new Error("Finance UI asks for prohibited sensitive banking credentials.");
 }
-for (const id of ["accountForm", "cardForm", "transactionForm", "accountsList", "cardsList", "transactionList"]) {
+for (const id of ["accountForm", "cardForm", "accountExpenseForm", "accountsList", "cardsList", "accountLedgerList"]) {
     if (!html.includes(`id="${id}"`)) throw new Error(`Finance UI is missing ${id}.`);
+}
+for (const removedId of ["transactionForm", "transactionList", "transactionFilter"]) {
+    if (html.includes(`id="${removedId}"`)) throw new Error(`Global Finance ledger remains in the UI: ${removedId}`);
+}
+const appSource = readFileSync(new URL("../finance/app.js", import.meta.url), "utf8");
+for (const requiredPattern of ["openAccountLedger", "balanceImpact: -expenseAmount", "applyBalanceImpact"]) {
+    if (!appSource.includes(requiredPattern)) throw new Error(`Account ledger balance wiring is missing: ${requiredPattern}`);
 }
 
 console.log("Finance passed: summaries, ordering, validation, future fields, and safe last-four-only UI are correct.");
