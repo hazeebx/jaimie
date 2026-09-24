@@ -128,9 +128,9 @@ npm run test:journal-inventory-packing
 ## Finance
 
 The Finance page presents every bank account as its own balance widget. Each
-widget opens a private manual expense ledger from its menu; adding an expense
-immediately reduces that account's balance, and deleting a balance-linked
-expense restores it. Older ledger records remain compatible without being
+widget opens a private manual ledger from its menu. Debit entries reduce the
+account balance, credit entries increase it, and deleting a balance-linked
+entry reverses its impact. Older ledger records remain compatible without being
 retroactively applied. Cards retain manually maintained limits and outstanding
 balances. Finance accepts only an optional last-four identifier and must not be
 used for banking credentials, PINs or security codes.

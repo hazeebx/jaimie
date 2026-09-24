@@ -106,16 +106,17 @@
             <div class="modal-head"><div><div class="eyebrow">ACCOUNT LEDGER</div><h2 id="ledgerAccountName">Account</h2></div><button class="icon-btn" type="button" data-close="accountLedgerDialog" aria-label="Close">×</button></div>
             <div class="ledger-balance"><span>Current balance</span><strong id="ledgerAccountBalance">—</strong></div>
             <form id="accountExpenseForm" class="expense-form">
-                <div class="expense-form-title">Add expense</div>
+                <div class="expense-form-title">Add ledger entry</div>
+                <label>Entry type<select id="ledgerEntryType"><option value="expense">Debit</option><option value="income">Credit</option></select></label>
                 <div class="form-row">
                     <label>Amount<input id="expenseAmount" type="number" min="0.01" step="0.01" required></label>
                     <label>Date<input id="expenseDate" type="date" required></label>
                 </div>
                 <label>Category<input id="expenseCategory" maxlength="60" required placeholder="e.g. Food"></label>
                 <label>Note<input id="expenseNote" maxlength="160" placeholder="Optional"></label>
-                <button class="primary add-expense-btn" type="submit">Add expense</button>
+                <button class="primary add-expense-btn" type="submit">Add entry</button>
             </form>
-            <div class="ledger-history-head"><span>Expense history</span><small>Deleting a new expense restores its balance impact.</small></div>
+            <div class="ledger-history-head"><span>Account history</span><small>Deleting an entry reverses its balance impact.</small></div>
             <div id="accountLedgerList" class="transaction-list"></div>
         </div>
     </dialog>

@@ -53,7 +53,11 @@ if (summary.monthExpenses !== 250 || summary.monthIncome !== 1000) {
 if (model.sortTransactions(data.transactions)[0].id !== "t2") {
     throw new Error("Finance transactions are not sorted newest first.");
 }
-if (model.applyBalanceImpact(5000, -250) !== 4750 || model.applyBalanceImpact(4750, 250) !== 5000) {
+if (
+    model.applyBalanceImpact(5000, -250) !== 4750 ||
+    model.applyBalanceImpact(4750, 250) !== 5000 ||
+    model.applyBalanceImpact(5000, 300) !== 5300
+) {
     throw new Error("Finance account balance impacts are not reversible.");
 }
 
@@ -81,8 +85,11 @@ for (const id of ["accountForm", "cardForm", "accountExpenseForm", "accountsList
 for (const removedId of ["transactionForm", "transactionList", "transactionFilter"]) {
     if (html.includes(`id="${removedId}"`)) throw new Error(`Global Finance ledger remains in the UI: ${removedId}`);
 }
+if (!html.includes("<option value=\"expense\">Debit</option>") || !html.includes("<option value=\"income\">Credit</option>")) {
+    throw new Error("Account ledger does not expose both Debit and Credit entry types.");
+}
 const appSource = readFileSync(new URL("../finance/app.js", import.meta.url), "utf8");
-for (const requiredPattern of ["openAccountLedger", "balanceImpact: -expenseAmount", "applyBalanceImpact"]) {
+for (const requiredPattern of ["openAccountLedger", "entryType === \"income\" ? entryAmount : -entryAmount", "applyBalanceImpact"]) {
     if (!appSource.includes(requiredPattern)) throw new Error(`Account ledger balance wiring is missing: ${requiredPattern}`);
 }
 

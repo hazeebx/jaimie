@@ -164,17 +164,18 @@
         $("ledgerAccountBalance").textContent = formatMoney(account.balance);
         const list = $("accountLedgerList");
         const transactions = model.sortTransactions(data.transactions)
-            .filter(transaction => transaction.type === "expense" && transaction.sourceKind === "account" && transaction.sourceId === account.id);
+            .filter(transaction => ["expense", "income"].includes(transaction.type) && transaction.sourceKind === "account" && transaction.sourceId === account.id);
         list.replaceChildren();
         if (!transactions.length) {
-            list.append(emptyState("No expenses yet", "Add an expense for this account above."));
+            list.append(emptyState("No entries yet", "Add a debit or credit for this account above."));
             return;
         }
 
         transactions.forEach(transaction => {
-            const row = element("article", "transaction-row");
+            const isCredit = transaction.type === "income";
+            const row = element("article", `transaction-row${isCredit ? " income" : ""}`);
             const main = element("div", "transaction-main");
-            main.append(element("span", "transaction-sign", "−"));
+            main.append(element("span", "transaction-sign", isCredit ? "+" : "−"));
             const copy = element("div", "transaction-copy");
             copy.append(element("strong", "", transaction.category || "Uncategorized"));
             const metadata = [formatDate(transaction.date), transaction.note].filter(Boolean).join(" · ");
@@ -182,7 +183,7 @@
             main.append(copy);
 
             const side = element("div", "transaction-side");
-            side.append(element("div", "transaction-amount", `−${formatMoney(transaction.amount)}`));
+            side.append(element("div", "transaction-amount", `${isCredit ? "+" : "−"}${formatMoney(transaction.amount)}`));
             const remove = element("button", "edit-btn", "Delete");
             remove.type = "button";
             remove.addEventListener("click", () => deleteLedgerExpense(transaction.id));
@@ -309,14 +310,15 @@
     $("accountExpenseForm").addEventListener("submit", async event => {
         event.preventDefault();
         const account = data.accounts.find(item => item.id === activeLedgerAccountId);
-        const expenseAmount = Math.max(0, amount($("expenseAmount").value));
-        if (!account || expenseAmount <= 0) return;
+        const entryAmount = Math.max(0, amount($("expenseAmount").value));
+        const entryType = $("ledgerEntryType").value === "income" ? "income" : "expense";
+        if (!account || entryAmount <= 0) return;
         const now = new Date().toISOString();
         const transaction = {
             id: id("transaction"),
-            type: "expense",
-            amount: expenseAmount,
-            balanceImpact: -expenseAmount,
+            type: entryType,
+            amount: entryAmount,
+            balanceImpact: entryType === "income" ? entryAmount : -entryAmount,
             date: $("expenseDate").value,
             category: text($("expenseCategory").value, 60),
             sourceKind: "account",
