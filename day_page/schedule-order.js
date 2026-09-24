@@ -6,6 +6,16 @@
         return match ? (Number(match[1]) * 60) + Number(match[2]) : Number.POSITIVE_INFINITY;
     }
 
+    function splitTime(value) {
+        const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(value || ""));
+        return match ? { hour: match[1], minute: match[2] } : { hour: "", minute: "" };
+    }
+
+    function composeTime(hour, minute) {
+        const value = `${String(hour || "")}:${String(minute || "")}`;
+        return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value) ? value : "";
+    }
+
     function sorted(items) {
         if (!Array.isArray(items)) return [];
         return items
@@ -30,5 +40,5 @@
         return data;
     }
 
-    window.JAIMIEScheduleOrder = Object.freeze({ timeValue, sorted, sortInPlace, sortDayData });
+    window.JAIMIEScheduleOrder = Object.freeze({ timeValue, splitTime, composeTime, sorted, sortInPlace, sortDayData });
 })();

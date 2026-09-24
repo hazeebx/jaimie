@@ -33,6 +33,7 @@ const featureFolders = [
     "day_page",
     "diet-tracker",
     "event-countdown-widget",
+    "finance",
     "habits",
     "house_inventory",
     "journal",
@@ -125,6 +126,23 @@ for (const folder of featureFolders) {
     ) {
         fail(`${folder}/index.html loads its feature app before the data manager`);
     }
+}
+
+const financeHtml = readFileSync(join(root, "finance", "index.html"), "utf8");
+const financeSchemaPath = join(root, "shared", "validation-schemas", "finance.js");
+requireFile(financeSchemaPath);
+requireFile(join(root, "finance", "finance-model.js"));
+if (!financeHtml.includes("../shared/validation-schemas/finance.js")) {
+    fail("Finance does not load its validation schema");
+}
+if (!financeHtml.includes("finance-model.js")) {
+    fail("Finance does not load its model before the feature app");
+}
+if (financeHtml.indexOf("../shared/validation-schemas/finance.js") > financeHtml.indexOf("../data-manager/app.js")) {
+    fail("Finance loads its validation schema after the data manager");
+}
+if (financeHtml.indexOf("finance-model.js") > financeHtml.search(/src=["']app\.js(?:\?[^"']*)?["']/)) {
+    fail("Finance loads its feature app before its model");
 }
 
 const homeHtml = readFileSync(join(root, "index.html"), "utf8");

@@ -49,7 +49,7 @@
 
     const componentPath =
         new URL(
-            "component.html?v=music-1",
+            "component.html?v=finance-1",
             script.src
         ).href;
 

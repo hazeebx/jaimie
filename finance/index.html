@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance — JAIMIE</title>
+    <link rel="stylesheet" href="../side-bar/styles.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="side-menu"></div>
+
+    <main class="app">
+        <header class="topbar">
+            <div class="title-lockup">
+                <div class="mark">¤</div>
+                <div>
+                    <div class="eyebrow">LIFE SYSTEM / FINANCE</div>
+                    <h1>Finance</h1>
+                    <p>Manual balances and spending, kept in your JAIMIE data.</p>
+                </div>
+            </div>
+            <label class="currency-control">
+                <span>Currency</span>
+                <select id="currencySelect" aria-label="Display currency">
+                    <option value="SAR">SAR</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="INR">INR</option>
+                </select>
+            </label>
+        </header>
+
+        <aside class="privacy-note">
+            <span class="privacy-icon">!</span>
+            <div>
+                <strong>Keep sensitive credentials out of JAIMIE.</strong>
+                <span>Use a display name and, optionally, only the last four digits. Never enter login credentials, PINs, or security codes.</span>
+            </div>
+        </aside>
+
+        <section class="summary-grid" aria-label="Finance summary">
+            <article class="summary-card"><span>Account balances</span><strong id="accountTotal">—</strong><small id="accountCount">0 accounts</small></article>
+            <article class="summary-card debt"><span>Card balance</span><strong id="cardTotal">—</strong><small id="cardCount">0 cards</small></article>
+            <article class="summary-card net"><span>Net position</span><strong id="netPosition">—</strong><small>Accounts minus card balance</small></article>
+            <article class="summary-card spend"><span>Spent this month</span><strong id="monthExpenses">—</strong><small id="monthIncome">Income: —</small></article>
+        </section>
+
+        <section class="finance-grid">
+            <section class="panel accounts-panel">
+                <div class="panel-head">
+                    <div><div class="eyebrow">CASH POSITION</div><h2>Bank Accounts</h2></div>
+                    <button id="addAccountBtn" class="secondary" type="button">+ Add account</button>
+                </div>
+                <div id="accountsList" class="entity-list"></div>
+            </section>
+
+            <section class="panel cards-panel">
+                <div class="panel-head">
+                    <div><div class="eyebrow">CREDIT POSITION</div><h2>Cards</h2></div>
+                    <button id="addCardBtn" class="secondary" type="button">+ Add card</button>
+                </div>
+                <div id="cardsList" class="entity-list"></div>
+            </section>
+
+            <section class="panel transactions-panel">
+                <div class="panel-head transaction-head">
+                    <div><div class="eyebrow">MANUAL LEDGER</div><h2>Income &amp; Expenses</h2></div>
+                    <div class="panel-actions">
+                        <select id="transactionFilter" aria-label="Filter transactions">
+                            <option value="all">All entries</option>
+                            <option value="expense">Expenses</option>
+                            <option value="income">Income</option>
+                        </select>
+                        <button id="addTransactionBtn" class="primary" type="button">+ Add entry</button>
+                    </div>
+                </div>
+                <p class="ledger-note">Ledger entries are manual records and do not automatically change the balances above.</p>
+                <div id="transactionList" class="transaction-list"></div>
+            </section>
+        </section>
+    </main>
+
+    <dialog id="accountDialog" class="modal">
+        <form id="accountForm">
+            <div class="modal-head"><div><div class="eyebrow">BANK ACCOUNT</div><h2 id="accountDialogTitle">Add Account</h2></div><button class="icon-btn" type="button" data-close="accountDialog" aria-label="Close">×</button></div>
+            <input id="accountId" type="hidden">
+            <label>Account name<input id="accountName" maxlength="80" required placeholder="e.g. Daily Account"></label>
+            <label>Institution<input id="accountInstitution" maxlength="80" placeholder="Optional"></label>
+            <div class="form-row">
+                <label>Type<select id="accountType"><option value="checking">Checking</option><option value="savings">Savings</option><option value="cash">Cash</option><option value="investment">Investment</option><option value="other">Other</option></select></label>
+                <label>Last four digits<input id="accountLast4" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Optional"></label>
+            </div>
+            <div class="form-row">
+                <label>Current balance<input id="accountBalance" type="number" step="0.01" required value="0"></label>
+                <label>Color<input id="accountColor" type="color" value="#ff8a3d"></label>
+            </div>
+            <div class="modal-actions"><button id="deleteAccountBtn" class="danger hidden" type="button">Delete</button><span></span><button class="secondary" type="button" data-close="accountDialog">Cancel</button><button class="primary" type="submit">Save account</button></div>
+        </form>
+    </dialog>
+
+    <dialog id="cardDialog" class="modal">
+        <form id="cardForm">
+            <div class="modal-head"><div><div class="eyebrow">PAYMENT CARD</div><h2 id="cardDialogTitle">Add Card</h2></div><button class="icon-btn" type="button" data-close="cardDialog" aria-label="Close">×</button></div>
+            <input id="cardId" type="hidden">
+            <label>Card name<input id="cardName" maxlength="80" required placeholder="e.g. Rewards Card"></label>
+            <label>Issuer<input id="cardIssuer" maxlength="80" placeholder="Optional"></label>
+            <label>Last four digits<input id="cardLast4" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Optional"></label>
+            <div class="form-row">
+                <label>Credit limit<input id="cardLimit" type="number" min="0" step="0.01" required value="0"></label>
+                <label>Outstanding balance<input id="cardBalance" type="number" min="0" step="0.01" required value="0"></label>
+            </div>
+            <label>Color<input id="cardColor" type="color" value="#6ec8ff"></label>
+            <div class="modal-actions"><button id="deleteCardBtn" class="danger hidden" type="button">Delete</button><span></span><button class="secondary" type="button" data-close="cardDialog">Cancel</button><button class="primary" type="submit">Save card</button></div>
+        </form>
+    </dialog>
+
+    <dialog id="transactionDialog" class="modal">
+        <form id="transactionForm">
+            <div class="modal-head"><div><div class="eyebrow">MANUAL LEDGER</div><h2 id="transactionDialogTitle">Add Entry</h2></div><button class="icon-btn" type="button" data-close="transactionDialog" aria-label="Close">×</button></div>
+            <input id="transactionId" type="hidden">
+            <div class="form-row">
+                <label>Entry type<select id="transactionType"><option value="expense">Expense</option><option value="income">Income</option></select></label>
+                <label>Date<input id="transactionDate" type="date" required></label>
+            </div>
+            <div class="form-row">
+                <label>Amount<input id="transactionAmount" type="number" min="0.01" step="0.01" required></label>
+                <label>Category<input id="transactionCategory" maxlength="60" required placeholder="e.g. Food"></label>
+            </div>
+            <label>Account or card<select id="transactionSource"><option value="none:">Not linked</option></select></label>
+            <label>Note<input id="transactionNote" maxlength="160" placeholder="Optional"></label>
+            <div class="modal-actions"><button id="deleteTransactionBtn" class="danger hidden" type="button">Delete</button><span></span><button class="secondary" type="button" data-close="transactionDialog">Cancel</button><button class="primary" type="submit">Save entry</button></div>
+        </form>
+    </dialog>
+
+    <script src="../shared/safe-content.js"></script>
+    <script src="../shared/validation.js"></script>
+    <script src="../shared/validation-schemas/calendar-reminders.js"></script>
+    <script src="../shared/validation-schemas/workout.js"></script>
+    <script src="../shared/validation-schemas/habits.js"></script>
+    <script src="../shared/validation-schemas/event-countdown.js"></script>
+    <script src="../shared/validation-schemas/diet.js"></script>
+    <script src="../shared/validation-schemas/sleep.js"></script>
+    <script src="../shared/validation-schemas/journal.js"></script>
+    <script src="../shared/validation-schemas/inventory.js"></script>
+    <script src="../shared/validation-schemas/packing.js"></script>
+    <script src="../shared/validation-schemas/finance.js"></script>
+    <script src="../data-manager/app.js?v=2"></script>
+    <script src="../side-bar/app.js"></script>
+    <script src="finance-model.js?v=1"></script>
+    <script src="app.js?v=1"></script>
+</body>
+</html>

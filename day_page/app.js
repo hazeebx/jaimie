@@ -151,6 +151,44 @@ function collection(type) {
 }
 
 
+function populateScheduleTimeSelectors() {
+
+    const hour = $("#scheduleHour");
+    const minute = $("#scheduleMinute");
+
+    hour.innerHTML = `<option value="">Hour</option>${Array.from(
+        { length: 24 },
+        (_, value) => `<option value="${String(value).padStart(2, "0")}">${String(value).padStart(2, "0")}</option>`
+    ).join("")}`;
+
+    minute.innerHTML = `<option value="">Minute</option>${Array.from(
+        { length: 60 },
+        (_, value) => `<option value="${String(value).padStart(2, "0")}">${String(value).padStart(2, "0")}</option>`
+    ).join("")}`;
+
+}
+
+
+function setScheduleTimeSelectors(value) {
+
+    const time = window.JAIMIEScheduleOrder.splitTime(value);
+    $("#scheduleHour").value = time.hour;
+    $("#scheduleMinute").value = time.minute;
+    $("#scheduleHour").setCustomValidity("");
+    $("#scheduleMinute").setCustomValidity("");
+
+}
+
+
+function selectedScheduleTime() {
+
+    const hour = $("#scheduleHour").value;
+    const minute = $("#scheduleMinute").value;
+    return window.JAIMIEScheduleOrder.composeTime(hour, minute);
+
+}
+
+
 /* =========================================================
    HTML ESCAPING
    ========================================================= */
@@ -547,10 +585,11 @@ function openModal(type, index = null) {
     }
 
 
-    $("#timeRow").style.display =
-        type === "schedule" || type === "reminder"
-            ? "block"
-            : "none";
+    $("#scheduleTimeRow").hidden =
+        type !== "schedule";
+
+    $("#timeRow").hidden =
+        type !== "reminder";
 
 
     $("#dateRow").hidden =
@@ -562,7 +601,8 @@ function openModal(type, index = null) {
 
     $("#title").value = item?.title || "";
     $("#note").value = item?.note || "";
-    $("#time").value = item?.time || "";
+    setScheduleTimeSelectors(item?.time || "");
+    $("#time").value = type === "reminder" ? item?.time || "" : "";
     $("#reminderDate").value = item?.date || key(state.date);
     $("#time").setCustomValidity("");
     $("#notificationRow").hidden = type !== "schedule" && type !== "reminder";
@@ -680,9 +720,24 @@ $("#form").onsubmit = async (event) => {
     const notifyMinutes = mode !== "quests" && $("#notificationMinutes").value !== "off"
         ? Number($("#notificationMinutes").value)
         : null;
-    if (notifyMinutes !== null && !$("#time").value) {
-        $("#time").setCustomValidity("Choose a time for this reminder.");
-        $("#time").reportValidity();
+
+    const scheduleHour = $("#scheduleHour").value;
+    const scheduleMinute = $("#scheduleMinute").value;
+    if (mode === "schedule" && Boolean(scheduleHour) !== Boolean(scheduleMinute)) {
+        const incompleteSelector = scheduleHour ? $("#scheduleMinute") : $("#scheduleHour");
+        incompleteSelector.setCustomValidity("Choose both an hour and minute.");
+        incompleteSelector.reportValidity();
+        return;
+    }
+
+    const selectedTime = mode === "schedule"
+        ? selectedScheduleTime()
+        : $("#time").value;
+
+    if (notifyMinutes !== null && !selectedTime) {
+        const timeControl = mode === "schedule" ? $("#scheduleHour") : $("#time");
+        timeControl.setCustomValidity("Choose a time for this notification.");
+        timeControl.reportValidity();
         return;
     }
 
@@ -706,7 +761,7 @@ $("#form").onsubmit = async (event) => {
             $("#note").value.trim(),
 
         time:
-            $("#time").value,
+            selectedTime,
 
         done:
             previous?.done || false,
@@ -1066,6 +1121,8 @@ async function init() {
 
     try {
 
+        populateScheduleTimeSelectors();
+
         /*
          * Wait for centralized storage.
          */
@@ -1116,7 +1173,12 @@ async function init() {
 
 
 $("#time").addEventListener("input", () => $("#time").setCustomValidity(""));
-$("#notificationMinutes").addEventListener("change", () => $("#time").setCustomValidity(""));
+$("#scheduleHour").addEventListener("change", () => $("#scheduleHour").setCustomValidity(""));
+$("#scheduleMinute").addEventListener("change", () => $("#scheduleMinute").setCustomValidity(""));
+$("#notificationMinutes").addEventListener("change", () => {
+    $("#time").setCustomValidity("");
+    $("#scheduleHour").setCustomValidity("");
+});
 
 let linkedDataRefreshInFlight = false;
 document.addEventListener("visibilitychange", async () => {

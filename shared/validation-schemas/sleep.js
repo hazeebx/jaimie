@@ -60,17 +60,26 @@
         }
         if (typeof value.rested !== "boolean") issue(issues, "field.wrong-type", "Rested must be true or false.", `${path}.rested`);
 
-        return {
+        const normalized = {
             ...value,
             date,
             bedtime: time(value.bedtime, `${path}.bedtime`, "Bedtime", issues),
             wakeTime: time(value.wakeTime, `${path}.wakeTime`, "Wake time", issues),
             duration: number(value.duration, null, 0, 1440, `${path}.duration`, "Sleep duration", issues, { integer: true, nullable: true }),
-            quality: number(value.quality, 5, 1, 10, `${path}.quality`, "Sleep quality", issues, { integer: true }),
             fellAsleep: FELL_ASLEEP_VALUES.has(fellAsleep) ? fellAsleep : "Easily",
-            wakeups: number(value.wakeups, 0, 0, 1000, `${path}.wakeups`, "Wake-ups", issues, { integer: true }),
             rested: Boolean(value.rested)
         };
+
+        // Keep validating old records without requiring these retired fields
+        // or adding them to new entries.
+        if (Object.hasOwn(value, "quality")) {
+            normalized.quality = number(value.quality, 5, 1, 10, `${path}.quality`, "Sleep quality", issues, { integer: true });
+        }
+        if (Object.hasOwn(value, "wakeups")) {
+            normalized.wakeups = number(value.wakeups, 0, 0, 1000, `${path}.wakeups`, "Wake-ups", issues, { integer: true });
+        }
+
+        return normalized;
     }
 
     function validateSleep(value) {

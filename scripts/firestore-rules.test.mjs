@@ -17,8 +17,9 @@ import {
 } from "firebase/firestore";
 
 const PROJECT_ID = "demo-jaimie-rules";
-const FIRESTORE_HOST = "127.0.0.1";
-const FIRESTORE_PORT = 8080;
+const [FIRESTORE_HOST = "127.0.0.1", rawFirestorePort = "8080"] =
+    String(process.env.FIRESTORE_EMULATOR_HOST || "127.0.0.1:8080").split(":");
+const FIRESTORE_PORT = Number(rawFirestorePort) || 8080;
 
 let testEnvironment;
 

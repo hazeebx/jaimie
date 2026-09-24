@@ -132,8 +132,17 @@
                     >
                 </label>
 
-                <label id="timeRow">
+                <label id="scheduleTimeRow" hidden>
                     Time
+                    <span class="time-selectors">
+                        <select id="scheduleHour" aria-label="Schedule hour"></select>
+                        <span aria-hidden="true">:</span>
+                        <select id="scheduleMinute" aria-label="Schedule minute"></select>
+                    </span>
+                </label>
+
+                <label id="timeRow" hidden>
+                    Reminder time
                     <input
                         id="time"
                         type="time"
@@ -208,7 +217,7 @@
 
     <!-- Day page -->
     <script src="schedule-order.js?v=1"></script>
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=5"></script>
 
 </body>
 </html>

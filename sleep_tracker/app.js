@@ -15,9 +15,7 @@
                    bedtime,
                    wakeTime,
                    duration,
-                   quality,
                    fellAsleep,
-                   wakeups,
                    rested
                }
            }
@@ -519,48 +517,6 @@ function human(minutes) {
 
 
 /* =========================================================
-   QUALITY
-   ========================================================= */
-
-function renderDots() {
-
-    const quality =
-        +$("quality").value;
-
-
-    $("qualityValue")
-        .textContent =
-        `${quality}/10`;
-
-
-    $("qualityDots")
-        .innerHTML =
-        Array
-            .from(
-                {
-                    length: 5
-                },
-                (_, index) =>
-                    `
-                        <span
-                            class="dot ${
-                                index <
-                                Math.round(
-                                    quality /
-                                    2
-                                )
-                                    ? "on"
-                                    : ""
-                            }"
-                        ></span>
-                    `
-            )
-            .join("");
-
-}
-
-
-/* =========================================================
    TOTAL SLEEP
    ========================================================= */
 
@@ -625,30 +581,16 @@ async function loadEntry() {
         "";
 
 
-    $("quality")
-        .value =
-        entry?.quality ||
-        5;
-
-
     $("fellAsleep")
         .value =
         entry?.fellAsleep ||
         "Easily";
 
 
-    $("wakeups")
-        .value =
-        entry?.wakeups ??
-        0;
-
-
     $("rested")
         .checked =
         !!entry?.rested;
 
-
-    renderDots();
 
     updateTotal();
 
@@ -701,17 +643,9 @@ async function save() {
                 wakeTime
             ),
 
-        quality:
-            +$("quality")
-                .value,
-
         fellAsleep:
             $("fellAsleep")
                 .value,
-
-        wakeups:
-            +$("wakeups")
-                .value || 0,
 
         rested:
             $("rested")
@@ -885,14 +819,6 @@ async function renderHistory() {
                                 </div>
 
 
-                                <div class="q">
-                                    ${
-                                        v
-                                            ? `${v.quality}/10`
-                                            : ""
-                                    }
-                                </div>
-
                             </div>
 
                         `;
@@ -919,23 +845,6 @@ async function renderHistory() {
         );
 
 
-    const averageQuality =
-        entries.length
-
-            ? entries.reduce(
-                (
-                    sum,
-                    item
-                ) =>
-                    sum +
-                    item.v.quality,
-                0
-            ) /
-            entries.length
-
-            : 0;
-
-
     $("avgSleep")
         .textContent =
         entries.length
@@ -945,15 +854,6 @@ async function renderHistory() {
                     entries.length
                 )
             )
-            : "—";
-
-
-    $("avgQuality")
-        .textContent =
-        entries.length
-            ? `${averageQuality.toFixed(
-                1
-            )}/10`
             : "—";
 
 
@@ -1097,11 +997,6 @@ $("todayBtn").onclick =
 $("saveBtn")
     .onclick =
     save;
-
-
-$("quality")
-    .oninput =
-    renderDots;
 
 
 $("bedtime")

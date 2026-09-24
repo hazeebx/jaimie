@@ -340,6 +340,54 @@ function esc(value) {
 }
 
 
+function workoutHistoryPanel() {
+
+    const history = window.JAIMIEWorkoutHistory.build(state.days);
+    const activeDays = history.filter(item => item.level > 0).length;
+    const completedSets = history.reduce((total, item) => total + item.completedSets, 0);
+    const leadingBlanks = history[0]?.weekday || 0;
+    const cells = [
+        ...Array.from({ length: leadingBlanks }, () => `<span class="history-cell history-blank" aria-hidden="true"></span>`),
+        ...history.map(item => {
+            const detail = item.level
+                ? `${item.completedSets} completed set${item.completedSets === 1 ? "" : "s"}, ${item.completedReps} reps`
+                : item.rest
+                    ? "Rest day"
+                    : "No completed workout";
+            return `
+                <button
+                    class="history-cell intensity-${item.level}${item.rest ? " rest-day" : ""}${item.date === state.selectedDate ? " selected" : ""}"
+                    type="button"
+                    data-history-date="${item.date}"
+                    aria-label="${esc(`${item.date}: ${detail}`)}"
+                    title="${esc(`${item.date} · ${detail}`)}"
+                ></button>
+            `;
+        })
+    ].join("");
+
+    return `
+        <aside class="side-panel history-panel">
+            <div class="side-title">Workout History</div>
+            <div class="side-copy">Past year · intensity based on completed sets.</div>
+            <div class="history-summary">
+                <span>${activeDays} active days</span>
+                <span>${completedSets} completed sets</span>
+            </div>
+            <div class="history-grid" role="grid" aria-label="Workout intensity over the past year">
+                ${cells}
+            </div>
+            <div class="history-legend" aria-label="Workout intensity legend">
+                <span>Less</span>
+                ${[0, 1, 2, 3, 4].map(level => `<i class="history-cell intensity-${level}"></i>`).join("")}
+                <span>More</span>
+            </div>
+        </aside>
+    `;
+
+}
+
+
 /* =========================================================
    RENDER
    ========================================================= */
@@ -777,6 +825,8 @@ function render() {
 
                     </aside>
 
+                    ${workoutHistoryPanel()}
+
                     </div>
 
 
@@ -1143,6 +1193,29 @@ function bind() {
                                     record.id
                             );
 
+
+                        await save();
+
+                        render();
+
+                    };
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            "[data-history-date]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    async () => {
+
+                        state.selectedDate =
+                            button.dataset.historyDate;
 
                         await save();
 

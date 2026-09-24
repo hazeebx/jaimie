@@ -78,6 +78,15 @@ warnings until strict enforcement is enabled.
 npm run test:workout
 ```
 
+The Workout page includes a one-year activity heatmap below Personal Records.
+Intensity is calculated from completed sets because daily workout logs do not
+currently store working weight. Each day also exposes completed reps in its
+tooltip and can be selected to open that workout log.
+
+```bash
+npm run test:workout-history
+```
+
 Habits data also has a compatibility-mode schema covering habit definitions,
 hex color tags, dated completion-history buckets, and food-recency tracking.
 The Habits load/edit paths merge existing records so new root or record fields
@@ -99,8 +108,8 @@ npm run test:event-countdown
 Diet and Sleep have separate compatibility-mode schemas. Diet validation covers
 targets, the food library, dated water/meal logs, meal items, nutrients, IDs and
 meal times. Sleep validation covers dated entries, bedtime/wake time, duration,
-quality, wake-ups, rested state and the current fell-asleep options. Their load
-and edit paths preserve unknown future fields.
+rested state and the current fell-asleep options. Retired quality and wake-up
+fields remain compatible with old records without appearing in new entries.
 
 ```bash
 npm run test:diet-sleep
@@ -114,6 +123,21 @@ packing profiles, item ownership, check keys and duplicate IDs.
 
 ```bash
 npm run test:journal-inventory-packing
+```
+
+## Finance
+
+The Finance page stores manually maintained account balances, card limits and
+outstanding balances, plus a manual income/expense ledger. It accepts only an
+optional last-four identifier and must not be used for banking credentials,
+PINs or security codes. Ledger entries do not silently alter balances, so a
+manual balance update cannot be double-counted.
+
+Finance uses the central `JAIMIEData` store under the `finance` dataset and a
+compatibility-mode schema that preserves unknown future fields.
+
+```bash
+npm run test:finance
 ```
 
 ### Firestore Security Rules

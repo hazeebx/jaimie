@@ -1,8 +1,25 @@
 globalThis.window = globalThis;
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 await import("../day_page/schedule-order.js");
 
 const order = globalThis.JAIMIEScheduleOrder;
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const dayStyles = readFileSync(join(root, "day_page", "styles.css"), "utf8");
+if (!/\.modal\s+\[hidden\]\s*\{\s*display\s*:\s*none\s*!important/.test(dayStyles)) {
+    throw new Error("Hidden Schedule/Reminder modal fields can be exposed by modal label styles.");
+}
+const selectedTime = order.composeTime("07", "05");
+if (selectedTime !== "07:05" || order.composeTime("24", "00") !== "" || order.composeTime("07", "") !== "") {
+    throw new Error("Schedule time selectors did not compose a valid HH:MM value.");
+}
+const splitTime = order.splitTime("19:47");
+if (splitTime.hour !== "19" || splitTime.minute !== "47" || order.splitTime("bad").hour !== "") {
+    throw new Error("Existing Schedule times were not restored into the selectors correctly.");
+}
 const items = [
     { id: "untimed-a", title: "Untimed A", time: "" },
     { id: "afternoon", title: "Afternoon", time: "14:30" },
@@ -32,4 +49,4 @@ if (dayData.reminders[0].id !== "reminder" || dayData["2026-09-21"].quests[0].id
 }
 if (dayData.futureRootField.preserve !== true) throw new Error("Schedule sorting changed future fields.");
 
-console.log("Day Schedule ordering passed: chronological, stable, untimed-last, and isolated from other sections.");
+console.log("Day Schedule passed: time selectors, chronological ordering, stability, untimed-last, and section isolation are correct.");

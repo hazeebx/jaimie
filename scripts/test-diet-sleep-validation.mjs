@@ -1,5 +1,7 @@
 globalThis.window = globalThis;
 
+import { readFileSync } from "node:fs";
+
 await import("../shared/safe-content.js");
 await import("../shared/validation.js");
 await import("../shared/validation-schemas/diet.js");
@@ -91,9 +93,7 @@ const sleep = {
             bedtime: "23:15",
             wakeTime: "07:00",
             duration: 465,
-            quality: 8,
             fellAsleep: "Normally",
-            wakeups: 1,
             rested: true,
             dreamNotes: "preserve"
         }
@@ -103,6 +103,14 @@ const validSleep = validation.validate("sleep", sleep, { source: "test" });
 if (!validSleep.valid || validSleep.issues.length) throw new Error("A current Sleep dataset failed validation.");
 if (validSleep.value.futureRootField !== true || validSleep.value.days["2026-09-08"].dreamNotes !== "preserve") {
     throw new Error("Sleep normalization discarded forward-compatible fields.");
+}
+
+const sleepHtml = readFileSync(new URL("../sleep_tracker/index.html", import.meta.url), "utf8");
+const sleepApp = readFileSync(new URL("../sleep_tracker/app.js", import.meta.url), "utf8");
+for (const retiredField of ["quality", "wakeups", "avgQuality"]) {
+    if (sleepHtml.includes(`id="${retiredField}"`) || sleepApp.includes(`$("${retiredField}")`)) {
+        throw new Error(`Retired Sleep field remains wired into the UI: ${retiredField}`);
+    }
 }
 
 const legacySleep = validation.validate("sleep", {
@@ -121,6 +129,12 @@ const legacySleep = validation.validate("sleep", {
 });
 if (!legacySleep.valid || !legacySleep.issues.some(issue => issue.code === "sleep.time.legacy-missing")) {
     throw new Error("Supported legacy Sleep entries were not handled as warnings.");
+}
+if (
+    legacySleep.value.days["2026-09-08"].quality !== 5 ||
+    legacySleep.value.days["2026-09-08"].wakeups !== 0
+) {
+    throw new Error("Retired Sleep fields were not preserved for legacy records.");
 }
 
 const invalidSleep = validation.validate("sleep", {
