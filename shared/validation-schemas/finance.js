@@ -9,6 +9,7 @@
 
     const ACCOUNT_TYPES = new Set(["checking", "savings", "cash", "investment", "other"]);
     const INVESTMENT_TYPES = new Set(["stocks", "fund", "gold", "crypto", "real-estate", "deposit", "other"]);
+    const LIABILITY_TYPES = new Set(["personal", "mortgage", "vehicle", "education", "business", "other"]);
     const TRANSACTION_TYPES = new Set(["expense", "income"]);
     const SOURCE_KINDS = new Set(["account", "card", "none"]);
     const CURRENCIES = new Set(["SAR", "USD", "EUR", "GBP", "INR"]);
@@ -63,6 +64,21 @@
             issue(issues, "finance.date.invalid", "Transaction date must be a real YYYY-MM-DD date.", path);
         }
         return normalized;
+    }
+
+    function optionalDate(value, path, issues) {
+        const normalized = safeContent.normalizeText(value, { maxLength: 10 });
+        return normalized ? date(normalized, path, issues) : "";
+    }
+
+    function percentage(value, path, label, issues) {
+        if (value === "" || value === null || value === undefined) return null;
+        const normalized = Number(value);
+        if (!Number.isFinite(normalized) || normalized < 0 || normalized > 1000) {
+            issue(issues, "finance.percentage.invalid", `${label} must be between 0 and 1000.`, path);
+            return null;
+        }
+        return Math.round((normalized + Number.EPSILON) * 10000) / 10000;
     }
 
     function uniqueId(value, path, label, issues, ids) {
@@ -135,6 +151,49 @@
         return normalized;
     }
 
+    function liability(value, index, issues, ids, fallbackCurrency) {
+        const path = `liabilities.${index}`;
+        if (!isRecord(value)) {
+            issue(issues, "finance.liability.invalid", "Liabilities must be objects.", path);
+            return null;
+        }
+        const type = text(value.type || "personal", `${path}.type`, "Liability type", issues, { maxLength: 30 });
+        if (!LIABILITY_TYPES.has(type)) issue(issues, "finance.liability-type.invalid", "Liability type is not supported.", `${path}.type`);
+        return {
+            ...value,
+            id: uniqueId(value.id, `${path}.id`, "Liability", issues, ids),
+            name: text(value.name, `${path}.name`, "Liability name", issues, { required: true, maxLength: 80 }),
+            lender: text(value.lender, `${path}.lender`, "Lender", issues, { maxLength: 80 }),
+            type: LIABILITY_TYPES.has(type) ? type : "other",
+            originalPrincipal: Math.max(0, money(value.originalPrincipal, `${path}.originalPrincipal`, "Original principal", issues)),
+            outstandingBalance: Math.max(0, money(value.outstandingBalance, `${path}.outstandingBalance`, "Outstanding balance", issues)),
+            monthlyPayment: Math.max(0, money(value.monthlyPayment ?? 0, `${path}.monthlyPayment`, "Monthly payment", issues)),
+            interestRate: percentage(value.interestRate, `${path}.interestRate`, "Interest rate", issues),
+            nextPaymentDate: optionalDate(value.nextPaymentDate, `${path}.nextPaymentDate`, issues),
+            endDate: optionalDate(value.endDate, `${path}.endDate`, issues),
+            currency: currency(value.currency, fallbackCurrency, `${path}.currency`, issues),
+            notes: text(value.notes, `${path}.notes`, "Liability notes", issues, { maxLength: 160 }),
+            color: color(value.color)
+        };
+    }
+
+    function liabilityPayment(value, index, issues, ids, fallbackCurrency) {
+        const path = `liabilityPayments.${index}`;
+        if (!isRecord(value)) {
+            issue(issues, "finance.liability-payment.invalid", "Liability payments must be objects.", path);
+            return null;
+        }
+        return {
+            ...value,
+            id: uniqueId(value.id, `${path}.id`, "Liability payment", issues, ids),
+            liabilityId: text(value.liabilityId, `${path}.liabilityId`, "Liability ID", issues, { required: true, maxLength: 80 }),
+            amount: money(value.amount, `${path}.amount`, "Payment amount", issues, { positive: true }),
+            date: date(value.date, `${path}.date`, issues),
+            currency: currency(value.currency, fallbackCurrency, `${path}.currency`, issues),
+            note: text(value.note, `${path}.note`, "Payment note", issues, { maxLength: 160 })
+        };
+    }
+
     function transaction(value, index, issues, ids, fallbackCurrency) {
         const path = `transactions.${index}`;
         if (!isRecord(value)) {
@@ -174,6 +233,8 @@
         const accountIds = new Set();
         const investmentIds = new Set();
         const cardIds = new Set();
+        const liabilityIds = new Set();
+        const liabilityPaymentIds = new Set();
         const transactionIds = new Set();
         const accounts = (Array.isArray(value.accounts) ? value.accounts : [])
             .map((item, index) => account(item, index, issues, accountIds, displayCurrency)).filter(Boolean);
@@ -181,12 +242,18 @@
             .map((item, index) => investment(item, index, issues, investmentIds, displayCurrency)).filter(Boolean);
         const cards = (Array.isArray(value.cards) ? value.cards : [])
             .map((item, index) => card(item, index, issues, cardIds, displayCurrency)).filter(Boolean);
+        const liabilities = (Array.isArray(value.liabilities) ? value.liabilities : [])
+            .map((item, index) => liability(item, index, issues, liabilityIds, displayCurrency)).filter(Boolean);
+        const liabilityPayments = (Array.isArray(value.liabilityPayments) ? value.liabilityPayments : [])
+            .map((item, index) => liabilityPayment(item, index, issues, liabilityPaymentIds, displayCurrency)).filter(Boolean);
         const transactions = (Array.isArray(value.transactions) ? value.transactions : [])
             .map((item, index) => transaction(item, index, issues, transactionIds, displayCurrency)).filter(Boolean);
 
         if (!Array.isArray(value.accounts)) issue(issues, "finance.accounts.invalid", "Accounts must be an array.", "accounts");
         if (value.investments !== undefined && !Array.isArray(value.investments)) issue(issues, "finance.investments.invalid", "Investments must be an array.", "investments");
         if (!Array.isArray(value.cards)) issue(issues, "finance.cards.invalid", "Cards must be an array.", "cards");
+        if (value.liabilities !== undefined && !Array.isArray(value.liabilities)) issue(issues, "finance.liabilities.invalid", "Liabilities must be an array.", "liabilities");
+        if (value.liabilityPayments !== undefined && !Array.isArray(value.liabilityPayments)) issue(issues, "finance.liability-payments.invalid", "Liability payments must be an array.", "liabilityPayments");
         if (!Array.isArray(value.transactions)) issue(issues, "finance.transactions.invalid", "Transactions must be an array.", "transactions");
 
         for (const item of transactions) {
@@ -195,6 +262,11 @@
             }
             if (item.sourceKind === "card" && item.sourceId && !cardIds.has(item.sourceId)) {
                 issue(issues, "finance.source.missing", "Transaction references a missing card.", `transactions.${item.id}.sourceId`, "warning");
+            }
+        }
+        for (const payment of liabilityPayments) {
+            if (payment.liabilityId && !liabilityIds.has(payment.liabilityId)) {
+                issue(issues, "finance.liability-source.missing", "Payment references a missing liability.", `liabilityPayments.${payment.id}.liabilityId`, "warning");
             }
         }
 
@@ -214,6 +286,8 @@
                 accounts,
                 investments,
                 cards,
+                liabilities,
+                liabilityPayments,
                 transactions
             },
             issues

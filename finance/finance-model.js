@@ -48,6 +48,7 @@
         const accounts = Array.isArray(data?.accounts) ? data.accounts : [];
         const investments = Array.isArray(data?.investments) ? data.investments : [];
         const cards = Array.isArray(data?.cards) ? data.cards : [];
+        const liabilities = Array.isArray(data?.liabilities) ? data.liabilities : [];
         const transactions = Array.isArray(data?.transactions) ? data.transactions : [];
         const displayCurrency = normalizedCurrency(data?.currency);
         const exchangeRates = data?.exchangeRates || {};
@@ -58,9 +59,11 @@
         const accountResult = totalConverted(accounts, "balance", displayCurrency, exchangeRates, displayCurrency);
         const investmentResult = totalConverted(investments, "value", displayCurrency, exchangeRates, displayCurrency);
         const cardResult = totalConverted(cards, "balance", displayCurrency, exchangeRates, displayCurrency);
+        const liabilityResult = totalConverted(liabilities, "outstandingBalance", displayCurrency, exchangeRates, displayCurrency);
         const accountBalance = accountResult.total;
         const investmentBalance = investmentResult.total;
         const cardBalance = cardResult.total;
+        const liabilityBalance = liabilityResult.total;
         const monthTransactions = transactions.filter(transaction => monthKey(transaction.date) === currentMonth);
         const sumTransactions = type => monthTransactions
             .filter(transaction => transaction.type === type && (type !== "expense" || transaction.sourceKind === "account"))
@@ -83,10 +86,11 @@
             accountBalance,
             investmentBalance,
             cardBalance,
-            netPosition: accountBalance + investmentBalance - cardBalance,
+            liabilityBalance,
+            netPosition: accountBalance + investmentBalance - cardBalance - liabilityBalance,
             monthExpenses: expenseResult.total,
             monthIncome: incomeResult.total,
-            unconvertedCount: accountResult.unconvertedCount + investmentResult.unconvertedCount + cardResult.unconvertedCount + expenseResult.unconvertedCount + incomeResult.unconvertedCount
+            unconvertedCount: accountResult.unconvertedCount + investmentResult.unconvertedCount + cardResult.unconvertedCount + liabilityResult.unconvertedCount + expenseResult.unconvertedCount + incomeResult.unconvertedCount
         };
     }
 

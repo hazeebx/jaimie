@@ -49,10 +49,11 @@
         </aside>
 
         <section class="summary-grid" aria-label="Finance summary">
-            <article class="summary-card net-worth"><span>Total Net Worth</span><strong id="netPosition">—</strong><small>Accounts + investments − cards</small></article>
+            <article class="summary-card net-worth"><span>Total Net Worth</span><strong id="netPosition">—</strong><small>Assets − cards − liabilities</small></article>
             <article class="summary-card"><span>Bank accounts</span><strong id="accountTotal">—</strong><small id="accountCount">0 accounts</small></article>
             <article class="summary-card investment"><span>Investments</span><strong id="investmentTotal">—</strong><small id="investmentCount">0 investments</small></article>
             <article class="summary-card debt"><span>Card balance</span><strong id="cardTotal">—</strong><small id="cardCount">0 cards</small></article>
+            <article class="summary-card debt"><span>Liabilities</span><strong id="liabilityTotal">—</strong><small id="liabilityCount">0 loans</small></article>
             <article class="summary-card spend"><span>Spent this month</span><strong id="monthExpenses">—</strong><small>Across account ledgers</small></article>
         </section>
 
@@ -79,6 +80,14 @@
                 <div id="cardsList" class="entity-list"></div>
             </section>
 
+            <section class="panel liabilities-panel">
+                <div class="panel-head">
+                    <div><div class="eyebrow">DEBT POSITION</div><h2>Liabilities</h2></div>
+                    <button id="addLiabilityBtn" class="secondary" type="button">+ Add liability</button>
+                </div>
+                <div id="liabilitiesList" class="account-widget-grid"></div>
+            </section>
+
         </section>
     </main>
 
@@ -101,6 +110,34 @@
         </form>
     </dialog>
 
+    <dialog id="liabilityDialog" class="modal" data-static-backdrop>
+        <form id="liabilityForm">
+            <div class="modal-head"><div><div class="eyebrow">LIABILITY</div><h2 id="liabilityDialogTitle">Add Liability</h2></div><button class="icon-btn" type="button" data-close="liabilityDialog" aria-label="Close">×</button></div>
+            <input id="liabilityId" type="hidden">
+            <label>Loan name<input id="liabilityName" maxlength="80" required placeholder="e.g. Car Loan"></label>
+            <label>Lender<input id="liabilityLender" maxlength="80" placeholder="Optional"></label>
+            <div class="form-row">
+                <label>Type<select id="liabilityType"><option value="personal">Personal loan</option><option value="mortgage">Mortgage</option><option value="vehicle">Vehicle loan</option><option value="education">Education loan</option><option value="business">Business loan</option><option value="other">Other</option></select></label>
+                <label>Currency<select id="liabilityCurrency"><option value="SAR">SAR</option><option value="INR">INR</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
+            </div>
+            <div class="form-row">
+                <label>Original principal<input id="liabilityPrincipal" type="number" min="0" step="0.01" required value="0"></label>
+                <label>Outstanding balance<input id="liabilityBalance" type="number" min="0" step="0.01" required value="0"></label>
+            </div>
+            <div class="form-row">
+                <label>Monthly payment / EMI<input id="liabilityMonthlyPayment" type="number" min="0" step="0.01" value="0"></label>
+                <label>Interest rate %<input id="liabilityInterestRate" type="number" min="0" max="1000" step="0.0001" placeholder="Optional"></label>
+            </div>
+            <div class="form-row">
+                <label>Next payment date<input id="liabilityNextPaymentDate" type="date"></label>
+                <label>Expected completion<input id="liabilityEndDate" type="date"></label>
+            </div>
+            <label>Color<input id="liabilityColor" type="color" value="#ff7373"></label>
+            <label>Notes<input id="liabilityNotes" maxlength="160" placeholder="Optional"></label>
+            <div class="modal-actions"><button id="deleteLiabilityBtn" class="danger hidden" type="button">Delete</button><span></span><button class="secondary" type="button" data-close="liabilityDialog">Cancel</button><button class="primary" type="submit">Save liability</button></div>
+        </form>
+    </dialog>
+
     <dialog id="investmentDialog" class="modal">
         <form id="investmentForm">
             <div class="modal-head"><div><div class="eyebrow">INVESTMENT</div><h2 id="investmentDialogTitle">Add Investment</h2></div><button class="icon-btn" type="button" data-close="investmentDialog" aria-label="Close">×</button></div>
@@ -120,7 +157,7 @@
         </form>
     </dialog>
 
-    <dialog id="cardDialog" class="modal">
+    <dialog id="cardDialog" class="modal" data-static-backdrop>
         <form id="cardForm">
             <div class="modal-head"><div><div class="eyebrow">PAYMENT CARD</div><h2 id="cardDialogTitle">Add Card</h2></div><button class="icon-btn" type="button" data-close="cardDialog" aria-label="Close">×</button></div>
             <input id="cardId" type="hidden">
@@ -157,6 +194,24 @@
         </div>
     </dialog>
 
+    <dialog id="liabilityLedgerDialog" class="modal ledger-modal" data-static-backdrop>
+        <div class="ledger-shell">
+            <div class="modal-head"><div><div class="eyebrow">LIABILITY LEDGER</div><h2 id="ledgerLiabilityName">Liability</h2></div><button class="icon-btn" type="button" data-close="liabilityLedgerDialog" aria-label="Close">×</button></div>
+            <div class="ledger-balance"><span>Outstanding balance</span><strong id="ledgerLiabilityBalance">—</strong></div>
+            <form id="liabilityPaymentForm" class="expense-form">
+                <div class="expense-form-title">Record payment</div>
+                <div class="form-row">
+                    <label>Amount<input id="liabilityPaymentAmount" type="number" min="0.01" step="0.01" required></label>
+                    <label>Date<input id="liabilityPaymentDate" type="date" required></label>
+                </div>
+                <label>Note<input id="liabilityPaymentNote" maxlength="160" placeholder="Optional"></label>
+                <button class="primary add-expense-btn" type="submit">Add payment</button>
+            </form>
+            <div class="ledger-history-head"><span>Payment history</span><small>Deleting a payment restores its balance impact.</small></div>
+            <div id="liabilityPaymentList" class="transaction-list"></div>
+        </div>
+    </dialog>
+
     <script src="../shared/safe-content.js"></script>
     <script src="../shared/validation.js"></script>
     <script src="../shared/validation-schemas/calendar-reminders.js"></script>
@@ -168,10 +223,10 @@
     <script src="../shared/validation-schemas/journal.js"></script>
     <script src="../shared/validation-schemas/inventory.js"></script>
     <script src="../shared/validation-schemas/packing.js"></script>
-    <script src="../shared/validation-schemas/finance.js?v=2"></script>
+    <script src="../shared/validation-schemas/finance.js?v=3"></script>
     <script src="../data-manager/app.js?v=2"></script>
     <script src="../side-bar/app.js"></script>
-    <script src="finance-model.js?v=2"></script>
-    <script src="app.js?v=2"></script>
+    <script src="finance-model.js?v=3"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>
