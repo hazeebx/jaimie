@@ -8,7 +8,9 @@
 
     let data = {
         currency: "SAR",
+        exchangeRates: {},
         accounts: [],
+        investments: [],
         cards: [],
         transactions: []
     };
@@ -23,6 +25,14 @@
         return Number.isFinite(parsed) ? Math.round((parsed + Number.EPSILON) * 100) / 100 : 0;
     }
 
+    function normalizedExchangeRates(value) {
+        const rates = value && typeof value === "object" && !Array.isArray(value) ? { ...value } : {};
+        const sarInr = Number(rates.SAR_INR);
+        if (Number.isFinite(sarInr) && sarInr > 0) rates.SAR_INR = sarInr;
+        else delete rates.SAR_INR;
+        return rates;
+    }
+
     function id(prefix) {
         const token = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
         return `${prefix}-${token}`;
@@ -33,16 +43,25 @@
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     }
 
-    function formatMoney(value) {
+    function supportedObjectCurrency(value) {
+        return ["SAR", "INR", "USD", "EUR", "GBP"].includes(String(value || "").toUpperCase()) ? String(value).toUpperCase() : "SAR";
+    }
+
+    function formatMoney(value, currency = data.currency) {
         try {
             return new Intl.NumberFormat(undefined, {
                 style: "currency",
-                currency: data.currency,
+                currency,
                 maximumFractionDigits: 2
             }).format(amount(value));
         } catch {
-            return `${data.currency} ${amount(value).toFixed(2)}`;
+            return `${currency} ${amount(value).toFixed(2)}`;
         }
+    }
+
+    function convertedMoney(value, nativeCurrency) {
+        const converted = model.convertAmount(value, nativeCurrency, data.currency, data.exchangeRates);
+        return converted === null ? "Conversion unavailable" : formatMoney(converted);
     }
 
     function formatDate(value) {
@@ -80,9 +99,11 @@
             data = {
                 ...stored,
                 currency: typeof stored.currency === "string" ? stored.currency : "SAR",
-                accounts: Array.isArray(stored.accounts) ? stored.accounts : [],
-                cards: Array.isArray(stored.cards) ? stored.cards : [],
-                transactions: Array.isArray(stored.transactions) ? stored.transactions : []
+                exchangeRates: normalizedExchangeRates(stored.exchangeRates),
+                accounts: (Array.isArray(stored.accounts) ? stored.accounts : []).map(item => ({ ...item, currency: item.currency || stored.currency || "SAR" })),
+                investments: (Array.isArray(stored.investments) ? stored.investments : []).map(item => ({ ...item, currency: item.currency || stored.currency || "SAR" })),
+                cards: (Array.isArray(stored.cards) ? stored.cards : []).map(item => ({ ...item, currency: item.currency || stored.currency || "SAR" })),
+                transactions: (Array.isArray(stored.transactions) ? stored.transactions : []).map(item => ({ ...item, currency: item.currency || stored.currency || "SAR" }))
             };
         }
     }
@@ -90,11 +111,17 @@
     function renderSummary() {
         const summary = model.summarize(data, new Date());
         $("accountTotal").textContent = formatMoney(summary.accountBalance);
+        $("investmentTotal").textContent = formatMoney(summary.investmentBalance);
         $("cardTotal").textContent = formatMoney(summary.cardBalance);
         $("netPosition").textContent = formatMoney(summary.netPosition);
         $("monthExpenses").textContent = formatMoney(summary.monthExpenses);
         $("accountCount").textContent = `${data.accounts.length} ${data.accounts.length === 1 ? "account" : "accounts"}`;
+        $("investmentCount").textContent = `${data.investments.length} ${data.investments.length === 1 ? "investment" : "investments"}`;
         $("cardCount").textContent = `${data.cards.length} ${data.cards.length === 1 ? "card" : "cards"}`;
+        $("conversionStatus").textContent = summary.unconvertedCount
+            ? `${summary.unconvertedCount} item${summary.unconvertedCount === 1 ? "" : "s"} excluded — no conversion factor`
+            : "Manual conversion factor · synced";
+        $("conversionStatus").classList.toggle("warning", summary.unconvertedCount > 0);
     }
 
     function createEntityCard(item, kind) {
@@ -102,17 +129,18 @@
         card.style.setProperty("--entity-color", /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : "#ff8a3d");
         const top = element("div", "entity-top");
         const copy = element("div");
-        copy.append(element("div", "entity-name", item.name || (kind === "account" ? "Untitled account" : "Untitled card")));
+        const fallbackName = kind === "account" ? "Untitled account" : kind === "investment" ? "Untitled investment" : "Untitled card";
+        copy.append(element("div", "entity-name", item.name || fallbackName));
 
         const details = [];
-        if (kind === "account") details.push(item.institution, text(item.type).replace(/^./, character => character.toUpperCase()));
+        if (["account", "investment"].includes(kind)) details.push(item.institution, text(item.type).replace(/^./, character => character.toUpperCase()));
         else details.push(item.issuer);
         if (item.last4) details.push(`•••• ${item.last4}`);
         copy.append(element("div", "entity-meta", details.filter(Boolean).join(" · ") || "No additional details"));
 
         const edit = element("button", "edit-btn", "Edit");
         edit.type = "button";
-        edit.addEventListener("click", () => kind === "account" ? openAccount(item.id) : openCard(item.id));
+        edit.addEventListener("click", () => kind === "account" ? openAccount(item.id) : kind === "investment" ? openInvestment(item.id) : openCard(item.id));
         const actions = element("div", "entity-actions");
         if (kind === "account") {
             const ledger = element("button", "menu-btn", "☰");
@@ -127,12 +155,18 @@
         card.append(top);
 
         if (kind === "account") {
-            card.append(element("div", "entity-balance", formatMoney(item.balance)));
-            card.append(element("div", "entity-sub", "Current balance"));
+            const nativeCurrency = item.currency || data.currency;
+            card.append(element("div", "entity-balance", formatMoney(item.balance, nativeCurrency)));
+            card.append(element("div", "entity-sub", nativeCurrency === data.currency ? "Current balance" : `${convertedMoney(item.balance, nativeCurrency)} in display currency`));
+        } else if (kind === "investment") {
+            const nativeCurrency = item.currency || data.currency;
+            card.append(element("div", "entity-balance", formatMoney(item.value, nativeCurrency)));
+            card.append(element("div", "entity-sub", nativeCurrency === data.currency ? "Current value" : `${convertedMoney(item.value, nativeCurrency)} in display currency`));
         } else {
+            const nativeCurrency = item.currency || data.currency;
             const available = Math.max(0, amount(item.limit) - amount(item.balance));
-            card.append(element("div", "entity-balance", formatMoney(item.balance)));
-            card.append(element("div", "entity-sub", `Outstanding · ${formatMoney(available)} available of ${formatMoney(item.limit)}`));
+            card.append(element("div", "entity-balance", formatMoney(item.balance, nativeCurrency)));
+            card.append(element("div", "entity-sub", `Outstanding · ${formatMoney(available, nativeCurrency)} available of ${formatMoney(item.limit, nativeCurrency)}`));
         }
         return card;
     }
@@ -157,11 +191,21 @@
         data.cards.forEach(card => list.append(createEntityCard(card, "card")));
     }
 
+    function renderInvestments() {
+        const list = $("investmentsList");
+        list.replaceChildren();
+        if (!data.investments.length) {
+            list.append(emptyState("No investments yet", "Add an investment to include it in your net worth."));
+            return;
+        }
+        data.investments.forEach(investment => list.append(createEntityCard(investment, "investment")));
+    }
+
     function renderAccountLedger() {
         const account = data.accounts.find(item => item.id === activeLedgerAccountId);
         if (!account) return;
         $("ledgerAccountName").textContent = account.name || "Account";
-        $("ledgerAccountBalance").textContent = formatMoney(account.balance);
+        $("ledgerAccountBalance").textContent = formatMoney(account.balance, account.currency || data.currency);
         const list = $("accountLedgerList");
         const transactions = model.sortTransactions(data.transactions)
             .filter(transaction => ["expense", "income"].includes(transaction.type) && transaction.sourceKind === "account" && transaction.sourceId === account.id);
@@ -183,7 +227,7 @@
             main.append(copy);
 
             const side = element("div", "transaction-side");
-            side.append(element("div", "transaction-amount", `${isCredit ? "+" : "−"}${formatMoney(transaction.amount)}`));
+            side.append(element("div", "transaction-amount", `${isCredit ? "+" : "−"}${formatMoney(transaction.amount, transaction.currency || account.currency || data.currency)}`));
             const remove = element("button", "edit-btn", "Delete");
             remove.type = "button";
             remove.addEventListener("click", () => deleteLedgerExpense(transaction.id));
@@ -195,8 +239,10 @@
 
     function render() {
         $("currencySelect").value = data.currency;
+        $("sarInrRate").value = model.sarInrRate(data) || "";
         renderSummary();
         renderAccounts();
+        renderInvestments();
         renderCards();
         if ($("accountLedgerDialog").open) renderAccountLedger();
     }
@@ -215,10 +261,27 @@
         $("accountType").value = current?.type || "checking";
         $("accountLast4").value = current?.last4 || "";
         $("accountBalance").value = current?.balance ?? 0;
+        $("accountCurrency").value = supportedObjectCurrency(current?.currency || data.currency);
         $("accountColor").value = /^#[0-9a-f]{6}$/i.test(current?.color || "") ? current.color : "#ff8a3d";
         $("accountDialogTitle").textContent = current ? "Edit Account" : "Add Account";
         $("deleteAccountBtn").classList.toggle("hidden", !current);
         $("accountDialog").showModal();
+    }
+
+    function openInvestment(investmentId = "") {
+        const current = data.investments.find(item => item.id === investmentId);
+        $("investmentForm").reset();
+        $("investmentId").value = current?.id || "";
+        $("investmentName").value = current?.name || "";
+        $("investmentInstitution").value = current?.institution || "";
+        $("investmentType").value = current?.type || "stocks";
+        $("investmentValue").value = current?.value ?? 0;
+        $("investmentCurrency").value = supportedObjectCurrency(current?.currency || data.currency);
+        $("investmentColor").value = /^#[0-9a-f]{6}$/i.test(current?.color || "") ? current.color : "#70d9a0";
+        $("investmentNotes").value = current?.notes || "";
+        $("investmentDialogTitle").textContent = current ? "Edit Investment" : "Add Investment";
+        $("deleteInvestmentBtn").classList.toggle("hidden", !current);
+        $("investmentDialog").showModal();
     }
 
     function openCard(cardId = "") {
@@ -230,6 +293,7 @@
         $("cardLast4").value = current?.last4 || "";
         $("cardLimit").value = current?.limit ?? 0;
         $("cardBalance").value = current?.balance ?? 0;
+        $("cardCurrency").value = supportedObjectCurrency(current?.currency || data.currency);
         $("cardColor").value = /^#[0-9a-f]{6}$/i.test(current?.color || "") ? current.color : "#6ec8ff";
         $("cardDialogTitle").textContent = current ? "Edit Card" : "Add Card";
         $("deleteCardBtn").classList.toggle("hidden", !current);
@@ -277,12 +341,35 @@
             type: $("accountType").value,
             last4: text($("accountLast4").value, 4),
             balance: amount($("accountBalance").value),
+            currency: $("accountCurrency").value,
             color: $("accountColor").value,
             createdAt: existing?.createdAt || now,
             updatedAt: now
         };
         data.accounts = existing ? data.accounts.map(item => item.id === existing.id ? account : item) : [...data.accounts, account];
         closeDialog("accountDialog");
+        await saveAndRender();
+    });
+
+    $("investmentForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        const existing = data.investments.find(item => item.id === $("investmentId").value);
+        const now = new Date().toISOString();
+        const investment = {
+            ...(existing || {}),
+            id: existing?.id || id("investment"),
+            name: text($("investmentName").value, 80),
+            institution: text($("investmentInstitution").value, 80),
+            type: $("investmentType").value,
+            value: amount($("investmentValue").value),
+            currency: $("investmentCurrency").value,
+            color: $("investmentColor").value,
+            notes: text($("investmentNotes").value, 160),
+            createdAt: existing?.createdAt || now,
+            updatedAt: now
+        };
+        data.investments = existing ? data.investments.map(item => item.id === existing.id ? investment : item) : [...data.investments, investment];
+        closeDialog("investmentDialog");
         await saveAndRender();
     });
 
@@ -298,6 +385,7 @@
             last4: text($("cardLast4").value, 4),
             limit: Math.max(0, amount($("cardLimit").value)),
             balance: Math.max(0, amount($("cardBalance").value)),
+            currency: $("cardCurrency").value,
             color: $("cardColor").value,
             createdAt: existing?.createdAt || now,
             updatedAt: now
@@ -323,6 +411,7 @@
             category: text($("expenseCategory").value, 60),
             sourceKind: "account",
             sourceId: account.id,
+            currency: account.currency || data.currency,
             note: text($("expenseNote").value, 160),
             createdAt: now,
             updatedAt: now
@@ -357,10 +446,29 @@
         await saveAndRender();
     });
 
+    $("deleteInvestmentBtn").addEventListener("click", async () => {
+        const investmentId = $("investmentId").value;
+        const current = data.investments.find(item => item.id === investmentId);
+        if (!current || !confirm(`Delete ${current.name}?`)) return;
+        data.investments = data.investments.filter(item => item.id !== investmentId);
+        closeDialog("investmentDialog");
+        await saveAndRender();
+    });
+
     $("addAccountBtn").addEventListener("click", () => openAccount());
+    $("addInvestmentBtn").addEventListener("click", () => openInvestment());
     $("addCardBtn").addEventListener("click", () => openCard());
     $("currencySelect").addEventListener("change", async event => {
         data = { ...data, currency: event.target.value };
+        await saveAndRender();
+    });
+    $("sarInrRate").addEventListener("change", async event => {
+        const rate = Number(event.target.value);
+        if (!Number.isFinite(rate) || rate <= 0) {
+            event.target.value = model.sarInrRate(data) || "";
+            return;
+        }
+        data = { ...data, exchangeRates: { ...(data.exchangeRates || {}), SAR_INR: rate } };
         await saveAndRender();
     });
 
@@ -369,7 +477,7 @@
     });
     document.querySelectorAll("dialog").forEach(dialog => {
         dialog.addEventListener("click", event => {
-            if (event.target === dialog) dialog.close();
+            if (event.target === dialog && !dialog.hasAttribute("data-static-backdrop")) dialog.close();
         });
     });
 

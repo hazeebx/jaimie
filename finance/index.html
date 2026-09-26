@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finance — JAIMIE</title>
     <link rel="stylesheet" href="../side-bar/styles.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
     <div id="side-menu"></div>
@@ -20,16 +20,24 @@
                     <p>Manual balances and spending, kept in your JAIMIE data.</p>
                 </div>
             </div>
-            <label class="currency-control">
-                <span>Currency</span>
-                <select id="currencySelect" aria-label="Display currency">
-                    <option value="SAR">SAR</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="INR">INR</option>
-                </select>
-            </label>
+            <div class="currency-tools">
+                <label class="rate-control">
+                    <span>1 SAR =</span>
+                    <input id="sarInrRate" type="number" min="0.0001" max="1000000" step="0.0001" aria-label="SAR to INR conversion factor">
+                    <span>INR</span>
+                </label>
+                <label class="currency-control">
+                    <span>Show totals in</span>
+                    <select id="currencySelect" aria-label="Display currency">
+                        <option value="SAR">SAR</option>
+                        <option value="INR">INR</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </label>
+                <small id="conversionStatus" class="conversion-status">Manual conversion factor · synced</small>
+            </div>
         </header>
 
         <aside class="privacy-note">
@@ -41,19 +49,26 @@
         </aside>
 
         <section class="summary-grid" aria-label="Finance summary">
-            <article class="summary-card"><span>Account balances</span><strong id="accountTotal">—</strong><small id="accountCount">0 accounts</small></article>
+            <article class="summary-card net-worth"><span>Total Net Worth</span><strong id="netPosition">—</strong><small>Accounts + investments − cards</small></article>
+            <article class="summary-card"><span>Bank accounts</span><strong id="accountTotal">—</strong><small id="accountCount">0 accounts</small></article>
+            <article class="summary-card investment"><span>Investments</span><strong id="investmentTotal">—</strong><small id="investmentCount">0 investments</small></article>
             <article class="summary-card debt"><span>Card balance</span><strong id="cardTotal">—</strong><small id="cardCount">0 cards</small></article>
-            <article class="summary-card net"><span>Net position</span><strong id="netPosition">—</strong><small>Accounts minus card balance</small></article>
             <article class="summary-card spend"><span>Spent this month</span><strong id="monthExpenses">—</strong><small>Across account ledgers</small></article>
         </section>
 
         <section class="finance-grid">
             <section class="panel accounts-panel">
                 <div class="panel-head">
-                    <div><div class="eyebrow">CASH POSITION</div><h2>Bank Accounts</h2></div>
+                    <div><div class="eyebrow">ASSET OVERVIEW</div><h2>Cash Position</h2></div>
                     <button id="addAccountBtn" class="secondary" type="button">+ Add account</button>
                 </div>
+                <div class="object-type-head"><div><span class="object-type-tag">BANK ACCOUNT</span><small>Liquid balances held with a bank.</small></div></div>
                 <div id="accountsList" class="account-widget-grid"></div>
+                <div class="object-type-head investment-head">
+                    <div><span class="object-type-tag">INVESTMENT</span><small>Assets valued manually in their native currency.</small></div>
+                    <button id="addInvestmentBtn" class="secondary" type="button">+ Add investment</button>
+                </div>
+                <div id="investmentsList" class="account-widget-grid"></div>
             </section>
 
             <section class="panel cards-panel">
@@ -67,21 +82,41 @@
         </section>
     </main>
 
-    <dialog id="accountDialog" class="modal">
+    <dialog id="accountDialog" class="modal" data-static-backdrop>
         <form id="accountForm">
             <div class="modal-head"><div><div class="eyebrow">BANK ACCOUNT</div><h2 id="accountDialogTitle">Add Account</h2></div><button class="icon-btn" type="button" data-close="accountDialog" aria-label="Close">×</button></div>
             <input id="accountId" type="hidden">
             <label>Account name<input id="accountName" maxlength="80" required placeholder="e.g. Daily Account"></label>
             <label>Institution<input id="accountInstitution" maxlength="80" placeholder="Optional"></label>
             <div class="form-row">
-                <label>Type<select id="accountType"><option value="checking">Checking</option><option value="savings">Savings</option><option value="cash">Cash</option><option value="investment">Investment</option><option value="other">Other</option></select></label>
+                <label>Type<select id="accountType"><option value="checking">Checking</option><option value="savings">Savings</option><option value="cash" disabled>Cash (legacy)</option><option value="investment" disabled>Investment (legacy)</option><option value="other">Other</option></select></label>
                 <label>Last four digits<input id="accountLast4" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Optional"></label>
             </div>
             <div class="form-row">
                 <label>Current balance<input id="accountBalance" type="number" step="0.01" required value="0"></label>
-                <label>Color<input id="accountColor" type="color" value="#ff8a3d"></label>
+                <label>Currency<select id="accountCurrency"><option value="SAR">SAR</option><option value="INR">INR</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
             </div>
+            <label>Color<input id="accountColor" type="color" value="#ff8a3d"></label>
             <div class="modal-actions"><button id="deleteAccountBtn" class="danger hidden" type="button">Delete</button><span></span><button class="secondary" type="button" data-close="accountDialog">Cancel</button><button class="primary" type="submit">Save account</button></div>
+        </form>
+    </dialog>
+
+    <dialog id="investmentDialog" class="modal">
+        <form id="investmentForm">
+            <div class="modal-head"><div><div class="eyebrow">INVESTMENT</div><h2 id="investmentDialogTitle">Add Investment</h2></div><button class="icon-btn" type="button" data-close="investmentDialog" aria-label="Close">×</button></div>
+            <input id="investmentId" type="hidden">
+            <label>Investment name<input id="investmentName" maxlength="80" required placeholder="e.g. Index Fund"></label>
+            <label>Platform or institution<input id="investmentInstitution" maxlength="80" placeholder="Optional"></label>
+            <div class="form-row">
+                <label>Type<select id="investmentType"><option value="stocks">Stocks</option><option value="fund">Fund</option><option value="gold">Gold</option><option value="crypto">Crypto</option><option value="real-estate">Real estate</option><option value="deposit">Fixed deposit</option><option value="other">Other</option></select></label>
+                <label>Currency<select id="investmentCurrency"><option value="SAR">SAR</option><option value="INR">INR</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
+            </div>
+            <div class="form-row">
+                <label>Current value<input id="investmentValue" type="number" step="0.01" required value="0"></label>
+                <label>Color<input id="investmentColor" type="color" value="#70d9a0"></label>
+            </div>
+            <label>Notes<input id="investmentNotes" maxlength="160" placeholder="Optional"></label>
+            <div class="modal-actions"><button id="deleteInvestmentBtn" class="danger hidden" type="button">Delete</button><span></span><button class="secondary" type="button" data-close="investmentDialog">Cancel</button><button class="primary" type="submit">Save investment</button></div>
         </form>
     </dialog>
 
@@ -92,6 +127,7 @@
             <label>Card name<input id="cardName" maxlength="80" required placeholder="e.g. Rewards Card"></label>
             <label>Issuer<input id="cardIssuer" maxlength="80" placeholder="Optional"></label>
             <label>Last four digits<input id="cardLast4" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Optional"></label>
+            <label>Currency<select id="cardCurrency"><option value="SAR">SAR</option><option value="INR">INR</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
             <div class="form-row">
                 <label>Credit limit<input id="cardLimit" type="number" min="0" step="0.01" required value="0"></label>
                 <label>Outstanding balance<input id="cardBalance" type="number" min="0" step="0.01" required value="0"></label>
@@ -132,10 +168,10 @@
     <script src="../shared/validation-schemas/journal.js"></script>
     <script src="../shared/validation-schemas/inventory.js"></script>
     <script src="../shared/validation-schemas/packing.js"></script>
-    <script src="../shared/validation-schemas/finance.js"></script>
+    <script src="../shared/validation-schemas/finance.js?v=2"></script>
     <script src="../data-manager/app.js?v=2"></script>
     <script src="../side-bar/app.js"></script>
-    <script src="finance-model.js?v=1"></script>
-    <script src="app.js?v=1"></script>
+    <script src="finance-model.js?v=2"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>

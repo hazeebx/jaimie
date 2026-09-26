@@ -8,6 +8,7 @@
     }
 
     const ACCOUNT_TYPES = new Set(["checking", "savings", "cash", "investment", "other"]);
+    const INVESTMENT_TYPES = new Set(["stocks", "fund", "gold", "crypto", "real-estate", "deposit", "other"]);
     const TRANSACTION_TYPES = new Set(["expense", "income"]);
     const SOURCE_KINDS = new Set(["account", "card", "none"]);
     const CURRENCIES = new Set(["SAR", "USD", "EUR", "GBP", "INR"]);
@@ -49,6 +50,12 @@
         return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized : "#ff8a3d";
     }
 
+    function currency(value, fallback, path, issues) {
+        const normalized = text(value || fallback, path, "Currency", issues, { maxLength: 3 }).toUpperCase();
+        if (!CURRENCIES.has(normalized)) issue(issues, "finance.currency.invalid", "Currency is not supported.", path);
+        return CURRENCIES.has(normalized) ? normalized : fallback;
+    }
+
     function date(value, path, issues) {
         const normalized = safeContent.normalizeText(value, { maxLength: 10 });
         const parsed = new Date(`${normalized}T00:00:00Z`);
@@ -65,7 +72,7 @@
         return id;
     }
 
-    function account(value, index, issues, ids) {
+    function account(value, index, issues, ids, fallbackCurrency) {
         const path = `accounts.${index}`;
         if (!isRecord(value)) {
             issue(issues, "finance.account.invalid", "Accounts must be objects.", path);
@@ -81,12 +88,34 @@
             type: ACCOUNT_TYPES.has(type) ? type : "other",
             last4: lastFour(value.last4, `${path}.last4`, issues),
             balance: money(value.balance, `${path}.balance`, "Account balance", issues),
+            currency: currency(value.currency, fallbackCurrency, `${path}.currency`, issues),
             color: color(value.color)
         };
         return normalized;
     }
 
-    function card(value, index, issues, ids) {
+    function investment(value, index, issues, ids, fallbackCurrency) {
+        const path = `investments.${index}`;
+        if (!isRecord(value)) {
+            issue(issues, "finance.investment.invalid", "Investments must be objects.", path);
+            return null;
+        }
+        const type = text(value.type || "other", `${path}.type`, "Investment type", issues, { maxLength: 30 });
+        if (!INVESTMENT_TYPES.has(type)) issue(issues, "finance.investment-type.invalid", "Investment type is not supported.", `${path}.type`);
+        return {
+            ...value,
+            id: uniqueId(value.id, `${path}.id`, "Investment", issues, ids),
+            name: text(value.name, `${path}.name`, "Investment name", issues, { required: true, maxLength: 80 }),
+            institution: text(value.institution, `${path}.institution`, "Platform or institution", issues, { maxLength: 80 }),
+            type: INVESTMENT_TYPES.has(type) ? type : "other",
+            value: money(value.value, `${path}.value`, "Investment value", issues),
+            currency: currency(value.currency, fallbackCurrency, `${path}.currency`, issues),
+            notes: text(value.notes, `${path}.notes`, "Investment notes", issues, { maxLength: 160 }),
+            color: color(value.color)
+        };
+    }
+
+    function card(value, index, issues, ids, fallbackCurrency) {
         const path = `cards.${index}`;
         if (!isRecord(value)) {
             issue(issues, "finance.card.invalid", "Cards must be objects.", path);
@@ -100,12 +129,13 @@
             last4: lastFour(value.last4, `${path}.last4`, issues),
             limit: Math.max(0, money(value.limit, `${path}.limit`, "Credit limit", issues)),
             balance: Math.max(0, money(value.balance, `${path}.balance`, "Outstanding balance", issues)),
+            currency: currency(value.currency, fallbackCurrency, `${path}.currency`, issues),
             color: color(value.color)
         };
         return normalized;
     }
 
-    function transaction(value, index, issues, ids) {
+    function transaction(value, index, issues, ids, fallbackCurrency) {
         const path = `transactions.${index}`;
         if (!isRecord(value)) {
             issue(issues, "finance.transaction.invalid", "Transactions must be objects.", path);
@@ -124,6 +154,7 @@
             category: text(value.category, `${path}.category`, "Category", issues, { required: true, maxLength: 60 }),
             sourceKind: SOURCE_KINDS.has(sourceKind) ? sourceKind : "none",
             sourceId: text(value.sourceId, `${path}.sourceId`, "Source ID", issues, { maxLength: 80 }),
+            currency: currency(value.currency, fallbackCurrency, `${path}.currency`, issues),
             note: text(value.note, `${path}.note`, "Note", issues, { maxLength: 160 })
         };
         if (Object.hasOwn(value, "balanceImpact")) {
@@ -139,17 +170,22 @@
             return { value: {}, issues };
         }
 
+        const displayCurrency = currency(value.currency, "SAR", "currency", issues);
         const accountIds = new Set();
+        const investmentIds = new Set();
         const cardIds = new Set();
         const transactionIds = new Set();
         const accounts = (Array.isArray(value.accounts) ? value.accounts : [])
-            .map((item, index) => account(item, index, issues, accountIds)).filter(Boolean);
+            .map((item, index) => account(item, index, issues, accountIds, displayCurrency)).filter(Boolean);
+        const investments = (Array.isArray(value.investments) ? value.investments : [])
+            .map((item, index) => investment(item, index, issues, investmentIds, displayCurrency)).filter(Boolean);
         const cards = (Array.isArray(value.cards) ? value.cards : [])
-            .map((item, index) => card(item, index, issues, cardIds)).filter(Boolean);
+            .map((item, index) => card(item, index, issues, cardIds, displayCurrency)).filter(Boolean);
         const transactions = (Array.isArray(value.transactions) ? value.transactions : [])
-            .map((item, index) => transaction(item, index, issues, transactionIds)).filter(Boolean);
+            .map((item, index) => transaction(item, index, issues, transactionIds, displayCurrency)).filter(Boolean);
 
         if (!Array.isArray(value.accounts)) issue(issues, "finance.accounts.invalid", "Accounts must be an array.", "accounts");
+        if (value.investments !== undefined && !Array.isArray(value.investments)) issue(issues, "finance.investments.invalid", "Investments must be an array.", "investments");
         if (!Array.isArray(value.cards)) issue(issues, "finance.cards.invalid", "Cards must be an array.", "cards");
         if (!Array.isArray(value.transactions)) issue(issues, "finance.transactions.invalid", "Transactions must be an array.", "transactions");
 
@@ -162,14 +198,21 @@
             }
         }
 
-        const currency = text(value.currency || "SAR", "currency", "Currency", issues, { maxLength: 3 }).toUpperCase();
-        if (!CURRENCIES.has(currency)) issue(issues, "finance.currency.invalid", "Currency is not supported.", "currency");
+        const hasRate = isRecord(value.exchangeRates) && Object.hasOwn(value.exchangeRates, "SAR_INR");
+        const rawRate = Number(value.exchangeRates?.SAR_INR);
+        const validRate = Number.isFinite(rawRate) && rawRate > 0 && rawRate <= 1_000_000;
+        if (hasRate && !validRate) issue(issues, "finance.exchange-rate.invalid", "SAR to INR conversion factor must be a positive number.", "exchangeRates.SAR_INR");
+        const exchangeRates = isRecord(value.exchangeRates) ? { ...value.exchangeRates } : {};
+        if (validRate) exchangeRates.SAR_INR = rawRate;
+        else delete exchangeRates.SAR_INR;
 
         return {
             value: {
                 ...value,
-                currency: CURRENCIES.has(currency) ? currency : "SAR",
+                currency: displayCurrency,
+                exchangeRates,
                 accounts,
+                investments,
                 cards,
                 transactions
             },
