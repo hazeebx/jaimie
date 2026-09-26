@@ -9,6 +9,44 @@
 
     if (!container) return;
 
+    let dataRefreshNotice = null;
+
+    function showDataRefreshNotice(detail) {
+        if (!detail || !["remote", "other-tab"].includes(detail.source)) return;
+
+        if (!dataRefreshNotice) {
+            dataRefreshNotice = document.createElement("aside");
+            dataRefreshNotice.className = "jaimie-data-refresh";
+            dataRefreshNotice.setAttribute("role", "status");
+
+            const copy = document.createElement("div");
+            const title = document.createElement("strong");
+            title.textContent = "New JAIMIE data received";
+            const message = document.createElement("span");
+            message.textContent = "Refresh this page to display the latest cloud changes.";
+            copy.append(title, message);
+
+            const reload = document.createElement("button");
+            reload.type = "button";
+            reload.textContent = "Refresh";
+            reload.addEventListener("click", () => window.location.reload());
+
+            const dismiss = document.createElement("button");
+            dismiss.type = "button";
+            dismiss.className = "jaimie-data-refresh__dismiss";
+            dismiss.setAttribute("aria-label", "Dismiss cloud update notice");
+            dismiss.textContent = "×";
+            dismiss.addEventListener("click", () => dataRefreshNotice.classList.remove("visible"));
+
+            dataRefreshNotice.append(copy, reload, dismiss);
+            document.body.appendChild(dataRefreshNotice);
+        }
+
+        dataRefreshNotice.classList.add("visible");
+    }
+
+    window.addEventListener("jaimie-data-changed", event => showDataRefreshNotice(event.detail));
+
 
     /* =====================================================
        FIND JAIMIE ROOT
@@ -49,7 +87,7 @@
 
     const componentPath =
         new URL(
-            "component.html?v=finance-1",
+            "component.html?v=cartographer-1",
             script.src
         ).href;
 

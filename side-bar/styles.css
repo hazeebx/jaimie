@@ -17,6 +17,32 @@ body:has(> #side-menu).jaimie-menu-collapsed {
     padding-left: var(--jaimie-menu-collapsed-width);
 }
 
+.jaimie-data-refresh {
+    position: fixed;
+    z-index: 1400;
+    right: 18px;
+    bottom: 18px;
+    width: min(410px, calc(100vw - 36px));
+    display: none;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    color: #eeeae3;
+    background: #17181b;
+    border: 1px solid #ff8a2a;
+    border-radius: 11px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.jaimie-data-refresh.visible { display: grid; }
+.jaimie-data-refresh div { display: grid; gap: 3px; }
+.jaimie-data-refresh strong { font-size: 13px; }
+.jaimie-data-refresh span { color: #9da0a7; font-size: 11px; line-height: 1.4; }
+.jaimie-data-refresh button { border: 1px solid #ff8a2a; border-radius: 7px; background: #ff8a2a; color: #111214; padding: 8px 11px; font: 700 11px Inter, "Segoe UI", Arial, sans-serif; cursor: pointer; }
+.jaimie-data-refresh .jaimie-data-refresh__dismiss { border-color: #3a3c42; background: transparent; color: #a3a5ab; padding: 7px 9px; }
+
 .side-menu,
 .side-menu * {
     box-sizing: border-box;

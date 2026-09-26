@@ -29,6 +29,7 @@ for (const schema of schemaScripts) {
 const featureFolders = [
     "braindump",
     "calendar-task-tracker",
+    "cartographer",
     "dashboard",
     "day_page",
     "diet-tracker",
@@ -143,6 +144,23 @@ if (financeHtml.indexOf("../shared/validation-schemas/finance.js") > financeHtml
 }
 if (financeHtml.indexOf("finance-model.js") > financeHtml.search(/src=["']app\.js(?:\?[^"']*)?["']/)) {
     fail("Finance loads its feature app before its model");
+}
+
+const cartographerHtml = readFileSync(join(root, "cartographer", "index.html"), "utf8");
+const cartographerSchemaPath = join(root, "shared", "validation-schemas", "cartographer.js");
+requireFile(cartographerSchemaPath);
+requireFile(join(root, "cartographer", "geo-model.js"));
+if (!cartographerHtml.includes("../shared/validation-schemas/cartographer.js")) {
+    fail("Cartographer does not load its validation schema");
+}
+if (!cartographerHtml.includes("geo-model.js")) {
+    fail("Cartographer does not load its geo model");
+}
+if (cartographerHtml.indexOf("../shared/validation-schemas/cartographer.js") > cartographerHtml.indexOf("../data-manager/app.js")) {
+    fail("Cartographer loads its validation schema after the data manager");
+}
+if (cartographerHtml.indexOf("geo-model.js") > cartographerHtml.search(/src=["']app\.js(?:\?[^"']*)?["']/)) {
+    fail("Cartographer loads its feature app before its geo model");
 }
 
 const homeHtml = readFileSync(join(root, "index.html"), "utf8");

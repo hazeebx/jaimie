@@ -7,12 +7,12 @@
    Every page writes locally immediately.
 
    Firebase sync happens:
-       • every 5 minutes
+       • shortly after each local change
+       • when Firestore reports a remote change
+       • when the app resumes / regains focus
+       • every 5 minutes as a fallback
        • on startup / authentication
        • manually via Sync Now
-
-   There is NO per-change Firebase upload.
-   There is NO realtime Firestore listener.
 
    ========================================================= */
 
@@ -29,6 +29,7 @@ import {
     collection,
     doc,
     getDocs,
+    onSnapshot,
     setDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
@@ -39,6 +40,12 @@ import {
 
 const SYNC_INTERVAL =
     5 * 60 * 1000; // 5 minutes
+
+const LOCAL_CHANGE_DEBOUNCE =
+    1200;
+
+const REMOTE_CHANGE_DEBOUNCE =
+    250;
 
 
 /* =========================================================
@@ -56,6 +63,12 @@ let lastSyncAt = null;
 let nextSyncAt = null;
 
 let syncTimer = null;
+
+let requestedSyncTimer = null;
+
+let syncRequestedWhileBusy = false;
+
+let remoteUnsubscribe = null;
 
 
 /* =========================================================
@@ -443,9 +456,19 @@ async function pushRecord(
     );
 
 
-    await JAIMIEData.markSynced(
-        record.key
-    );
+    const markedSynced =
+        await JAIMIEData.markSynced(
+            record.key,
+            {
+                version: record.version,
+                updatedAtMs: record.updatedAtMs,
+                deviceId: record.deviceId
+            }
+        );
+
+    if (!markedSynced) {
+        requestSync("newer-local-change", LOCAL_CHANGE_DEBOUNCE);
+    }
 
 
     console.log(
@@ -636,7 +659,12 @@ async function reconcileRecord(
     ) {
 
         await JAIMIEData.markSynced(
-            local.key
+            local.key,
+            {
+                version: local.version,
+                updatedAtMs: local.updatedAtMs,
+                deviceId: local.deviceId
+            }
         );
 
     }
@@ -995,6 +1023,9 @@ async function syncNow() {
         syncing
     ) {
 
+        syncRequestedWhileBusy =
+            true;
+
         return {
 
             skipped: true
@@ -1073,6 +1104,11 @@ async function syncNow() {
         syncing =
             false;
 
+        if (syncRequestedWhileBusy) {
+            syncRequestedWhileBusy = false;
+            requestSync("queued-while-syncing", 0);
+        }
+
     }
 
 }
@@ -1084,23 +1120,16 @@ async function syncNow() {
 
    IMPORTANT:
 
-   This is intentionally NO-OP.
-
-   JAIMIEData.save() still marks the dataset dirty,
-   but Firebase is NOT touched immediately.
-
-   The 5-minute sync cycle will pick it up.
+   Saves remain local-first, then request one debounced
+   reconciliation. Several rapid edits collapse into one sync.
    ========================================================= */
 
 async function onLocalChange(
     record
 ) {
 
-    /*
-     * No Firebase write here.
-     *
-     * Local IndexedDB remains instant.
-     */
+    requestSync("local-change", LOCAL_CHANGE_DEBOUNCE);
+
     return {
 
         queued: true,
@@ -1111,6 +1140,45 @@ async function onLocalChange(
 
     };
 
+}
+
+
+/* =========================================================
+   EVENT-DRIVEN SYNC
+   ========================================================= */
+
+function requestSync(reason, delay = 0) {
+    if (!currentUser) return;
+
+    if (requestedSyncTimer) clearTimeout(requestedSyncTimer);
+
+    requestedSyncTimer = setTimeout(async () => {
+        requestedSyncTimer = null;
+        try {
+            await syncNow();
+        } catch (error) {
+            console.error(`JAIMIE Sync: ${reason} sync failed.`, error);
+        }
+    }, Math.max(0, Number(delay) || 0));
+}
+
+function stopRemoteListener() {
+    if (typeof remoteUnsubscribe === "function") remoteUnsubscribe();
+    remoteUnsubscribe = null;
+}
+
+function startRemoteListener(uid) {
+    stopRemoteListener();
+    if (!uid) return;
+
+    remoteUnsubscribe = onSnapshot(
+        userDataCollection(uid),
+        snapshot => {
+            if (snapshot.metadata?.hasPendingWrites) return;
+            requestSync("remote-change", REMOTE_CHANGE_DEBOUNCE);
+        },
+        error => console.error("JAIMIE Sync: realtime listener failed.", error)
+    );
 }
 
 
@@ -1255,6 +1323,8 @@ observe(
             currentUser =
                 null;
 
+            stopRemoteListener();
+
 
             return;
 
@@ -1269,6 +1339,8 @@ observe(
 
         currentUser =
             user;
+
+        if (changedUser) startRemoteListener(user.uid);
 
 
         /*
@@ -1357,6 +1429,14 @@ window.addEventListener(
     }
 );
 
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") requestSync("visibility-resume", 0);
+});
+
+window.addEventListener("pageshow", () => requestSync("page-show", REMOTE_CHANGE_DEBOUNCE));
+
+window.addEventListener("focus", () => requestSync("window-focus", REMOTE_CHANGE_DEBOUNCE));
+
 
 /* =========================================================
    INITIALIZE
@@ -1392,7 +1472,7 @@ function initialize() {
 
 
     console.log(
-        "%cJAIMIE Firebase Sync%c adapter configured — 5 minute cycle",
+        "%cJAIMIE Firebase Sync%c adapter configured — realtime + local-first",
         "color:#ff8a2a;font-weight:bold",
         "color:inherit"
     );

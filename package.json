@@ -2,7 +2,7 @@
   "name": "jaimie",
   "private": true,
   "scripts": {
-    "test": "npm run test:smoke && npm run test:validation && npm run test:calendar-reminders && npm run test:day-schedule-order && npm run test:workout && npm run test:workout-history && npm run test:habits && npm run test:event-countdown && npm run test:diet-sleep && npm run test:journal-inventory-packing && npm run test:finance && npm run test:music && npm run test:content-safety && npm run test:rules",
+    "test": "npm run test:smoke && npm run test:validation && npm run test:calendar-reminders && npm run test:day-schedule-order && npm run test:workout && npm run test:workout-history && npm run test:habits && npm run test:event-countdown && npm run test:diet-sleep && npm run test:journal-inventory-packing && npm run test:finance && npm run test:cartographer && npm run test:music && npm run test:sync && npm run test:content-safety && npm run test:rules",
     "test:smoke": "node scripts/smoke-test.mjs",
     "test:validation": "node scripts/test-validation.mjs",
     "test:calendar-reminders": "node scripts/test-calendar-reminder-validation.mjs",
@@ -14,7 +14,9 @@
     "test:diet-sleep": "node scripts/test-diet-sleep-validation.mjs",
     "test:journal-inventory-packing": "node scripts/test-journal-inventory-packing-validation.mjs",
     "test:finance": "node scripts/test-finance.mjs",
+    "test:cartographer": "node scripts/test-cartographer.mjs",
     "test:music": "node scripts/test-music-architecture.mjs",
+    "test:sync": "node scripts/test-sync-architecture.mjs",
     "test:content-safety": "node scripts/test-content-safety.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-jaimie-rules \"node --test scripts/firestore-rules.test.mjs\""
   },

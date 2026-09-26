@@ -11,13 +11,11 @@
          ↓
        IndexedDB
          ↓
-       Sync Adapter (future Firebase)
+       Optional Firebase Sync Adapter
 
-   IMPORTANT:
-   Firebase is NOT connected yet.
-
-   This version only prepares the local data layer
-   for cloud synchronization.
+   Feature pages continue to work when Firebase is
+   unavailable. Local writes remain the source for the
+   current session and are synchronized opportunistically.
    ========================================================= */
 
 (() => {
@@ -64,6 +62,56 @@
     let deviceIdPromise = null;
 
     let syncAdapter = null;
+
+    const subscribers = new Map();
+
+    let changeChannel = null;
+
+    if (typeof BroadcastChannel === "function") {
+        changeChannel = new BroadcastChannel("jaimie-data-changes");
+        changeChannel.addEventListener("message", event => {
+            const detail = event.data;
+            if (detail?.type === "jaimie-data-changed") {
+                notifySubscribers({
+                    ...detail,
+                    source: detail.source === "local" ? "other-tab" : detail.source
+                }, false);
+            }
+        });
+    }
+
+    function notifySubscribers(detail, broadcast = true) {
+        const payload = {
+            type: "jaimie-data-changed",
+            key: detail?.key || null,
+            source: detail?.source || "unknown",
+            updatedAt: detail?.updatedAt || nowIso()
+        };
+        const callbacks = [
+            ...(subscribers.get(payload.key) || []),
+            ...(subscribers.get("*") || [])
+        ];
+        for (const callback of callbacks) {
+            try { callback(payload); } catch (error) { console.warn("JAIMIE data subscriber failed:", error); }
+        }
+        if (typeof window.dispatchEvent === "function" && typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("jaimie-data-changed", { detail: payload }));
+        }
+        if (broadcast && changeChannel) changeChannel.postMessage(payload);
+    }
+
+    function subscribe(key, callback) {
+        if (typeof key !== "string" || !key || typeof callback !== "function") {
+            throw new TypeError("JAIMIEData.subscribe(): key and callback are required.");
+        }
+        if (!subscribers.has(key)) subscribers.set(key, new Set());
+        subscribers.get(key).add(callback);
+        return () => {
+            const group = subscribers.get(key);
+            group?.delete(callback);
+            if (group?.size === 0) subscribers.delete(key);
+        };
+    }
 
 
     /* =====================================================
@@ -599,6 +647,8 @@
 
         }
 
+        notifySubscribers({ key, source: "local", updatedAt });
+
 
         return value;
 
@@ -924,7 +974,8 @@
     ===================================================== */
 
     async function markSynced(
-        key
+        key,
+        expected = null
     ) {
 
         const record =
@@ -937,6 +988,17 @@
 
             return false;
 
+        }
+
+        if (
+            expected &&
+            (
+                Number(record.version || 0) !== Number(expected.version || 0) ||
+                Number(record.updatedAtMs || 0) !== Number(expected.updatedAtMs || 0) ||
+                String(record.deviceId || "") !== String(expected.deviceId || "")
+            )
+        ) {
+            return false;
         }
 
 
@@ -980,7 +1042,6 @@
 
             }
         );
-
 
         return true;
 
@@ -1218,7 +1279,13 @@
         );
 
 
-        return normalized;
+        notifySubscribers({ key: normalized.key, source: "remote", updatedAt: normalized.updatedAt });
+
+        return {
+            applied: true,
+            conflict: false,
+            record: normalized
+        };
 
     }
 
@@ -1735,6 +1802,8 @@
         save,
 
         load,
+
+        subscribe,
 
         delete:
             remove,

@@ -17,7 +17,7 @@ Then open `http://localhost:8000/`. Serving over HTTP is required because shared
 - Each feature lives in its own folder and can be opened as a standalone page.
 - `side-bar/` provides shared navigation and the Settings launcher.
 - `data-manager/` provides the IndexedDB-backed local data API, backup/restore and optional sync integration.
-- `firebase/` provides authentication and batched cloud synchronization.
+- `firebase/` provides authentication and event-driven cloud synchronization.
 - Feature data remains local-first; Firebase is not required for ordinary local use.
 
 ## Verification
@@ -31,6 +31,24 @@ node scripts/smoke-test.mjs
 The smoke test checks JavaScript syntax, required page files, shared script order and sidebar destinations. It does not modify browser data.
 
 The shared validation foundation runs in compatibility mode. Registered schemas can normalize values and report structured issues at storage boundaries, while legacy data remains untouched until feature-specific enforcement is enabled and tested.
+
+### Multi-device synchronization
+
+JAIMIE saves locally first, then requests a debounced Firebase reconciliation
+after each change. A Firestore realtime listener detects changes from another
+device, while page-show, focus, visibility-resume, online and the existing
+five-minute safety timer provide recovery triggers. When cloud data changes an
+already-open feature page, JAIMIE displays a refresh notice instead of silently
+leaving stale UI on screen.
+
+Both devices must show **Cloud Account Connected** with the same Firebase UID.
+Anonymous Local Sessions are separate accounts and cannot synchronize with one
+another. Dataset storage remains backward compatible; item-level Firestore
+documents are a later migration for true simultaneous editing of one feature.
+
+```bash
+npm run test:sync
+```
 
 Run its focused test with:
 
@@ -140,6 +158,34 @@ compatibility-mode schema that preserves unknown future fields.
 
 ```bash
 npm run test:finance
+```
+
+## Cartographer
+
+The Cartographer page is a foreground web MVP for recording road-camera
+locations and receiving proximity alerts. GPS permission is requested only
+after **Enable GPS** is pressed. Camera captures, edits, verification metadata,
+warning preferences, and offline changes use the central `JAIMIEData` store
+under the `cartographer` dataset. The map uses OpenStreetMap raster tiles when
+online; capture and record management remain available if map tiles cannot
+load.
+
+Driver mode checks active camera records against the live browser location,
+applies an optional direction tolerance, de-duplicates alerts during the active
+session, and can speak the warning. Its live mini-map keeps a directional
+location pointer centred, rotates to the travel heading, adjusts zoom by speed,
+and retains a short in-session breadcrumb trail. The map provides a persistent
+light/dark theme toggle without changing providers. Moving the map suspends camera
+following until Recenter is pressed. It is intentionally labeled foreground
+only: a browser page cannot guarantee continuous location monitoring after the
+browser is closed. Native Android background location, shared master-camera
+collections, role-based publishing, and server-side verification remain later
+phases.
+
+Run its geospatial and architecture checks with:
+
+```bash
+npm run test:cartographer
 ```
 
 ### Firestore Security Rules
