@@ -1,5 +1,11 @@
-const CACHE_NAME = "jaimie-music-shell-v2";
+const CACHE_NAME = "jaimie-music-shell-v3";
 const SHELL_URLS = [
+    "./app.html",
+    "./app-shell.css?v=1",
+    "./app-shell.js?v=1",
+    "./side-bar/styles.css",
+    "./side-bar/app.js",
+    "./side-bar/component.html?v=cartographer-1",
     "./music/index.html",
     "./music/styles.css?v=1",
     "./music/app.js?v=2",
@@ -35,11 +41,12 @@ self.addEventListener("fetch", event => {
     if (url.origin !== self.location.origin) return;
 
     const isMusicNavigation = request.mode === "navigate" && /\/music\/?(?:index\.html)?$/.test(url.pathname);
+    const isAppNavigation = request.mode === "navigate" && /\/app\.html$/.test(url.pathname);
     const isShellAsset = SHELL_URLS.some(entry => {
         const shellUrl = new URL(entry, self.location.href);
         return shellUrl.pathname === url.pathname;
     });
-    if (!isMusicNavigation && !isShellAsset) return;
+    if (!isMusicNavigation && !isAppNavigation && !isShellAsset) return;
 
     event.respondWith(
         fetch(request)
@@ -50,6 +57,9 @@ self.addEventListener("fetch", event => {
                 }
                 return response;
             })
-            .catch(() => caches.match(request).then(cached => cached || caches.match("./music/index.html")))
+            .catch(() => caches.match(request).then(cached => {
+                if (cached) return cached;
+                return caches.match(isAppNavigation ? "./app.html" : "./music/index.html");
+            }))
     );
 });

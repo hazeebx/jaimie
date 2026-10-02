@@ -22,6 +22,20 @@
 
     "use strict";
 
+    const embeddedInJaimieShell =
+        window.self !== window.top &&
+        new URLSearchParams(window.location.search).get("jaimie-embedded") === "1";
+
+    /*
+     * The application shell owns the single data/sync runtime. Same-origin
+     * feature frames reuse that public API so navigation does not multiply
+     * BroadcastChannels, Firebase listeners, or background sync timers.
+     */
+    if (embeddedInJaimieShell && window.parent.JAIMIEData) {
+        window.JAIMIEData = window.parent.JAIMIEData;
+        return;
+    }
+
 
     /* =====================================================
        DATABASE

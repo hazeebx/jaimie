@@ -20,6 +20,15 @@ if (!model.isDirectionCompatible(90, 120, 45) || model.isDirectionCompatible(90,
 if (!model.isDirectionCompatible(null, 180, 45)) throw new Error("Missing device bearing should not hide cameras.");
 const eastBearing = model.bearingDegrees(origin, nearby);
 if (eastBearing < 89 || eastBearing > 91) throw new Error(`Movement bearing is incorrect: ${eastBearing}`);
+if (model.normalizeHeading(-10) !== 350 || model.cardinalDirection(91) !== "E" || model.cardinalDirection(null) !== "—") {
+    throw new Error("Compass heading normalization is incorrect.");
+}
+if (model.uvRisk(2.9) !== "Low" || model.uvRisk(7) !== "High" || model.uvRisk(11) !== "Extreme") {
+    throw new Error("UV risk classification is incorrect.");
+}
+if (model.weatherCondition(0, 1).label !== "Clear" || model.weatherCondition(63, 1).label !== "Rain" || model.weatherCondition(95, 1).label !== "Thunderstorm") {
+    throw new Error("Weather condition mapping is incorrect.");
+}
 
 const match = model.findRelevantCamera([far, nearby], origin, { warningRadius: 500, directionTolerance: 45 }, new Set());
 if (match?.camera.id !== "near") throw new Error("Nearest relevant camera was not selected.");
@@ -62,11 +71,11 @@ for (const code of ["cartographer.number.invalid", "cartographer.type.invalid", 
 }
 
 const html = readFileSync(new URL("../cartographer/index.html", import.meta.url), "utf8");
-for (const id of ["map", "mapThemeButton", "gpsButton", "captureButton", "driverButton", "cameraList", "cameraDialog", "radiusSelect", "driveHud", "driveSpeed", "driveHeading", "recenterButton", "addSpeedCameraButton", "addCheckPostButton", "driverCaptureMessage"]) {
+for (const id of ["map", "mapThemeButton", "gpsButton", "captureButton", "driverButton", "cameraList", "cameraDialog", "radiusSelect", "driveHud", "driveSpeed", "driveHeading", "recenterButton", "addSpeedCameraButton", "addCheckPostButton", "driverCaptureMessage", "weatherIcon", "weatherTemperature", "weatherCondition", "uvIndex", "uvRisk", "compassNeedle", "compassHeading", "compassCardinal"]) {
     if (!html.includes(`id="${id}"`)) throw new Error(`Cartographer UI is missing ${id}.`);
 }
 const app = readFileSync(new URL("../cartographer/app.js", import.meta.url), "utf8");
-for (const behavior of ["watchPosition", "possibleDuplicate", "findRelevantCamera", "speechSynthesis", "JAIMIEData.save", "journey-trail", "miniMapZoom", "setMiniMapFollowing", "bearingDegrees", "captureMarker(\"speed-camera\"", "captureMarker(\"check-post\"", "toggleMapTheme", "dark-map"]) {
+for (const behavior of ["watchPosition", "possibleDuplicate", "findRelevantCamera", "speechSynthesis", "JAIMIEData.save", "journey-trail", "miniMapZoom", "setMiniMapFollowing", "bearingDegrees", "captureMarker(\"speed-camera\"", "captureMarker(\"check-post\"", "toggleMapTheme", "dark-map", "DeviceOrientationEvent.requestPermission", "deviceorientationabsolute", "api.open-meteo.com/v1/forecast", "temperature_2m,weather_code,is_day,uv_index", "WEATHER_REFRESH_MS", "refreshLiveWeather"]) {
     if (!app.includes(behavior)) throw new Error(`Cartographer behavior is missing: ${behavior}`);
 }
 

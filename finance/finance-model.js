@@ -107,5 +107,36 @@
         return Math.round((number(balance) + number(impact) + Number.EPSILON) * 100) / 100;
     }
 
-    window.JAIMIEFinanceModel = Object.freeze({ summarize, sortTransactions, applyBalanceImpact, convertAmount, sarInrRate });
+    function sumAccountExpenses(transactions, accountId, startDate, endDate, accountCurrency, exchangeRates = {}) {
+        const start = String(startDate || "");
+        const end = String(endDate || "");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end) || start > end) {
+            return { total: 0, count: 0, unconvertedCount: 0, valid: false };
+        }
+
+        return (Array.isArray(transactions) ? transactions : [])
+            .filter(transaction =>
+                transaction?.type === "expense" &&
+                transaction.sourceKind === "account" &&
+                transaction.sourceId === accountId &&
+                String(transaction.date || "") >= start &&
+                String(transaction.date || "") <= end
+            )
+            .reduce((result, transaction) => {
+                const converted = convertAmount(
+                    Math.max(0, number(transaction.amount)),
+                    transaction.currency || accountCurrency,
+                    accountCurrency,
+                    exchangeRates
+                );
+                if (converted === null) result.unconvertedCount += 1;
+                else {
+                    result.total = applyBalanceImpact(result.total, converted);
+                    result.count += 1;
+                }
+                return result;
+            }, { total: 0, count: 0, unconvertedCount: 0, valid: true });
+    }
+
+    window.JAIMIEFinanceModel = Object.freeze({ summarize, sortTransactions, applyBalanceImpact, convertAmount, sarInrRate, sumAccountExpenses });
 })();

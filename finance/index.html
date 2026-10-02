@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finance — JAIMIE</title>
     <link rel="stylesheet" href="../side-bar/styles.css">
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
     <div id="side-menu"></div>
@@ -178,6 +178,17 @@
         <div class="ledger-shell">
             <div class="modal-head"><div><div class="eyebrow">ACCOUNT LEDGER</div><h2 id="ledgerAccountName">Account</h2></div><button class="icon-btn" type="button" data-close="accountLedgerDialog" aria-label="Close">×</button></div>
             <div class="ledger-balance"><span>Current balance</span><strong id="ledgerAccountBalance">—</strong></div>
+            <section class="ledger-range" aria-labelledby="ledgerRangeTitle">
+                <div class="ledger-range-head">
+                    <div><span class="eyebrow">EXPENSE TOTAL</span><strong id="ledgerRangeTitle">Date range</strong></div>
+                    <div class="ledger-range-result"><span>Debits in range</span><strong id="ledgerRangeTotal">—</strong></div>
+                </div>
+                <div class="form-row ledger-range-fields">
+                    <label>From<input id="ledgerRangeStart" type="date"></label>
+                    <label>To<input id="ledgerRangeEnd" type="date"></label>
+                </div>
+                <small id="ledgerRangeStatus" class="ledger-range-status" aria-live="polite">Choose both dates to calculate.</small>
+            </section>
             <form id="accountExpenseForm" class="expense-form">
                 <div class="expense-form-title">Add ledger entry</div>
                 <label>Entry type<select id="ledgerEntryType"><option value="expense">Debit</option><option value="income">Credit</option></select></label>
@@ -226,7 +237,7 @@
     <script src="../shared/validation-schemas/finance.js?v=3"></script>
     <script src="../data-manager/app.js?v=2"></script>
     <script src="../side-bar/app.js"></script>
-    <script src="finance-model.js?v=3"></script>
-    <script src="app.js?v=3"></script>
+    <script src="finance-model.js?v=4"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>

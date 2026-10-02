@@ -2,7 +2,7 @@
   "name": "JAIMIE Music",
   "short_name": "Music",
   "description": "A private, device-local music library and player.",
-  "start_url": "./music/index.html",
+  "start_url": "./app.html#/music/index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#101113",

@@ -46,6 +46,11 @@
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     }
 
+    function currentMonthStartKey() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    }
+
     function supportedObjectCurrency(value) {
         return ["SAR", "INR", "USD", "EUR", "GBP"].includes(String(value || "").toUpperCase()) ? String(value).toUpperCase() : "SAR";
     }
@@ -232,6 +237,7 @@
         if (!account) return;
         $("ledgerAccountName").textContent = account.name || "Account";
         $("ledgerAccountBalance").textContent = formatMoney(account.balance, account.currency || data.currency);
+        renderAccountExpenseRange(account);
         const list = $("accountLedgerList");
         const transactions = model.sortTransactions(data.transactions)
             .filter(transaction => ["expense", "income"].includes(transaction.type) && transaction.sourceKind === "account" && transaction.sourceId === account.id);
@@ -261,6 +267,44 @@
             row.append(main, side);
             list.append(row);
         });
+    }
+
+    function renderAccountExpenseRange(account = data.accounts.find(item => item.id === activeLedgerAccountId)) {
+        if (!account) return;
+
+        const start = $("ledgerRangeStart").value;
+        const end = $("ledgerRangeEnd").value;
+        const total = $("ledgerRangeTotal");
+        const status = $("ledgerRangeStatus");
+        status.classList.remove("warning");
+
+        if (!start || !end) {
+            total.textContent = "—";
+            status.textContent = "Choose both dates to calculate.";
+            return;
+        }
+
+        if (start > end) {
+            total.textContent = "—";
+            status.textContent = "The From date must be on or before the To date.";
+            status.classList.add("warning");
+            return;
+        }
+
+        const result = model.sumAccountExpenses(
+            data.transactions,
+            account.id,
+            start,
+            end,
+            account.currency || data.currency,
+            data.exchangeRates
+        );
+        total.textContent = formatMoney(result.total, account.currency || data.currency);
+        const entryLabel = `${result.count} debit${result.count === 1 ? "" : "s"}`;
+        status.textContent = result.unconvertedCount
+            ? `${entryLabel} included · ${result.unconvertedCount} skipped because conversion is unavailable.`
+            : `${entryLabel} included · ${formatDate(start)} to ${formatDate(end)}, inclusive.`;
+        status.classList.toggle("warning", result.unconvertedCount > 0);
     }
 
     function renderLiabilityLedger() {
@@ -388,6 +432,8 @@
         activeLedgerAccountId = accountId;
         $("accountExpenseForm").reset();
         $("expenseDate").value = todayKey();
+        $("ledgerRangeStart").value = currentMonthStartKey();
+        $("ledgerRangeEnd").value = todayKey();
         renderAccountLedger();
         $("accountLedgerDialog").showModal();
     }
@@ -647,6 +693,8 @@
         data = { ...data, exchangeRates: { ...(data.exchangeRates || {}), SAR_INR: rate } };
         await saveAndRender();
     });
+    $("ledgerRangeStart").addEventListener("input", () => renderAccountExpenseRange());
+    $("ledgerRangeEnd").addEventListener("input", () => renderAccountExpenseRange());
 
     document.querySelectorAll("[data-close]").forEach(button => {
         button.addEventListener("click", () => closeDialog(button.dataset.close));

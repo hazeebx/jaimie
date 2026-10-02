@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111214">
+    <title>JAIMIE</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="stylesheet" href="./side-bar/styles.css">
+    <link rel="stylesheet" href="./app-shell.css?v=1">
+</head>
+<body>
+    <div id="side-menu"></div>
+
+    <main class="app-shell" id="appShell" aria-live="polite">
+        <div class="app-shell__loading" id="appShellLoading" role="status">
+            <span class="app-shell__pulse" aria-hidden="true"></span>
+            <span>Opening JAIMIE</span>
+        </div>
+        <div class="app-shell__frames" id="appShellFrames"></div>
+    </main>
+
+    <script src="./shared/safe-content.js"></script>
+    <script src="./shared/validation.js"></script>
+    <script src="./shared/validation-schemas/calendar-reminders.js"></script>
+    <script src="./shared/validation-schemas/workout.js"></script>
+    <script src="./shared/validation-schemas/habits.js"></script>
+    <script src="./shared/validation-schemas/event-countdown.js"></script>
+    <script src="./shared/validation-schemas/diet.js"></script>
+    <script src="./shared/validation-schemas/sleep.js"></script>
+    <script src="./shared/validation-schemas/journal.js"></script>
+    <script src="./shared/validation-schemas/inventory.js"></script>
+    <script src="./shared/validation-schemas/packing.js"></script>
+    <script src="./data-manager/app.js?v=2"></script>
+    <script src="./side-bar/app.js"></script>
+    <script src="./app-shell.js?v=1"></script>
+</body>
+</html>

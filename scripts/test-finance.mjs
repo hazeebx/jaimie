@@ -102,6 +102,17 @@ if (model.convertAmount(100, "SAR", "INR", { SAR_INR: 20 }) !== 2000 || model.co
 if (model.convertAmount(100, "SAR", "INR", {}) !== null) {
     throw new Error("Finance must not invent a conversion when the manual factor is missing.");
 }
+const rangeResult = model.sumAccountExpenses([
+    ...data.transactions,
+    { id: "t3", type: "expense", amount: 75, date: "2026-09-30", sourceKind: "account", sourceId: "account-1", currency: "SAR" },
+    { id: "t4", type: "expense", amount: 500, date: "2026-10-01", sourceKind: "account", sourceId: "account-2", currency: "SAR" }
+], "account-1", "2026-09-10", "2026-09-30", "SAR", data.exchangeRates);
+if (!rangeResult.valid || rangeResult.total !== 325 || rangeResult.count !== 2 || rangeResult.unconvertedCount !== 0) {
+    throw new Error("Account expense date-range totals are incorrect or failed to exclude credits and other accounts.");
+}
+if (model.sumAccountExpenses(data.transactions, "account-1", "2026-09-30", "2026-09-01", "SAR").valid) {
+    throw new Error("Account expense date ranges must reject an end date before the start date.");
+}
 const inrSummary = model.summarize({ ...valid.value, currency: "INR" }, new Date(2026, 8, 24));
 if (inrSummary.netPosition !== 93000 || inrSummary.accountBalance !== 100000 || inrSummary.investmentBalance !== 20000 || inrSummary.cardBalance !== 25000 || inrSummary.liabilityBalance !== 2000) {
     throw new Error("Finance display-currency conversion changed the net-worth arithmetic.");
@@ -125,7 +136,7 @@ const html = readFileSync(new URL("../finance/index.html", import.meta.url), "ut
 if (/id=["'][^"']*(?:cardNumber|accountNumber|cvv|pin)[^"']*["']/i.test(html) || /type=["']password["']/i.test(html)) {
     throw new Error("Finance UI asks for prohibited sensitive banking credentials.");
 }
-for (const id of ["accountForm", "investmentForm", "cardForm", "liabilityForm", "liabilityPaymentForm", "accountExpenseForm", "accountsList", "investmentsList", "cardsList", "liabilitiesList", "accountLedgerList", "liabilityPaymentList", "sarInrRate", "investmentTotal", "liabilityTotal", "netPosition"]) {
+for (const id of ["accountForm", "investmentForm", "cardForm", "liabilityForm", "liabilityPaymentForm", "accountExpenseForm", "accountsList", "investmentsList", "cardsList", "liabilitiesList", "accountLedgerList", "liabilityPaymentList", "sarInrRate", "investmentTotal", "liabilityTotal", "netPosition", "ledgerRangeStart", "ledgerRangeEnd", "ledgerRangeTotal", "ledgerRangeStatus"]) {
     if (!html.includes(`id="${id}"`)) throw new Error(`Finance UI is missing ${id}.`);
 }
 for (const removedId of ["transactionForm", "transactionList", "transactionFilter"]) {
@@ -144,7 +155,7 @@ if (!/<dialog id="liabilityDialog"[^>]*data-static-backdrop/.test(html)) {
     throw new Error("Add Liability dialog can still be dismissed by clicking its backdrop.");
 }
 const appSource = readFileSync(new URL("../finance/app.js", import.meta.url), "utf8");
-for (const requiredPattern of ["openAccountLedger", "openInvestment", "openLiabilityLedger", "deleteLiabilityPayment", "entryType === \"income\" ? entryAmount : -entryAmount", "applyBalanceImpact", "convertAmount", "!dialog.hasAttribute(\"data-static-backdrop\")"]) {
+for (const requiredPattern of ["openAccountLedger", "openInvestment", "openLiabilityLedger", "deleteLiabilityPayment", "entryType === \"income\" ? entryAmount : -entryAmount", "applyBalanceImpact", "convertAmount", "sumAccountExpenses", "renderAccountExpenseRange", "!dialog.hasAttribute(\"data-static-backdrop\")"]) {
     if (!appSource.includes(requiredPattern)) throw new Error(`Account ledger balance wiring is missing: ${requiredPattern}`);
 }
 

@@ -22,6 +22,9 @@ const schemaScripts = [
 
 requireFile(safeContentPath);
 requireFile(validationPath);
+requireFile(join(root, "app.html"));
+requireFile(join(root, "app-shell.css"));
+requireFile(join(root, "app-shell.js"));
 for (const schema of schemaScripts) {
     requireFile(join(root, "shared", "validation-schemas", schema.filename));
 }

@@ -170,6 +170,13 @@ under the `cartographer` dataset. The map uses OpenStreetMap raster tiles when
 online; capture and record management remain available if map tiles cannot
 load.
 
+The page also shows live compass, weather, and UV widgets. Compass data comes
+from the device-orientation sensor when available and falls back to the GPS
+travel bearing. After GPS is enabled, current coordinates are sent to the
+keyless Open-Meteo forecast endpoint for current conditions and UV data. These
+conditions refresh at most every ten minutes unless the device has moved more
+than five kilometres; network failure leaves Cartographer and its map usable.
+
 Driver mode checks active camera records against the live browser location,
 applies an optional direction tolerance, de-duplicates alerts during the active
 session, and can speak the warning. Its live mini-map keeps a directional

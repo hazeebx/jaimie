@@ -9,6 +9,53 @@
 
     if (!container) return;
 
+    const script =
+        document.currentScript;
+
+    if (!script) return;
+
+    const jaimieRoot =
+        new URL("../", script.src);
+
+    const embeddedMode =
+        window.self !== window.top &&
+        new URLSearchParams(window.location.search).get("jaimie-embedded") === "1";
+
+    /*
+     * Feature pages remain valid standalone documents, but the application shell
+     * owns the one shared sidebar. Removing the placeholder from an embedded page
+     * also prevents the sidebar's layout padding from being applied inside it.
+     */
+    if (embeddedMode) {
+        container.remove();
+        document.documentElement.classList.add("jaimie-embedded");
+        return;
+    }
+
+    const currentUrl = new URL(window.location.href);
+    const shellUrl = new URL("app.html", jaimieRoot);
+    const isApplicationShell =
+        currentUrl.origin === shellUrl.origin &&
+        currentUrl.pathname === shellUrl.pathname;
+
+    /*
+     * Route top-level feature-page visits through the persistent shell. This is
+     * what lets the Music document (and its real audio element) survive when the
+     * user opens another JAIMIE page.
+     */
+    if (window.self === window.top && !isApplicationShell) {
+        let route = currentUrl.pathname.startsWith(jaimieRoot.pathname)
+            ? currentUrl.pathname.slice(jaimieRoot.pathname.length)
+            : "";
+
+        route = route.replace(/^\/+/, "");
+        if (!route || route.endsWith("/")) route += "index.html";
+
+        shellUrl.hash = `/${encodeURI(route)}`;
+        window.location.replace(shellUrl.href);
+        return;
+    }
+
     let dataRefreshNotice = null;
 
     function showDataRefreshNotice(detail) {
@@ -61,15 +108,6 @@
      *
      * Therefore "../" from this script is the JAIMIE root.
      */
-
-    const script =
-        document.currentScript;
-
-    if (!script) return;
-
-
-    const jaimieRoot =
-        new URL("../", script.src);
 
     // Keep Day reminders running while any JAIMIE page is open.
     const notificationsScript = document.createElement("script");
@@ -157,6 +195,10 @@
 
 
             initSideMenu();
+
+            window.dispatchEvent(new CustomEvent("jaimie:sidebar-ready", {
+                detail: { root: jaimieRoot.href }
+            }));
 
         })
 

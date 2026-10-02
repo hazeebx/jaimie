@@ -3,6 +3,7 @@
 
     const DATA_KEY = "cartographer";
     const DEFAULT_CENTER = [46.6753, 24.7136];
+    const WEATHER_REFRESH_MS = 10 * 60 * 1000;
     const model = window.JAIMIEGeoModel;
     const safe = window.JAIMIESafeContent;
     const $ = id => document.getElementById(id);
@@ -15,6 +16,13 @@
     let miniMapFollowing = true;
     let previousPosition = null;
     let journeyPoints = [];
+    let orientationHeading = null;
+    let orientationListening = false;
+    let liveWeather = null;
+    let weatherRequest = null;
+    let weatherFetchedAt = 0;
+    let weatherPosition = null;
+    let weatherTimer = null;
     const alertedIds = new Set();
 
     function id(prefix) {
@@ -94,6 +102,7 @@
     }
 
     function enableGps() {
+        enableCompass();
         if (!navigator.geolocation) {
             setGpsState("GPS unavailable", "This browser does not expose geolocation.", false);
             return;
@@ -114,6 +123,8 @@
         if (position.heading === null && previousPosition && model.haversineMeters(previousPosition, position) >= 3) position.heading = model.bearingDegrees(previousPosition, position);
         if (position.speed === null && previousPosition && position.timestamp > previousPosition.timestamp) position.speed = model.haversineMeters(previousPosition, position) / ((position.timestamp - previousPosition.timestamp) / 1000);
         setGpsState("GPS locked", `${Math.round(position.accuracy)} m accuracy${position.heading === null ? "" : ` · ${Math.round(position.heading)}° bearing`}`, true);
+        renderLiveConditions();
+        refreshLiveWeather();
         $("gpsButton").textContent = "GPS active";
         $("captureButton").disabled = false;
         $("driverButton").disabled = false;
@@ -135,6 +146,124 @@
             updateMiniMap();
             checkDriverAlert();
         }
+    }
+
+    async function enableCompass() {
+        if (orientationListening || !("DeviceOrientationEvent" in window)) {
+            renderLiveConditions();
+            return;
+        }
+        try {
+            if (typeof DeviceOrientationEvent.requestPermission === "function") {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission !== "granted") return;
+            }
+            window.addEventListener("deviceorientationabsolute", onOrientation, true);
+            window.addEventListener("deviceorientation", onOrientation, true);
+            orientationListening = true;
+        } catch (error) {
+            console.warn("Cartographer compass unavailable:", error);
+        }
+        renderLiveConditions();
+    }
+
+    function onOrientation(event) {
+        let heading = Number(event.webkitCompassHeading);
+        if (!Number.isFinite(heading) && Number.isFinite(event.alpha)) {
+            const screenAngle = Number(screen.orientation?.angle ?? window.orientation ?? 0) || 0;
+            heading = 360 - event.alpha + screenAngle;
+        }
+        orientationHeading = model.normalizeHeading(heading);
+        renderLiveConditions();
+    }
+
+    async function refreshLiveWeather(force = false) {
+        if (!position) return;
+        if (weatherRequest && !force) return;
+        const recentlyFetched = Date.now() - weatherFetchedAt < WEATHER_REFRESH_MS;
+        const nearbyPreviousFetch = weatherPosition && model.haversineMeters(weatherPosition, position) < 5000;
+        if (!force && recentlyFetched && nearbyPreviousFetch) return;
+
+        if (weatherRequest) weatherRequest.abort();
+        weatherFetchedAt = Date.now();
+        weatherPosition = { latitude: position.latitude, longitude: position.longitude };
+        weatherRequest = new AbortController();
+        const request = weatherRequest;
+        const timeout = window.setTimeout(() => request.abort(), 12000);
+        try {
+            const url = new URL("https://api.open-meteo.com/v1/forecast");
+            url.searchParams.set("latitude", position.latitude.toFixed(5));
+            url.searchParams.set("longitude", position.longitude.toFixed(5));
+            url.searchParams.set("current", "temperature_2m,weather_code,is_day,uv_index");
+            url.searchParams.set("temperature_unit", "celsius");
+            url.searchParams.set("timezone", "auto");
+            const response = await fetch(url, { signal: request.signal, cache: "no-store" });
+            if (!response.ok) throw new Error(`Weather request failed with ${response.status}`);
+            const payload = await response.json();
+            const current = payload?.current;
+            if (!current || !Number.isFinite(Number(current.temperature_2m)) || !Number.isFinite(Number(current.weather_code))) {
+                throw new Error("Weather response did not include current conditions.");
+            }
+            liveWeather = {
+                temperature: Number(current.temperature_2m),
+                weatherCode: Number(current.weather_code),
+                isDay: Number(current.is_day) === 1,
+                uvIndex: Number.isFinite(Number(current.uv_index)) ? Math.max(0, Number(current.uv_index)) : null,
+                updatedAt: Date.now(),
+                error: false
+            };
+            weatherFetchedAt = Date.now();
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                console.warn("Cartographer live conditions unavailable:", error);
+                liveWeather = liveWeather ? { ...liveWeather, error: true } : { error: true };
+            }
+        } finally {
+            window.clearTimeout(timeout);
+            if (weatherRequest === request) weatherRequest = null;
+            renderLiveConditions();
+        }
+    }
+
+    function renderLiveConditions() {
+        const heading = orientationHeading ?? position?.heading ?? null;
+        const normalizedHeading = model.normalizeHeading(heading);
+        $("compassHeading").textContent = normalizedHeading === null ? "—°" : `${Math.round(normalizedHeading)}°`;
+        $("compassCardinal").textContent = model.cardinalDirection(normalizedHeading);
+        $("compassNeedle").style.transform = `rotate(${normalizedHeading ?? 0}deg)`;
+
+        if (!position) {
+            $("weatherIcon").textContent = "—";
+            $("weatherTemperature").textContent = "—°";
+            $("weatherCondition").textContent = "Enable GPS";
+            $("uvIndex").textContent = "—";
+            $("uvRisk").textContent = "Enable GPS";
+            document.querySelector(".uv-card")?.removeAttribute("data-risk");
+            return;
+        }
+        if (!liveWeather) {
+            $("weatherCondition").textContent = "Loading…";
+            $("uvRisk").textContent = "Loading…";
+            return;
+        }
+        if (liveWeather.error && !Number.isFinite(liveWeather.temperature)) {
+            $("weatherIcon").textContent = "!";
+            $("weatherTemperature").textContent = "—°";
+            $("weatherCondition").textContent = "Unavailable";
+            $("uvIndex").textContent = "—";
+            $("uvRisk").textContent = "Unavailable";
+            document.querySelector(".uv-card")?.removeAttribute("data-risk");
+            return;
+        }
+
+        const condition = model.weatherCondition(liveWeather.weatherCode, liveWeather.isDay);
+        const risk = model.uvRisk(liveWeather.uvIndex);
+        $("weatherIcon").textContent = condition.icon;
+        $("weatherTemperature").textContent = `${Math.round(liveWeather.temperature)}°`;
+        $("weatherCondition").textContent = `${condition.label}${liveWeather.error ? " · stale" : ""}`;
+        $("uvIndex").textContent = liveWeather.uvIndex === null ? "—" : liveWeather.uvIndex.toFixed(1);
+        $("uvRisk").textContent = risk;
+        document.querySelector(".uv-card")?.setAttribute("data-risk", risk.toLowerCase().replaceAll(" ", "-"));
     }
 
     function setGpsState(title, detail, live) {
@@ -407,7 +536,19 @@
     $("cameraForm").addEventListener("submit", saveEditor);
     $("deleteCamera").addEventListener("click", deleteCamera);
     document.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => $("cameraDialog").close()));
-    window.addEventListener("beforeunload", () => { if (watchId !== null) navigator.geolocation.clearWatch(watchId); });
+    window.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && position && Date.now() - weatherFetchedAt >= WEATHER_REFRESH_MS) refreshLiveWeather(true);
+    });
+    window.addEventListener("beforeunload", () => {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        if (weatherRequest) weatherRequest.abort();
+        if (weatherTimer !== null) window.clearInterval(weatherTimer);
+        window.removeEventListener("deviceorientationabsolute", onOrientation, true);
+        window.removeEventListener("deviceorientation", onOrientation, true);
+    });
+
+    renderLiveConditions();
+    weatherTimer = window.setInterval(() => refreshLiveWeather(true), WEATHER_REFRESH_MS);
 
     if (window.maplibregl) {
         initMap();

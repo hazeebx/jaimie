@@ -51,6 +51,44 @@
         return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     }
 
+    function normalizeHeading(value) {
+        const heading = number(value);
+        return heading === null ? null : ((heading % 360) + 360) % 360;
+    }
+
+    function cardinalDirection(value) {
+        const heading = normalizeHeading(value);
+        if (heading === null) return "—";
+        return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(heading / 45) % 8];
+    }
+
+    function uvRisk(value) {
+        const uv = number(value);
+        if (uv === null) return "Unavailable";
+        if (uv < 3) return "Low";
+        if (uv < 6) return "Moderate";
+        if (uv < 8) return "High";
+        if (uv < 11) return "Very high";
+        return "Extreme";
+    }
+
+    function weatherCondition(code, isDay = true) {
+        const value = number(code);
+        const day = Boolean(Number(isDay));
+        if (value === 0) return { label: "Clear", icon: day ? "☀" : "☾" };
+        if (value === 1) return { label: "Mainly clear", icon: day ? "🌤" : "☾" };
+        if (value === 2) return { label: "Partly cloudy", icon: "⛅" };
+        if (value === 3) return { label: "Overcast", icon: "☁" };
+        if ([45, 48].includes(value)) return { label: "Fog", icon: "≋" };
+        if ([51, 53, 55, 56, 57].includes(value)) return { label: "Drizzle", icon: "🌦" };
+        if ([61, 63, 65, 66, 67].includes(value)) return { label: "Rain", icon: "🌧" };
+        if ([71, 73, 75, 77].includes(value)) return { label: "Snow", icon: "❄" };
+        if ([80, 81, 82].includes(value)) return { label: "Rain showers", icon: "🌦" };
+        if ([85, 86].includes(value)) return { label: "Snow showers", icon: "❄" };
+        if ([95, 96, 99].includes(value)) return { label: "Thunderstorm", icon: "⚡" };
+        return { label: "Unavailable", icon: "—" };
+    }
+
     function isDirectionCompatible(userBearing, cameraDirection, tolerance = 45) {
         const difference = angularDifference(userBearing, cameraDirection);
         return difference === null || difference <= Math.max(0, Number(tolerance) || 45);
@@ -103,6 +141,10 @@
         haversineMeters,
         angularDifference,
         bearingDegrees,
+        normalizeHeading,
+        cardinalDirection,
+        uvRisk,
+        weatherCondition,
         isDirectionCompatible,
         camerasByDistance,
         findRelevantCamera,

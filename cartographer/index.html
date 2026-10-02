@@ -6,7 +6,7 @@
     <title>Cartographer — JAIMIE</title>
     <link rel="stylesheet" href="../side-bar/styles.css">
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
     <div id="side-menu"></div>
@@ -16,6 +16,23 @@
                 <div class="mark">⌖</div>
                 <div><div class="eyebrow">TOOLS / CARTOGRAPHER</div><h1>Cartographer</h1><p>Capture road cameras and receive foreground proximity alerts.</p></div>
             </div>
+            <section class="live-conditions" aria-label="Live local conditions">
+                <article class="live-card weather-card">
+                    <span class="live-label">WEATHER</span>
+                    <div class="live-value"><span id="weatherIcon" class="weather-icon">—</span><strong id="weatherTemperature">—°</strong></div>
+                    <small id="weatherCondition">Enable GPS</small>
+                </article>
+                <article class="live-card uv-card">
+                    <span class="live-label">UV INDEX</span>
+                    <strong id="uvIndex" class="uv-value">—</strong>
+                    <small id="uvRisk">Enable GPS</small>
+                </article>
+                <article class="live-card compass-card">
+                    <span class="live-label">COMPASS</span>
+                    <div class="compass-face" aria-hidden="true"><span>N</span><i id="compassNeedle">▲</i></div>
+                    <small><strong id="compassHeading">—°</strong> <span id="compassCardinal">—</span></small>
+                </article>
+            </section>
             <div class="mode-switch" role="group" aria-label="Cartographer mode">
                 <button class="mode-button active" data-mode="cartographer" type="button">Cartographer</button>
                 <button class="mode-button" data-mode="driver" type="button">Driver</button>
@@ -107,7 +124,7 @@
         window.maplibregl = maplibregl;
         window.dispatchEvent(new Event("jaimie-maplibre-ready"));
     </script>
-    <script src="geo-model.js?v=1"></script>
-    <script src="app.js?v=1"></script>
+    <script src="geo-model.js?v=2"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>
