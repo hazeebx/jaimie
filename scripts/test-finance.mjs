@@ -113,6 +113,28 @@ if (!rangeResult.valid || rangeResult.total !== 325 || rangeResult.count !== 2 |
 if (model.sumAccountExpenses(data.transactions, "account-1", "2026-09-30", "2026-09-01", "SAR").valid) {
     throw new Error("Account expense date ranges must reject an end date before the start date.");
 }
+const exportedAt = "2026-10-09T12:00:00.000Z";
+const transactionExport = model.buildAccountTransactionExport({
+    ...data,
+    transactions: [
+        ...data.transactions,
+        { id: "other-account", type: "expense", amount: 999, date: "2026-09-12", sourceKind: "account", sourceId: "account-2" }
+    ]
+}, "account-1", exportedAt);
+if (
+    transactionExport?.format !== "JAIMIE_ACCOUNT_TRANSACTIONS" ||
+    transactionExport.version !== 1 ||
+    transactionExport.exportedAt !== exportedAt ||
+    transactionExport.account.name !== "Daily Account" ||
+    transactionExport.transactionCount !== 2 ||
+    transactionExport.transactions[0].id !== "t2" ||
+    transactionExport.transactions.some(transaction => transaction.id === "other-account")
+) {
+    throw new Error("Account transaction JSON export is incomplete, unsorted, or includes another account.");
+}
+if (model.buildAccountTransactionExport(data, "missing-account", exportedAt) !== null) {
+    throw new Error("Account transaction export must reject a missing account.");
+}
 const inrSummary = model.summarize({ ...valid.value, currency: "INR" }, new Date(2026, 8, 24));
 if (inrSummary.netPosition !== 93000 || inrSummary.accountBalance !== 100000 || inrSummary.investmentBalance !== 20000 || inrSummary.cardBalance !== 25000 || inrSummary.liabilityBalance !== 2000) {
     throw new Error("Finance display-currency conversion changed the net-worth arithmetic.");
@@ -136,7 +158,7 @@ const html = readFileSync(new URL("../finance/index.html", import.meta.url), "ut
 if (/id=["'][^"']*(?:cardNumber|accountNumber|cvv|pin)[^"']*["']/i.test(html) || /type=["']password["']/i.test(html)) {
     throw new Error("Finance UI asks for prohibited sensitive banking credentials.");
 }
-for (const id of ["accountForm", "investmentForm", "cardForm", "liabilityForm", "liabilityPaymentForm", "accountExpenseForm", "accountsList", "investmentsList", "cardsList", "liabilitiesList", "accountLedgerList", "liabilityPaymentList", "sarInrRate", "investmentTotal", "liabilityTotal", "netPosition", "ledgerRangeStart", "ledgerRangeEnd", "ledgerRangeTotal", "ledgerRangeStatus"]) {
+for (const id of ["accountForm", "investmentForm", "cardForm", "liabilityForm", "liabilityPaymentForm", "accountExpenseForm", "accountsList", "investmentsList", "cardsList", "liabilitiesList", "accountLedgerList", "liabilityPaymentList", "sarInrRate", "investmentTotal", "liabilityTotal", "netPosition", "ledgerRangeStart", "ledgerRangeEnd", "ledgerRangeTotal", "ledgerRangeStatus", "downloadAccountTransactions"]) {
     if (!html.includes(`id="${id}"`)) throw new Error(`Finance UI is missing ${id}.`);
 }
 for (const removedId of ["transactionForm", "transactionList", "transactionFilter"]) {
@@ -155,7 +177,7 @@ if (!/<dialog id="liabilityDialog"[^>]*data-static-backdrop/.test(html)) {
     throw new Error("Add Liability dialog can still be dismissed by clicking its backdrop.");
 }
 const appSource = readFileSync(new URL("../finance/app.js", import.meta.url), "utf8");
-for (const requiredPattern of ["openAccountLedger", "openInvestment", "openLiabilityLedger", "deleteLiabilityPayment", "entryType === \"income\" ? entryAmount : -entryAmount", "applyBalanceImpact", "convertAmount", "sumAccountExpenses", "renderAccountExpenseRange", "!dialog.hasAttribute(\"data-static-backdrop\")"]) {
+for (const requiredPattern of ["openAccountLedger", "openInvestment", "openLiabilityLedger", "deleteLiabilityPayment", "entryType === \"income\" ? entryAmount : -entryAmount", "applyBalanceImpact", "convertAmount", "sumAccountExpenses", "renderAccountExpenseRange", "buildAccountTransactionExport", "downloadAccountTransactions", "application/json;charset=utf-8", "URL.revokeObjectURL", "!dialog.hasAttribute(\"data-static-backdrop\")"]) {
     if (!appSource.includes(requiredPattern)) throw new Error(`Account ledger balance wiring is missing: ${requiredPattern}`);
 }
 

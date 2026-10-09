@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finance — JAIMIE</title>
     <link rel="stylesheet" href="../side-bar/styles.css">
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
     <div id="side-menu"></div>
@@ -200,7 +200,10 @@
                 <label>Note<input id="expenseNote" maxlength="160" placeholder="Optional"></label>
                 <button class="primary add-expense-btn" type="submit">Add entry</button>
             </form>
-            <div class="ledger-history-head"><span>Account history</span><small>Deleting an entry reverses its balance impact.</small></div>
+            <div class="ledger-history-head">
+                <div class="ledger-history-copy"><span>Account history</span><small>Deleting an entry reverses its balance impact.</small></div>
+                <button id="downloadAccountTransactions" class="secondary ledger-download" type="button">Download JSON</button>
+            </div>
             <div id="accountLedgerList" class="transaction-list"></div>
         </div>
     </dialog>
@@ -237,7 +240,7 @@
     <script src="../shared/validation-schemas/finance.js?v=3"></script>
     <script src="../data-manager/app.js?v=2"></script>
     <script src="../side-bar/app.js"></script>
-    <script src="finance-model.js?v=4"></script>
-    <script src="app.js?v=4"></script>
+    <script src="finance-model.js?v=5"></script>
+    <script src="app.js?v=5"></script>
 </body>
 </html>

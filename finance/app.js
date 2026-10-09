@@ -92,6 +92,15 @@
         return wrapper;
     }
 
+    function safeFilenamePart(value) {
+        return String(value || "account")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")
+            .slice(0, 60) || "account";
+    }
+
     async function persist() {
         await window.JAIMIEData.save(DATA_KEY, data);
     }
@@ -305,6 +314,22 @@
             ? `${entryLabel} included · ${result.unconvertedCount} skipped because conversion is unavailable.`
             : `${entryLabel} included · ${formatDate(start)} to ${formatDate(end)}, inclusive.`;
         status.classList.toggle("warning", result.unconvertedCount > 0);
+    }
+
+    function downloadAccountTransactions() {
+        const payload = model.buildAccountTransactionExport(data, activeLedgerAccountId);
+        if (!payload) return;
+
+        const json = JSON.stringify(payload, null, 2);
+        const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+        const objectUrl = URL.createObjectURL(blob);
+        const download = document.createElement("a");
+        download.href = objectUrl;
+        download.download = `jaimie-${safeFilenamePart(payload.account.name)}-transactions-${todayKey()}.json`;
+        document.body.appendChild(download);
+        download.click();
+        download.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
     }
 
     function renderLiabilityLedger() {
@@ -695,6 +720,7 @@
     });
     $("ledgerRangeStart").addEventListener("input", () => renderAccountExpenseRange());
     $("ledgerRangeEnd").addEventListener("input", () => renderAccountExpenseRange());
+    $("downloadAccountTransactions").addEventListener("click", downloadAccountTransactions);
 
     document.querySelectorAll("[data-close]").forEach(button => {
         button.addEventListener("click", () => closeDialog(button.dataset.close));

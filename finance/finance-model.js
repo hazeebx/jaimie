@@ -138,5 +138,35 @@
             }, { total: 0, count: 0, unconvertedCount: 0, valid: true });
     }
 
-    window.JAIMIEFinanceModel = Object.freeze({ summarize, sortTransactions, applyBalanceImpact, convertAmount, sarInrRate, sumAccountExpenses });
+    function buildAccountTransactionExport(data, accountId, exportedAt = new Date().toISOString()) {
+        const accounts = Array.isArray(data?.accounts) ? data.accounts : [];
+        const account = accounts.find(item => item?.id === accountId);
+        if (!account) return null;
+
+        const transactions = sortTransactions(data?.transactions)
+            .filter(transaction =>
+                ["expense", "income"].includes(transaction?.type) &&
+                transaction.sourceKind === "account" &&
+                transaction.sourceId === account.id
+            )
+            .map(transaction => ({ ...transaction }));
+
+        return {
+            format: "JAIMIE_ACCOUNT_TRANSACTIONS",
+            version: 1,
+            exportedAt,
+            account: {
+                id: account.id,
+                name: account.name || "Account",
+                institution: account.institution || "",
+                type: account.type || "",
+                last4: account.last4 || "",
+                currency: account.currency || data?.currency || "SAR"
+            },
+            transactionCount: transactions.length,
+            transactions
+        };
+    }
+
+    window.JAIMIEFinanceModel = Object.freeze({ summarize, sortTransactions, applyBalanceImpact, convertAmount, sarInrRate, sumAccountExpenses, buildAccountTransactionExport });
 })();
