@@ -1,5 +1,7 @@
 globalThis.window = globalThis;
 
+import { readFileSync } from "node:fs";
+
 await import("../shared/safe-content.js");
 await import("../shared/validation.js");
 await import("../shared/validation-schemas/workout.js");
@@ -96,5 +98,20 @@ for (const code of [
 
 const compatible = validation.inspect("workout", invalid, { mode: "compatibility", source: "test" });
 if (compatible.value !== invalid) throw new Error("Workout compatibility mode changed existing data.");
+
+const workoutApp = readFileSync(new URL("../workout-tracker/app.js", import.meta.url), "utf8");
+const workoutStyles = readFileSync(new URL("../workout-tracker/styles.css", import.meta.url), "utf8");
+for (const required of ["data-setremove", "data-set-index", "removeExerciseSet", "item.sets.splice(setIndex, 1)", "item.sets.length <= 1"]) {
+    if (!workoutApp.includes(required)) throw new Error(`Workout individual-set removal is missing: ${required}`);
+}
+if (!workoutStyles.includes(".set-remove-btn") || !workoutStyles.includes(".set-remove-btn:disabled")) {
+    throw new Error("Workout individual-set removal controls are not visibly styled or guarded at one remaining set.");
+}
+for (const required of ["data-vieww", "saved-workout-exercises", "saved-workout-exercise", "aria-expanded", "details.hidden = expanded"]) {
+    if (!workoutApp.includes(required)) throw new Error(`Saved workout exercise disclosure is missing: ${required}`);
+}
+if (!workoutStyles.includes(".saved-workout-toggle") || !workoutStyles.includes(".saved-workout-target")) {
+    throw new Error("Saved workout exercise disclosure is not visibly styled.");
+}
 
 console.log("Workout schema passed: current, legacy, malformed, nested, and future-extension records behave correctly.");

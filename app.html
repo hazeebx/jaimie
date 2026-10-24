@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#111214">
     <title>JAIMIE</title>
     <link rel="manifest" href="./manifest.webmanifest">
-    <link rel="stylesheet" href="./side-bar/styles.css">
-    <link rel="stylesheet" href="./app-shell.css?v=1">
+    <link rel="icon" href="./assets/jaimie-icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./assets/jaimie-icon-192.png">
+    <link rel="stylesheet" href="./side-bar/styles.css?v=mobile-shell-2">
+    <link rel="stylesheet" href="./app-shell.css?v=mobile-shell-2">
 </head>
 <body>
     <div id="side-menu"></div>
@@ -32,7 +34,8 @@
     <script src="./shared/validation-schemas/inventory.js"></script>
     <script src="./shared/validation-schemas/packing.js"></script>
     <script src="./data-manager/app.js?v=2"></script>
-    <script src="./side-bar/app.js"></script>
-    <script src="./app-shell.js?v=1"></script>
+    <script src="./side-bar/app.js?v=mobile-shell-2"></script>
+    <script src="./app-shell.js?v=mobile-shell-2"></script>
+    <script src="./pwa.js?v=1"></script>
 </body>
 </html>

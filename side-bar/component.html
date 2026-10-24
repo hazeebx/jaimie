@@ -1,4 +1,25 @@
-<!-- JAIMIE collapsible side menu component -->
+<!-- JAIMIE responsive side menu component -->
+
+<button
+    class="side-menu__mobile-launcher"
+    id="mobileMenuToggle"
+    type="button"
+    aria-label="Open navigation"
+    aria-controls="jaimieSideMenu"
+    aria-expanded="false"
+>
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+
+<button
+    class="side-menu__backdrop"
+    id="sideMenuBackdrop"
+    type="button"
+    aria-label="Close navigation"
+    tabindex="-1"
+></button>
 
 <aside class="side-menu" id="jaimieSideMenu">
 
@@ -8,7 +29,7 @@
             class="side-menu__toggle"
             id="sideMenuToggle"
             type="button"
-            aria-label="Toggle navigation"
+            aria-label="Collapse navigation"
             aria-expanded="true"
         >
             <span></span>
@@ -55,17 +76,6 @@
                 LIFE SYSTEM
             </span>
         </div>
-
-
-        <a
-            class="side-menu__item"
-            href="music/index.html"
-        >
-            <span class="side-menu__icon">♫</span>
-            <span class="side-menu__label">
-                Music
-            </span>
-        </a>
 
 
         <a
@@ -140,18 +150,6 @@
                 Sleep
             </span>
         </a>
-
-
-        <a
-            class="side-menu__item"
-            href="braindump/index.html"
-        >
-            <span class="side-menu__icon">✎</span>
-            <span class="side-menu__label">
-                Braindump
-            </span>
-        </a>
-
 
         <a
             class="side-menu__item"
@@ -247,6 +245,17 @@
     <span class="side-menu__label">
         Settings
     </span>
+</button>
+
+<button
+    class="side-menu__item side-menu__install"
+    id="installJaimie"
+    type="button"
+    aria-hidden="true"
+    hidden
+>
+    <span class="side-menu__icon">↓</span>
+    <span class="side-menu__label">Install JAIMIE</span>
 </button>
 
 

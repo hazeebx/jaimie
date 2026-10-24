@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">JAIMIE</title>
+  <desc id="description">JAIMIE letter mark with an orange orbit.</desc>
+  <defs>
+    <radialGradient id="background" cx="72%" cy="18%" r="90%">
+      <stop offset="0" stop-color="#25201c"/>
+      <stop offset="0.46" stop-color="#17191c"/>
+      <stop offset="1" stop-color="#101113"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb36f"/>
+      <stop offset="0.48" stop-color="#ff8a2a"/>
+      <stop offset="1" stop-color="#dc6413"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#background)"/>
+  <rect x="18" y="18" width="476" height="476" rx="94" fill="none" stroke="#303238" stroke-width="4"/>
+  <circle cx="256" cy="256" r="158" fill="none" stroke="#393b41" stroke-width="10"/>
+  <path d="M126 178a158 158 0 0 1 212-64" fill="none" stroke="url(#accent)" stroke-width="16" stroke-linecap="round" filter="url(#glow)"/>
+  <circle cx="354" cy="132" r="13" fill="#ff8a2a" filter="url(#glow)"/>
+  <path d="M292 155v151c0 62-34 94-91 94-29 0-54-8-73-25l29-43c13 11 27 16 42 16 25 0 37-14 37-44V155h56z" fill="#f3efe9"/>
+</svg>

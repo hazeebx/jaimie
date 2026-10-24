@@ -271,4 +271,12 @@ select { appearance: auto; }
   .task-dot { width: 4px; height: 4px; }
   .day-task-count { display: none; }
   .weekdays span { padding-right: 3px; }
+  .icon-button, .close-button { min-width: 44px; min-height: 44px; }
+  .selected-day-panel { padding: 17px 14px; }
+  .selected-task { grid-template-columns: 24px minmax(0, 1fr); }
+  .selected-task .task-actions { grid-column: 2; justify-content: flex-end; }
+  .modal { align-items: end; padding: 0; }
+  .modal-card, .modal-card.wide { width: 100%; max-height: 92dvh; padding: 18px 15px calc(18px + env(safe-area-inset-bottom, 0px)); border-radius: 16px 16px 0 0; }
+  .form-actions { align-items: stretch; flex-direction: column; gap: 10px; }
+  .form-actions-right { display: grid; grid-template-columns: 1fr 1fr; }
 }

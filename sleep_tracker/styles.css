@@ -31,4 +31,11 @@ input:focus,select:focus{border-color:var(--orange)}
 @media(max-width:800px){.page-grid{grid-template-columns:1fr}.app{padding:22px 15px}.history-list{min-height:0}}
 @media(max-width:470px){.form-grid{grid-template-columns:1fr}.day{grid-template-columns:48px 1fr 62px}}
 
+@media(max-width:470px){
+    .ghost,.range-tabs button,.nav-btn{min-height:42px}
+    .range-tabs{width:100%;overflow-x:auto;padding-bottom:3px}
+    .range-tabs button{flex:1;white-space:nowrap}
+    .day{padding:12px 6px}
+}
+
 .day-nav{display:flex;align-items:center;gap:6px}.nav-btn{font-size:24px;line-height:1;padding:5px 12px;min-width:40px}

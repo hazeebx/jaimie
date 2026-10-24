@@ -130,4 +130,12 @@ h1 { font-size: clamp(26px, 3vw, 38px); letter-spacing: -.035em; }
 
 @media (max-width: 720px) {
     .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+    .widget-link, .widget-remove, .icon-button { min-height: 40px; }
+    .widget-remove, .icon-button { width: 40px; }
+    .set-pill { width: 34px; height: 34px; }
+    .countdown-arrow { width: 44px; height: 44px; }
+    .widget-dialog { width: 100%; max-width: none; max-height: 90dvh; margin: auto 0 0; border-radius: 16px 16px 0 0; }
+    .dialog-header { padding: 17px; }
+    .widget-options { padding: 14px; }
+    .dashboard-toast { right: 12px; bottom: 12px; left: 12px; text-align: center; }
 }

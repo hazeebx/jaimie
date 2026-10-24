@@ -5,15 +5,40 @@ await import("../shared/validation.js");
 await import("../shared/validation-schemas/journal.js");
 await import("../shared/validation-schemas/inventory.js");
 await import("../shared/validation-schemas/packing.js");
+await import("../journal/notes-model.js");
 
 const validation = globalThis.JAIMIEValidation;
 
 const journal = {
     futureRootField: { version: 2 },
+    folders: {
+        research: { id: "research", name: "Research", createdAt: "2026-09-21T10:00:00.000Z", futureFolderField: true }
+    },
+    notes: {
+        "note-one": {
+            id: "note-one",
+            title: "First Note",
+            content: "Links to [[Second Note]] with #project notes.",
+            folderId: "research",
+            createdAt: "2026-09-21T10:00:00.000Z",
+            updatedAt: "2026-09-21T12:00:00.000Z",
+            futureNoteField: 7
+        },
+        "note-two": {
+            id: "note-two",
+            title: "Second Note",
+            content: "Backlink target.",
+            folderId: "",
+            createdAt: "2026-09-21T11:00:00.000Z",
+            updatedAt: "2026-09-21T12:30:00.000Z"
+        }
+    },
+    selectedNoteId: "note-one",
     entries: {
         "2026-09-21": {
             date: "2026-09-21",
             howDay: "Productive",
+            howDayHtml: "<div><strong>Productive</strong></div>",
             tomorrow: "Continue",
             updatedAt: "2026-09-21T12:00:00.000Z",
             futureEntryField: "preserve"
@@ -22,7 +47,7 @@ const journal = {
 };
 const validJournal = validation.validate("journal", journal, { source: "test" });
 if (!validJournal.valid || validJournal.issues.length) throw new Error("A current Journal dataset failed validation.");
-if (validJournal.value.futureRootField?.version !== 2 || validJournal.value.entries["2026-09-21"].futureEntryField !== "preserve") {
+if (validJournal.value.futureRootField?.version !== 2 || validJournal.value.entries["2026-09-21"].futureEntryField !== "preserve" || validJournal.value.notes["note-one"].futureNoteField !== 7 || validJournal.value.folders.research.futureFolderField !== true) {
     throw new Error("Journal normalization discarded forward-compatible fields.");
 }
 const legacyJournal = validation.validate("journal", { entries: { "2026-09-20": { howDay: "Legacy" } } });
@@ -37,6 +62,31 @@ const invalidJournal = validation.validate("journal", {
 });
 for (const code of ["journal.entry-key.invalid", "journal.entry.date-mismatch", "field.wrong-type", "field.invalid-timestamp"]) {
     if (!invalidJournal.issues.some(issue => issue.code === code)) throw new Error(`Missing Journal validation issue: ${code}`);
+}
+
+const invalidJournalNotes = validation.validate("journal", {
+    entries: {},
+    folders: { alpha: { id: "wrong", name: "" } },
+    notes: { first: { id: "other", title: "", content: 7, folderId: "missing", updatedAt: "never" } },
+    selectedNoteId: "missing-note"
+});
+for (const code of ["journal.folder.id-mismatch", "journal.note.id-mismatch", "journal.note.folder-missing", "journal.selected-note.missing", "field.required"]) {
+    if (!invalidJournalNotes.issues.some(issue => issue.code === code)) throw new Error(`Missing Journal notes validation issue: ${code}`);
+}
+
+const notesModel = globalThis.JAIMIEJournalNotes;
+if (notesModel.extractWikiLinks("[[Alpha]] and [[alpha]] and [[Beta]]").join(",") !== "Alpha,Beta") {
+    throw new Error("Journal wikilink extraction did not deduplicate note titles.");
+}
+if (notesModel.extractTags("#work #Work #deep-focus").join(",") !== "work,deep-focus") {
+    throw new Error("Journal tag extraction did not normalize duplicate tags.");
+}
+const renderedMarkdown = notesModel.renderMarkdown("# Safe\n<script>alert(1)</script>\n[[Second Note]]");
+if (renderedMarkdown.includes("<script>") || !renderedMarkdown.includes("&lt;script&gt;") || !renderedMarkdown.includes("data-wikilink=\"Second Note\"")) {
+    throw new Error("Journal Markdown rendering did not safely escape HTML or render wikilinks.");
+}
+if (notesModel.getBacklinks(journal.notes, journal.notes["note-two"])[0]?.id !== "note-one") {
+    throw new Error("Journal backlinks did not resolve linked notes.");
 }
 if (validation.inspect("journal", invalidJournal, { mode: "compatibility" }).value !== invalidJournal) {
     throw new Error("Journal compatibility mode changed existing data.");

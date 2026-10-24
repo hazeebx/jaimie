@@ -439,4 +439,8 @@ input:focus {
   .main { width: min(100% - 28px, 1200px); padding-top: 25px; }
   .screen-title { align-items: start; gap: 18px; flex-direction: column; }
   .form-panel { padding: 20px; }
+  button { min-height: 42px; }
+  .countdown-grid { grid-template-columns: 1fr; }
+  .form-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .form-actions .primary { grid-column: 1 / -1; }
 }

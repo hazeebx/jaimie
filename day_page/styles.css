@@ -3,3 +3,13 @@
 #modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:20px}.modal{position:relative;width:min(470px,95vw);background:#151619;border:1px solid #b85c23;border-radius:14px;padding:25px;box-shadow:0 30px 100px #000}.modal h2{font-weight:450;margin:8px 0 22px}.modal label{display:block;color:#92949b;font-size:11px;margin:14px 0}.modal input,.modal textarea{display:block;width:100%;margin-top:6px;background:#101114;border:1px solid #383a40;color:#e8e5df;border-radius:7px;padding:10px;outline:0}.modal input:focus,.modal textarea:focus{border-color:#ff8a2a}.submit{width:100%;padding:12px;background:#ff8a2a12;border:1px solid #b85c23;color:#ff8a2a;border-radius:8px;cursor:pointer}.submit:hover{background:#ff8a2a22}#close{position:absolute;right:9px;top:5px;border:0;background:none;color:#92949b;font-size:27px;cursor:pointer}@media(max-width:950px){main{grid-template-columns:1fr}.panel{height:auto;min-height:400px}.panel>#schedule,.panel>#quests,.panel>#reminders{height:300px}}@media(max-width:520px){body{padding:10px}.topbar{gap:7px}.date{min-width:105px}}
 .modal select{display:block;width:100%;margin-top:6px;background:#101114;border:1px solid #383a40;color:#e8e5df;border-radius:7px;padding:10px;outline:0}.modal select:focus{border-color:#ff8a2a}.time-selectors{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:9px;margin-top:6px}.time-selectors select{margin-top:0;text-align:center}.time-selectors>span{color:#ff8a2a;font:16px monospace}
 .modal [hidden]{display:none!important}
+
+@media(max-width:520px){
+    .plus{width:44px;height:44px}
+    .mini{min-width:42px;min-height:42px}
+    .entry{grid-template-columns:54px minmax(0,1fr) auto}
+    .task{grid-template-columns:28px minmax(0,1fr) auto}
+    #modal{align-items:end;padding:0}
+    .modal{width:100%;max-height:92dvh;overflow:auto;border-radius:16px 16px 0 0;padding:22px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+    #close{top:8px;right:8px;width:44px;height:44px}
+}

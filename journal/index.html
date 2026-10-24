@@ -1,271 +1,199 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111214">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../assets/jaimie-icon-192.png">
     <title>JAIMIE — Journal</title>
-
-    <!-- Shared sidebar -->
-    <link
-        rel="stylesheet"
-        href="../side-bar/styles.css"
-    >
-
-    <!-- Journal -->
-    <link
-        rel="stylesheet"
-        href="styles.css"
-    >
-
+    <link rel="stylesheet" href="../side-bar/styles.css">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
-
 <body>
-
-    <!-- Shared JAIMIE sidebar -->
     <div id="side-menu"></div>
-
-
     <main class="app">
-
-        <!-- =====================================================
-             HEADER
-        ====================================================== -->
-
         <header class="topbar">
-
             <div class="brand">
-
-                <div class="sigil">
-                    ◆
-                </div>
-
-                <div>
-
-                    <div class="eyebrow">
-                        LIFE SYSTEM / JOURNAL
-                    </div>
-
-                    <h1>
-                        Journal
-                    </h1>
-
-                </div>
-
+                <div class="sigil">◆</div>
+                <div><div class="eyebrow">LIFE SYSTEM / JOURNAL</div><h1>Journal</h1></div>
             </div>
-
-
-            <div class="day-nav">
-
-                <button
-                    id="prevDay"
-                    class="ghost nav-btn"
-                    aria-label="Previous day"
-                >
-                    ‹
-                </button>
-
-
-                <button
-                    id="todayBtn"
-                    class="ghost"
-                >
-                    TODAY
-                </button>
-
-
-                <button
-                    id="nextDay"
-                    class="ghost nav-btn"
-                    aria-label="Next day"
-                >
-                    ›
-                </button>
-
+            <div class="view-switch" aria-label="Journal section">
+                <button id="dailyTab" class="view-tab active" type="button">Daily Entry</button>
+                <button id="notesTab" class="view-tab" type="button">Notes</button>
+                <button id="braindumpTab" class="view-tab" type="button">Braindump</button>
             </div>
-
+            <div id="dayNav" class="day-nav">
+                <button id="prevDay" class="ghost nav-btn" type="button" aria-label="Previous day">‹</button>
+                <button id="todayBtn" class="ghost" type="button">TODAY</button>
+                <button id="nextDay" class="ghost nav-btn" type="button" aria-label="Next day">›</button>
+            </div>
         </header>
 
-
-        <!-- =====================================================
-             MAIN GRID
-        ====================================================== -->
-
-        <section class="journal-grid">
-
-
-            <!-- =================================================
-                 ENTRY
-            ================================================== -->
-
-            <section class="journal-card entry-card">
-
-                <div class="card-head">
-
-                    <div>
-
-                        <div class="eyebrow">
-                            DAILY ENTRY
+        <section id="dailyView" class="journal-view">
+            <section class="journal-grid">
+                <section class="journal-card entry-card">
+                    <div class="card-head">
+                        <div><div class="eyebrow">DAILY ENTRY</div><h2 id="entryTitle">—</h2></div>
+                        <div id="saveState" class="save-state">SAVED</div>
+                    </div>
+                    <div class="journal-fields">
+                        <div class="journal-field">
+                            <div class="daily-format-toolbar" role="toolbar" aria-label="Daily entry formatting">
+                                <button type="button" data-daily-format="bold" title="Bold" aria-label="Bold" aria-pressed="false"><strong>B</strong></button>
+                                <button type="button" data-daily-format="italic" title="Italic" aria-label="Italic" aria-pressed="false"><em>I</em></button>
+                                <button type="button" data-daily-format="heading" title="Heading" aria-label="Heading" aria-pressed="false">H</button>
+                                <button type="button" data-daily-format="bullet" title="Bullet list" aria-label="Bullet list" aria-pressed="false">• List</button>
+                            </div>
+                            <div id="dailyEditorStage" class="daily-editor-stage">
+                                <div id="howDay" class="daily-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Daily entry" data-placeholder="Start writing…"></div>
+                            </div>
                         </div>
-
-                        <h2 id="entryTitle">
-                            AUGUST 27, 2026
-                        </h2>
-
                     </div>
-
-
-                    <div
-                        id="saveState"
-                        class="save-state"
-                    >
-                        SAVED
+                    <div class="entry-footer">
+                        <span id="charCount" class="char-count">0 characters</span>
+                        <button id="saveBtn" class="primary" type="button">SAVE ENTRY</button>
                     </div>
-
-                </div>
-
-
-                <!-- =================================================
-                     PROMPTS
-                ================================================== -->
-
-                <div class="journal-fields">
-
-
-                    <div class="journal-field">
-
-                        <label
-                            for="howDay"
-                        >
-                            HOW WAS TODAY?
-                        </label>
-
-                        <textarea
-                            id="howDay"
-                            rows="5"
-                            maxlength="4000"
-                            placeholder="How did today feel?"
-                        ></textarea>
-
-                    </div>
-
-
-                    <div class="journal-field">
-
-                        <label
-                            for="tomorrow"
-                        >
-                            TOMORROW
-                        </label>
-
-                        <textarea
-                            id="tomorrow"
-                            rows="5"
-                            maxlength="4000"
-                            placeholder="What matters tomorrow?"
-                        ></textarea>
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="entry-footer">
-
-                    <span
-                        id="charCount"
-                        class="char-count"
-                    >
-                        0 characters
-                    </span>
-
-
-                    <button
-                        id="saveBtn"
-                        class="primary"
-                    >
-                        SAVE ENTRY
-                    </button>
-
-                </div>
-
+                </section>
+                <aside class="journal-card history-card">
+                    <div class="card-head"><div><div class="eyebrow">ARCHIVE</div><h2>Journal History</h2></div></div>
+                    <div id="historyList" class="history-list"></div>
+                    <div class="history-footer"><span id="entryCount">0 ENTRIES</span></div>
+                </aside>
             </section>
-
-
-            <!-- =================================================
-                 HISTORY
-            ================================================== -->
-
-            <aside class="journal-card history-card">
-
-                <div class="card-head">
-
-                    <div>
-
-                        <div class="eyebrow">
-                            ARCHIVE
-                        </div>
-
-                        <h2>
-                            Journal History
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="historyList"
-                    class="history-list"
-                ></div>
-
-
-                <div class="history-footer">
-
-                    <span id="entryCount">
-                        0 ENTRIES
-                    </span>
-
-                </div>
-
-            </aside>
-
-
         </section>
 
+        <section id="notesView" class="journal-view" hidden>
+            <div class="notes-workspace">
+                <aside class="vault-panel">
+                    <div class="vault-head">
+                        <div><div class="eyebrow">PERSONAL VAULT</div><h2>Notes</h2></div>
+                        <span id="noteCount" class="count-pill">0</span>
+                    </div>
+                    <div class="vault-actions">
+                        <button id="newNoteBtn" class="primary compact" type="button">+ NOTE</button>
+                        <button id="newFolderBtn" class="ghost compact" type="button">+ FOLDER</button>
+                    </div>
+                    <label class="search-field" for="noteSearch">
+                        <span aria-hidden="true">⌕</span>
+                        <input id="noteSearch" type="search" maxlength="200" placeholder="Search notes and tags">
+                    </label>
+                    <div id="vaultTree" class="vault-tree" aria-live="polite"></div>
+                </aside>
 
-        <!-- =====================================================
-             STATUS BAR
-        ====================================================== -->
+                <section class="note-panel">
+                    <div id="noteEmpty" class="note-empty">
+                        <div class="empty-mark">◇</div>
+                        <h2>Your notes vault is empty</h2>
+                        <p>Create a Markdown note, connect ideas with <code>[[wikilinks]]</code>, and organize them into folders.</p>
+                        <button id="emptyNewNoteBtn" class="primary" type="button">CREATE FIRST NOTE</button>
+                    </div>
+                    <div id="noteEditor" class="note-editor" hidden>
+                        <div class="note-head">
+                            <div class="note-title-wrap">
+                                <input id="noteTitle" class="note-title" type="text" maxlength="200" aria-label="Note title">
+                                <span id="noteSaveState" class="note-save-state">SAVED</span>
+                            </div>
+                            <div class="note-head-actions">
+                                <label class="folder-select-label" for="noteFolder">FOLDER</label>
+                                <select id="noteFolder" class="folder-select"></select>
+                                <button id="saveNoteBtn" class="ghost compact" type="button">SAVE</button>
+                                <button id="deleteNoteBtn" class="icon-button danger" type="button" aria-label="Delete note">×</button>
+                            </div>
+                        </div>
+                        <div class="editor-toolbar">
+                            <div class="mode-switch" aria-label="Note view mode">
+                                <button class="mode-button active" type="button" data-mode="edit">EDIT</button>
+                                <button class="mode-button" type="button" data-mode="split">SPLIT</button>
+                                <button class="mode-button" type="button" data-mode="preview">PREVIEW</button>
+                            </div>
+                            <span class="syntax-help">Markdown · [[Link notes]] · #tags</span>
+                        </div>
+                        <div id="editorStage" class="editor-stage mode-edit">
+                            <textarea id="noteContent" class="note-content" maxlength="500000" spellcheck="true" placeholder="# Start writing…"></textarea>
+                            <article id="notePreview" class="note-preview prose" aria-label="Markdown preview"></article>
+                        </div>
+                    </div>
+                </section>
+
+                <aside id="noteContext" class="context-panel" hidden>
+                    <section class="context-section">
+                        <div class="context-heading">NOTE INFO</div>
+                        <div class="note-stats">
+                            <div><strong id="wordCount">0</strong><span>WORDS</span></div>
+                            <div><strong id="linkCount">0</strong><span>LINKS</span></div>
+                        </div>
+                        <div id="updatedAt" class="updated-at">—</div>
+                    </section>
+                    <section class="context-section">
+                        <div class="context-heading">TAGS</div>
+                        <div id="tagList" class="tag-list"></div>
+                    </section>
+                    <section class="context-section backlinks-section">
+                        <div class="context-heading">BACKLINKS</div>
+                        <div id="backlinkList" class="backlink-list"></div>
+                    </section>
+                </aside>
+            </div>
+        </section>
+
+        <section id="braindumpView" class="journal-view" hidden>
+            <div class="braindump-shell">
+                <header class="braindump-toolbar">
+                    <div>
+                        <div class="eyebrow">FREEFORM CANVAS</div>
+                        <h2>Braindump</h2>
+                    </div>
+                    <div class="toolbar" aria-label="Braindump tools">
+                        <button class="tool active" data-tool="select" type="button">Select</button>
+                        <button class="tool" data-tool="pen" type="button">Pen</button>
+                        <button class="tool" data-tool="eraser" type="button">Eraser</button>
+                        <span class="divider" aria-hidden="true"></span>
+                        <label class="color-wrap" title="Pen color" aria-label="Pen color">
+                            <input id="color" type="color" value="#ff8a2a">
+                        </label>
+                        <button class="brain-icon-btn" id="undo" type="button" title="Undo" aria-label="Undo">↶</button>
+                        <button class="brain-icon-btn" id="redo" type="button" title="Redo" aria-label="Redo">↷</button>
+                        <button class="brain-icon-btn" id="clear" type="button" title="Clear canvas" aria-label="Clear canvas">⌫</button>
+                        <button class="brain-icon-btn" id="import" type="button" title="Import dump" aria-label="Import Braindump">↑</button>
+                        <button class="brain-icon-btn" id="export" type="button" title="Export dump" aria-label="Export Braindump">↓</button>
+                        <input id="import-file" type="file" accept="application/json" hidden>
+                    </div>
+                </header>
+                <div class="brain-workspace" id="workspace">
+                    <canvas id="canvas"></canvas>
+                    <div class="brain-hint" id="hint">
+                        <strong>Click anywhere to type.</strong>
+                        <span>Switch to Pen to draw anywhere.</span>
+                    </div>
+                    <div class="brain-save-status" id="status">
+                        <span class="save-dot"></span>
+                        <span id="save-text">Loading canvas…</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <footer class="status-bar">
-
-            <span>
-                <i class="status-dot"></i>
-                JOURNAL READY
-            </span>
-
-            <span id="dateStatus">
-                —
-            </span>
-
+            <span><i class="status-dot"></i><span id="readyStatus">JOURNAL READY</span></span>
+            <span id="dateStatus">—</span>
         </footer>
-
     </main>
 
+    <dialog id="folderDialog" class="journal-dialog">
+        <form id="folderForm" method="dialog">
+            <div class="eyebrow">PERSONAL VAULT</div>
+            <h2>Create Folder</h2>
+            <label for="folderName">Folder name</label>
+            <input id="folderName" type="text" maxlength="200" required autocomplete="off">
+            <div class="dialog-actions">
+                <button id="cancelFolderBtn" class="ghost" type="button">CANCEL</button>
+                <button class="primary" type="submit">CREATE</button>
+            </div>
+        </form>
+    </dialog>
 
-    <!-- Shared sidebar -->
     <script src="../side-bar/app.js"></script>
-
-    <!-- Unified JAIMIE data manager -->
     <script src="../shared/safe-content.js"></script>
     <script src="../shared/validation.js"></script>
     <script src="../shared/validation-schemas/calendar-reminders.js"></script>
@@ -274,14 +202,13 @@
     <script src="../shared/validation-schemas/event-countdown.js"></script>
     <script src="../shared/validation-schemas/diet.js"></script>
     <script src="../shared/validation-schemas/sleep.js"></script>
-    <script src="../shared/validation-schemas/journal.js"></script>
+    <script src="../shared/validation-schemas/journal.js?v=2"></script>
     <script src="../shared/validation-schemas/inventory.js"></script>
     <script src="../shared/validation-schemas/packing.js"></script>
     <script src="../data-manager/app.js?v=2"></script>
-
-    <!-- Journal -->
-    <script src="app.js?v=3"></script>
-
+    <script src="../braindump/app.js?v=2"></script>
+    <script src="notes-model.js?v=1"></script>
+    <script src="rich-text.js?v=1"></script>
+    <script src="app.js?v=4"></script>
 </body>
-
 </html>

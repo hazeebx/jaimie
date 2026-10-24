@@ -19,6 +19,9 @@
   safely removed later once the new system is proven stable.
 */
 
+(() => {
+"use strict";
+
 const DB_NAME = "braindump-db";
 const DB_VERSION = 1;
 const STORE = "boards";
@@ -1134,3 +1137,14 @@ document.addEventListener(
     }
   }
 );
+
+window.JAIMIEBraindump = Object.freeze({
+  refresh() {
+    resizeCanvas();
+    renderTextNodes();
+    redraw();
+    updateHint();
+  }
+});
+
+})();

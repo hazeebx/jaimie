@@ -1,4 +1,4 @@
-# JAIMIE Collapsible Side Menu
+# JAIMIE Responsive Side Menu
 
 Standalone HTML/CSS/JS component.
 
@@ -6,7 +6,7 @@ Standalone HTML/CSS/JS component.
 
 - `component.html` — menu markup
 - `styles.css` — menu styling
-- `app.js` — collapse/expand logic + persistence
+- `app.js` — desktop collapse persistence and mobile drawer behavior
 
 ## Pages currently included
 
@@ -17,7 +17,7 @@ Standalone HTML/CSS/JS component.
 - Habits
 - Diet
 - Sleep
-- Braindump
+- Journal (Daily Entry, Notes, and Braindump)
 - Pomodoro
 - Event Countdown
 - House Inventory
@@ -51,4 +51,4 @@ The shared stylesheet reserves the sidebar's width on every JAIMIE page, and the
 
 The JS also marks the current page active. Both folder URLs (for example `/journal/`) and explicit `index.html` URLs are supported.
 
-The collapsed/expanded state is saved in localStorage.
+On desktop, the collapsed/expanded state is saved in localStorage. At 700px and below, the menu becomes an off-canvas drawer with a persistent top launcher, backdrop dismissal, Escape-key dismissal, and automatic closing after navigation. Mobile drawer state is intentionally not persisted.

@@ -925,6 +925,18 @@ function exercise(exerciseData) {
                                             }
                                             reps
 
+                                            <button
+                                                class="set-remove-btn"
+                                                type="button"
+                                                data-setremove="${esc(exerciseData.id)}"
+                                                data-set-index="${index}"
+                                                aria-label="Remove set ${index + 1} from ${esc(exerciseData.name)}"
+                                                title="${exerciseData.sets.length <= 1 ? "At least one set is required" : `Remove set ${index + 1}`}"
+                                                ${exerciseData.sets.length <= 1 ? "disabled" : ""}
+                                            >
+                                                ×
+                                            </button>
+
                                         </div>
 
                                       `
@@ -1358,6 +1370,24 @@ function bind() {
 
     document
         .querySelectorAll(
+            "[data-setremove]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    () =>
+                        removeExerciseSet(
+                            button.dataset.setremove,
+                            Number(button.dataset.setIndex)
+                        );
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(
             "[data-remove]"
         )
         .forEach(
@@ -1426,6 +1456,42 @@ function bind() {
 
             }
         );
+
+}
+
+
+async function removeExerciseSet(
+    exerciseId,
+    setIndex
+) {
+
+    const item =
+        day()
+            .exercises
+            .find(
+                exerciseData =>
+                    exerciseData.id === exerciseId
+            );
+
+
+    if (
+        !item ||
+        !Array.isArray(item.sets) ||
+        item.sets.length <= 1 ||
+        !Number.isInteger(setIndex) ||
+        setIndex < 0 ||
+        setIndex >= item.sets.length
+    ) {
+        return;
+    }
+
+
+    item.sets.splice(setIndex, 1);
+
+
+    await save();
+
+    render();
 
 }
 
@@ -2493,40 +2559,85 @@ function manageModal() {
                     .map(
                         workout => `
 
-                            <div
-                                class="library-item"
+                            <article
+                                class="library-item saved-workout-card"
                                 style="margin-bottom:7px"
                             >
 
-                                <div>
+                                <div class="saved-workout-head">
 
-                                    <strong>
-                                        ${esc(
-                                            workout.name
-                                        )}
-                                    </strong>
+                                    <button
+                                        type="button"
+                                        class="saved-workout-toggle"
+                                        data-vieww="${esc(workout.id)}"
+                                        aria-expanded="false"
+                                    >
 
-                                    <span>
-                                        ${
-                                            workout
-                                                .exercises
-                                                .length
-                                        }
-                                        exercises
-                                    </span>
+                                        <span class="saved-workout-identity">
+                                            <strong>
+                                                ${esc(workout.name)}
+                                            </strong>
+
+                                            <span>
+                                                ${workout.exercises.length}
+                                                exercises
+                                            </span>
+                                        </span>
+
+                                        <span class="saved-workout-view">
+                                            View
+                                            <span class="saved-workout-chevron" aria-hidden="true">⌄</span>
+                                        </span>
+
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="danger-btn"
+                                        data-delw="${esc(workout.id)}"
+                                    >
+                                        Delete
+                                    </button>
 
                                 </div>
 
 
-                                <button
-                                    type="button"
-                                    class="danger-btn"
-                                    data-delw="${esc(workout.id)}"
+                                <div
+                                    class="saved-workout-exercises"
+                                    hidden
                                 >
-                                    Delete
-                                </button>
 
-                            </div>
+                                    ${
+                                        workout.exercises
+                                            .map(
+                                                (exerciseData, index) => `
+
+                                                    <div class="saved-workout-exercise">
+                                                        <span class="saved-workout-number">
+                                                            ${String(index + 1).padStart(2, "0")}
+                                                        </span>
+
+                                                        <strong>
+                                                            ${esc(exerciseData.name)}
+                                                        </strong>
+
+                                                        <span class="saved-workout-target">
+                                                            ${Number(exerciseData.sets) || 0}
+                                                            sets ·
+                                                            ${Number(exerciseData.reps) || 0}
+                                                            reps
+                                                        </span>
+                                                    </div>
+
+                                                  `
+                                            )
+                                            .join("")
+                                    }
+
+                                </div>
+
+                            </article>
 
                           `
                     )
@@ -2646,6 +2757,53 @@ function manageModal() {
             manageModal();
 
         };
+
+
+    document
+        .querySelectorAll(
+            "[data-vieww]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    () => {
+
+                        const details =
+                            button
+                                .closest(".saved-workout-card")
+                                ?.querySelector(".saved-workout-exercises");
+
+
+                        if (!details) {
+                            return;
+                        }
+
+
+                        const expanded =
+                            button.getAttribute("aria-expanded") === "true";
+
+
+                        button.setAttribute(
+                            "aria-expanded",
+                            String(!expanded)
+                        );
+
+                        details.hidden = expanded;
+
+                        const label =
+                            button.querySelector(".saved-workout-view");
+
+                        if (label) {
+                            label.firstChild.textContent = expanded
+                                ? "View "
+                                : "Hide ";
+                        }
+
+                    };
+
+            }
+        );
 
 
     document

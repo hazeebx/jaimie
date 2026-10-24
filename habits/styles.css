@@ -1864,4 +1864,26 @@ h2 {
 
     }
 
+    .modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal,
+    .history-modal {
+        width: 100%;
+        max-height: 92dvh;
+        overflow-y: auto;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-close {
+        width: 44px;
+        height: 44px;
+    }
+
+    .modal-footer {
+        padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    }
+
 }

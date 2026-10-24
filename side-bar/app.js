@@ -38,11 +38,7 @@
         currentUrl.origin === shellUrl.origin &&
         currentUrl.pathname === shellUrl.pathname;
 
-    /*
-     * Route top-level feature-page visits through the persistent shell. This is
-     * what lets the Music document (and its real audio element) survive when the
-     * user opens another JAIMIE page.
-     */
+    /* Route top-level feature-page visits through the shared application shell. */
     if (window.self === window.top && !isApplicationShell) {
         let route = currentUrl.pathname.startsWith(jaimieRoot.pathname)
             ? currentUrl.pathname.slice(jaimieRoot.pathname.length)
@@ -125,7 +121,7 @@
 
     const componentPath =
         new URL(
-            "component.html?v=cartographer-1",
+            "component.html?v=mobile-shell-2",
             script.src
         ).href;
 
@@ -229,8 +225,21 @@
                 "sideMenuToggle"
             );
 
+        const mobileToggle =
+            document.getElementById(
+                "mobileMenuToggle"
+            );
+
+        const backdrop =
+            document.getElementById(
+                "sideMenuBackdrop"
+            );
+
 
         if (!menu || !toggle) return;
+
+        const mobileViewport =
+            window.matchMedia("(max-width: 700px)");
 
 
         /* =================================================
@@ -252,6 +261,11 @@
             toggle.setAttribute(
                 "aria-expanded",
                 String(!collapsed)
+            );
+
+            toggle.setAttribute(
+                "aria-label",
+                collapsed ? "Expand navigation" : "Collapse navigation"
             );
 
 
@@ -278,6 +292,40 @@
             localStorage.setItem(
                 STORAGE_KEY,
                 String(collapsed)
+            );
+
+        }
+
+        function setMobileOpen(open) {
+
+            const shouldOpen =
+                mobileViewport.matches && open;
+
+            menu.classList.toggle(
+                "is-mobile-open",
+                shouldOpen
+            );
+
+            document.body.classList.toggle(
+                "jaimie-mobile-menu-open",
+                shouldOpen
+            );
+
+            if (mobileToggle) {
+                mobileToggle.setAttribute(
+                    "aria-expanded",
+                    String(shouldOpen)
+                );
+            }
+
+            toggle.setAttribute(
+                "aria-expanded",
+                String(shouldOpen)
+            );
+
+            toggle.setAttribute(
+                "aria-label",
+                shouldOpen ? "Close navigation" : "Open navigation"
             );
 
         }
@@ -310,6 +358,16 @@
             "click",
             () => {
 
+                if (mobileViewport.matches) {
+
+                    setMobileOpen(
+                        !menu.classList.contains("is-mobile-open")
+                    );
+
+                    return;
+
+                }
+
                 const isCollapsed =
                     menu.classList.contains(
                         "is-collapsed"
@@ -322,6 +380,49 @@
 
             }
         );
+
+        if (mobileToggle) {
+            mobileToggle.addEventListener(
+                "click",
+                () => setMobileOpen(true)
+            );
+        }
+
+        if (backdrop) {
+            backdrop.addEventListener(
+                "click",
+                () => setMobileOpen(false)
+            );
+        }
+
+        menu.querySelectorAll("a.side-menu__item").forEach(link => {
+            link.addEventListener("click", () => setMobileOpen(false));
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") setMobileOpen(false);
+        });
+
+        const handleViewportChange = () => {
+            setMobileOpen(false);
+
+            if (!mobileViewport.matches) {
+                const collapsed = menu.classList.contains("is-collapsed");
+                toggle.setAttribute("aria-expanded", String(!collapsed));
+                toggle.setAttribute(
+                    "aria-label",
+                    collapsed ? "Expand navigation" : "Collapse navigation"
+                );
+            }
+        };
+
+        if (typeof mobileViewport.addEventListener === "function") {
+            mobileViewport.addEventListener("change", handleViewportChange);
+        } else {
+            mobileViewport.addListener(handleViewportChange);
+        }
+
+        handleViewportChange();
 /* =================================================
    SETTINGS OVERLAY
    ================================================= */
@@ -334,6 +435,8 @@ if (settingsButton) {
     settingsButton.addEventListener(
         "click",
         async () => {
+
+            setMobileOpen(false);
 
             try {
 

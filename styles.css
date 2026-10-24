@@ -709,4 +709,7 @@ code {
     .pairing-form input { width: 100%; }
     .chat-header { flex-direction: column; }
     .chat-message { max-width: 94%; }
+    button { min-height: 42px; }
+    .composer-footer { align-items: stretch; flex-direction: column; }
+    .composer-footer > div { display: grid; grid-template-columns: 1fr 1fr; }
 }

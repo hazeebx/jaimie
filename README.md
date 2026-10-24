@@ -238,24 +238,3 @@ See `local-ai-engine/README.md` for configuration and security details.
 The engine directory is explicitly excluded from Firebase Hosting in
 `firebase.json`. Engine source remains versioned, while local models, virtual
 environments, caches, and secrets are excluded by `.gitignore`.
-
-## Local Music library
-
-The Music page imports individual audio files or an entire desktop folder,
-reads embedded metadata and artwork, and stores the audio in the browser's
-Origin Private File System. Its searchable catalog, playlists and player
-settings use a separate IndexedDB database. Music never enters `JAIMIEData`,
-Firebase, or JAIMIE backup exports.
-
-On Android Chrome, select multiple files with **Import Files**. Install the
-JAIMIE Music PWA from Chrome for the most reliable lock-screen and background
-Media Session controls. Playback normally continues when Chrome is backgrounded
-or the screen is locked, but Android can stop it if Chrome is force-closed or
-the operating system kills the browser process. The library is local to each
-browser/device and must be imported separately on other devices.
-
-Run the Music isolation and PWA architecture checks with:
-
-```bash
-npm run test:music
-```

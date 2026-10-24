@@ -11,7 +11,6 @@
     if (!framesHost || !script) return;
 
     const jaimieRoot = new URL("./", script.src);
-    const MUSIC_ROUTE = "music/index.html";
     const HOME_ROUTE = "index.html";
     const frames = new Map();
     let activeRoute = "";
@@ -61,7 +60,7 @@
         const frame = document.createElement("iframe");
         frame.className = "app-shell__frame";
         frame.dataset.route = route;
-        frame.title = route === MUSIC_ROUTE ? "JAIMIE Music" : "JAIMIE page";
+        frame.title = "JAIMIE page";
         frame.src = embeddedUrl(route);
         frame.addEventListener("load", () => {
             if (route === activeRoute) loading?.classList.add("is-hidden");
@@ -74,7 +73,7 @@
 
     function discardInactiveFeatureFrames(nextRoute) {
         for (const [route, frame] of frames) {
-            if (route === MUSIC_ROUTE || route === nextRoute) continue;
+            if (route === nextRoute) continue;
             frame.remove();
             frames.delete(route);
         }
@@ -94,9 +93,7 @@
         activeRoute = route;
         loading?.classList.remove("is-hidden");
 
-        // Music is intentionally never discarded: its audio element owns playback.
-        const musicFrame = ensureFrame(MUSIC_ROUTE);
-        const nextFrame = route === MUSIC_ROUTE ? musicFrame : ensureFrame(route);
+        const nextFrame = ensureFrame(route);
         discardInactiveFeatureFrames(route);
 
         for (const [frameRoute, frame] of frames) {

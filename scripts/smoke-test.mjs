@@ -41,7 +41,6 @@ const featureFolders = [
     "habits",
     "house_inventory",
     "journal",
-    "music",
     "packing_tracker",
     "sleep_tracker",
     "workout-tracker"
@@ -213,6 +212,14 @@ const sidebarHtml = readFileSync(
     join(root, "side-bar", "component.html"),
     "utf8"
 );
+const sidebarSource = readFileSync(
+    join(root, "side-bar", "app.js"),
+    "utf8"
+);
+const sidebarStyles = readFileSync(
+    join(root, "side-bar", "styles.css"),
+    "utf8"
+);
 
 if (/href\s*=\s*["']\s*["']/.test(sidebarHtml)) {
     fail("Sidebar contains an empty link");
@@ -220,6 +227,59 @@ if (/href\s*=\s*["']\s*["']/.test(sidebarHtml)) {
 
 for (const match of sidebarHtml.matchAll(/href=["']([^"']+)["']/g)) {
     requireFile(join(root, match[1]));
+}
+
+for (const removedMusicPath of [
+    "music/index.html",
+    "music/app.js",
+    "music/styles.css",
+    "assets/jaimie-music.svg",
+    "scripts/test-music-architecture.mjs"
+]) {
+    if (existsSync(join(root, removedMusicPath))) {
+        fail(`Removed Music feature file still exists: ${removedMusicPath}`);
+    }
+}
+
+if (/href=["']music\//i.test(sidebarHtml)) {
+    fail("Removed Music feature remains linked in the sidebar");
+}
+
+if (/href=["']braindump\//i.test(sidebarHtml)) {
+    fail("Braindump remains a separate sidebar destination instead of being merged into Journal");
+}
+
+for (const mobileShellHook of ["mobileMenuToggle", "sideMenuBackdrop"]) {
+    if (!sidebarHtml.includes(mobileShellHook)) {
+        fail(`Sidebar is missing mobile navigation control: ${mobileShellHook}`);
+    }
+}
+
+for (const mobileShellBehavior of ["matchMedia", "setMobileOpen", "jaimie-mobile-menu-open"]) {
+    if (!sidebarSource.includes(mobileShellBehavior)) {
+        fail(`Sidebar is missing mobile drawer behavior: ${mobileShellBehavior}`);
+    }
+}
+
+for (const mobileShellStyle of ["100dvh", ".side-menu.is-mobile-open", "padding-left: 0"]) {
+    if (!sidebarStyles.includes(mobileShellStyle)) {
+        fail(`Sidebar is missing mobile layout protection: ${mobileShellStyle}`);
+    }
+}
+
+const journalHtml = readFileSync(join(root, "journal", "index.html"), "utf8");
+for (const requiredJournalFeature of ["braindumpTab", "braindumpView", "../braindump/app.js", "daily-format-toolbar", "rich-text.js"]) {
+    if (!journalHtml.includes(requiredJournalFeature)) {
+        fail(`Journal is missing merged Braindump wiring: ${requiredJournalFeature}`);
+    }
+}
+if (journalHtml.indexOf("rich-text.js") > journalHtml.search(/src=["']app\.js(?:\?[^"']*)?["']/)) {
+    fail("Journal loads its rich-text service after the feature app");
+}
+
+const appShellSource = readFileSync(join(root, "app-shell.js"), "utf8");
+if (/MUSIC_ROUTE|music\/index\.html/i.test(appShellSource)) {
+    fail("Application shell still contains Music-specific routing");
 }
 
 function collectJavaScript(directory) {
